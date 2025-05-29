@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_MIND_BLOWN].effect == EFFECT_MIND_BLOWN);
+    ASSUME(GetMoveEffect(MOVE_MIND_BLOWN) == EFFECT_MIND_BLOWN);
 }
 
 SINGLE_BATTLE_TEST("Mind Blown makes the user lose 1/2 of its Max HP")
@@ -96,10 +96,10 @@ DOUBLE_BATTLE_TEST("Mind Blown causes everyone to faint in a double battle")
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_MIND_BLOWN, playerLeft);
         HP_BAR(opponentLeft, hp: 0);
-        MESSAGE("The opposing Abra fainted!");
         HP_BAR(playerRight, hp: 0);
-        MESSAGE("Wynaut fainted!");
         HP_BAR(opponentRight, hp: 0);
+        MESSAGE("The opposing Abra fainted!");
+        MESSAGE("Wynaut fainted!");
         MESSAGE("The opposing Kadabra fainted!");
         HP_BAR(playerLeft, hp: 0);
         MESSAGE("Wobbuffet fainted!");
@@ -154,7 +154,7 @@ SINGLE_BATTLE_TEST("Mind Blown makes the user lose HP even if the opposing mon p
 SINGLE_BATTLE_TEST("Mind Blown makes the user lose HP even if it is absorbed by Flash Fire")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_MIND_BLOWN].type == TYPE_FIRE);
+        ASSUME(GetMoveType(MOVE_MIND_BLOWN) == TYPE_FIRE);
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_CYNDAQUIL) { Ability(ABILITY_FLASH_FIRE); }
     } WHEN {
@@ -183,5 +183,51 @@ SINGLE_BATTLE_TEST("Mind Blown does not cause the user to lose HP if there is no
         MESSAGE("Wobbuffet used Mind Blown!");
         MESSAGE("But it failed!");
         MESSAGE("2 sent out Wobbuffet!");
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Mind Blown hp loss is prevented by Magic Guard")
+{
+    GIVEN {
+        PLAYER(SPECIES_CLEFAIRY) { Ability(ABILITY_FRIEND_GUARD); Innates(ABILITY_MAGIC_GUARD); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_MIND_BLOWN); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_MIND_BLOWN, player);
+        HP_BAR(opponent);
+        NOT HP_BAR(player);
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Mind Blown is blocked by Damp")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { HP(400); MaxHP(400); }
+        OPPONENT(SPECIES_GOLDUCK) { Ability(ABILITY_CLOUD_NINE); Innates(ABILITY_DAMP); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_MIND_BLOWN); }
+    } SCENE {
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_MIND_BLOWN, player);
+            HP_BAR(player, damage: 200);
+        }
+        ABILITY_POPUP(opponent, ABILITY_DAMP);
+        MESSAGE("The opposing Golduck's Damp prevents Wobbuffet from using Mind Blown!");
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Mind Blown makes the user lose HP even if it is absorbed by Flash Fire")
+{
+    GIVEN {
+        ASSUME(GetMoveType(MOVE_MIND_BLOWN) == TYPE_FIRE);
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_CYNDAQUIL) { Ability(ABILITY_BLAZE); Innates(ABILITY_FLASH_FIRE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_MIND_BLOWN); }
+    } SCENE {
+        ABILITY_POPUP(opponent, ABILITY_FLASH_FIRE);
+        NOT ANIMATION(ANIM_TYPE_MOVE, MOVE_MIND_BLOWN, player);
+        HP_BAR(player);
     }
 }

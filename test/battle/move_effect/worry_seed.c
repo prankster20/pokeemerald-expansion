@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_WORRY_SEED].effect == EFFECT_WORRY_SEED);
+    ASSUME(GetMoveEffect(MOVE_WORRY_SEED) == EFFECT_WORRY_SEED);
 }
 
 SINGLE_BATTLE_TEST("Worry Seed replaces target's ability with Insomnia")
@@ -70,5 +70,23 @@ SINGLE_BATTLE_TEST("Worry Seed fails if target has an ability that can't be over
     } SCENE {
         NOT ANIMATION(ANIM_TYPE_MOVE, MOVE_WORRY_SEED, player);
         MESSAGE("But it failed!");
+    }
+}
+
+DOUBLE_BATTLE_TEST("INNATE: Worry Seed fails if the target already has Insomnia")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); }
+        PLAYER(SPECIES_CHARMANDER) { Ability(ABILITY_SOLAR_POWER); Innates(ABILITY_BLAZE); }
+        OPPONENT(SPECIES_BULBASAUR) { Ability(ABILITY_INSOMNIA); Innates(ABILITY_OVERGROW); }
+        OPPONENT(SPECIES_SQUIRTLE) { Ability(ABILITY_RAIN_DISH); Innates(ABILITY_INSOMNIA); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_WORRY_SEED, target: opponentLeft); MOVE(playerRight, MOVE_WORRY_SEED, target: opponentLeft); }
+    } SCENE {
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_WORRY_SEED, playerLeft);
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_WORRY_SEED, playerRight);
+            ABILITY_POPUP(opponentLeft, ABILITY_INSOMNIA);
+        }
     }
 }

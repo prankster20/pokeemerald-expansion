@@ -120,7 +120,7 @@ DOUBLE_BATTLE_TEST("Primal reversion's order is determined by Speed - player fas
 SINGLE_BATTLE_TEST("Primal reversion happens after a mon is sent out after a mon is fainted")
 {
     GIVEN {
-        ASSUME(!IS_MOVE_STATUS(MOVE_TACKLE));
+        ASSUME(!IsBattleMoveStatus(MOVE_TACKLE));
         PLAYER(SPECIES_WOBBUFFET) {HP(1); }
         PLAYER(SPECIES_GROUDON) { Item(ITEM_RED_ORB); }
         OPPONENT(SPECIES_WOBBUFFET);
@@ -156,7 +156,7 @@ SINGLE_BATTLE_TEST("Primal reversion happens after a mon is switched in")
 SINGLE_BATTLE_TEST("Primal reversion happens after a switch-in caused by Eject Button")
 {
     GIVEN {
-        ASSUME(!IS_MOVE_STATUS(MOVE_TACKLE));
+        ASSUME(!IsBattleMoveStatus(MOVE_TACKLE));
         ASSUME(gItemsInfo[ITEM_EJECT_BUTTON].holdEffect == HOLD_EFFECT_EJECT_BUTTON);
         PLAYER(SPECIES_WOBBUFFET) {Item(ITEM_EJECT_BUTTON); }
         PLAYER(SPECIES_GROUDON) { Item(ITEM_RED_ORB); }
@@ -177,7 +177,7 @@ SINGLE_BATTLE_TEST("Primal reversion happens after a switch-in caused by Eject B
 SINGLE_BATTLE_TEST("Primal reversion happens after a switch-in caused by Red Card")
 {
     GIVEN {
-        ASSUME(!IS_MOVE_STATUS(MOVE_TACKLE));
+        ASSUME(!IsBattleMoveStatus(MOVE_TACKLE));
         ASSUME(gItemsInfo[ITEM_RED_CARD].holdEffect == HOLD_EFFECT_RED_CARD);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_GROUDON) { Item(ITEM_RED_ORB); }
@@ -197,7 +197,7 @@ SINGLE_BATTLE_TEST("Primal reversion happens after a switch-in caused by Red Car
 SINGLE_BATTLE_TEST("Primal reversion happens after the entry hazards damage")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_SPIKES].effect == EFFECT_SPIKES);
+        ASSUME(GetMoveEffect(MOVE_SPIKES) == EFFECT_SPIKES);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_GROUDON) { Item(ITEM_RED_ORB); }
         OPPONENT(SPECIES_WOBBUFFET);
@@ -239,7 +239,7 @@ SINGLE_BATTLE_TEST("Primal reversion happens immediately if it was brought in by
 DOUBLE_BATTLE_TEST("Primal reversion triggers for multiple battlers if multiple fainted the previous turn")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_EARTHQUAKE].target == MOVE_TARGET_FOES_AND_ALLY);
+        ASSUME(GetMoveTarget(MOVE_EARTHQUAKE) == MOVE_TARGET_FOES_AND_ALLY);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_CATERPIE) { HP(1); }
         PLAYER(SPECIES_RESHIRAM);
@@ -262,8 +262,8 @@ DOUBLE_BATTLE_TEST("Primal reversion triggers for multiple battlers if multiple 
 DOUBLE_BATTLE_TEST("Primal reversion triggers for all battlers if multiple fainted the previous turn")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_EXPLOSION].effect == EFFECT_EXPLOSION);
-        ASSUME(gMovesInfo[MOVE_EXPLOSION].target == MOVE_TARGET_FOES_AND_ALLY);
+        ASSUME(GetMoveEffect(MOVE_EXPLOSION) == EFFECT_EXPLOSION);
+        ASSUME(GetMoveTarget(MOVE_EXPLOSION) == MOVE_TARGET_FOES_AND_ALLY);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_CATERPIE) { HP(1); }
         PLAYER(SPECIES_KYOGRE) { Item(ITEM_BLUE_ORB); }
@@ -290,14 +290,60 @@ DOUBLE_BATTLE_TEST("Primal reversion triggers for all battlers if multiple faint
 DOUBLE_BATTLE_TEST("Primal reversion and other switch-in effects trigger for all battlers if multiple fainted the previous turn")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_EXPLOSION].effect == EFFECT_EXPLOSION);
-        ASSUME(gMovesInfo[MOVE_EXPLOSION].target == MOVE_TARGET_FOES_AND_ALLY);
-        ASSUME(gMovesInfo[MOVE_STICKY_WEB].effect == EFFECT_STICKY_WEB);
-        ASSUME(gMovesInfo[MOVE_SPIKES].effect == EFFECT_SPIKES);
-        ASSUME(gMovesInfo[MOVE_TOXIC_SPIKES].effect == EFFECT_TOXIC_SPIKES);
+        ASSUME(GetMoveEffect(MOVE_EXPLOSION) == EFFECT_EXPLOSION);
+        ASSUME(GetMoveTarget(MOVE_EXPLOSION) == MOVE_TARGET_FOES_AND_ALLY);
+        ASSUME(GetMoveEffect(MOVE_STICKY_WEB) == EFFECT_STICKY_WEB);
+        ASSUME(GetMoveEffect(MOVE_SPIKES) == EFFECT_SPIKES);
+        ASSUME(GetMoveEffect(MOVE_TOXIC_SPIKES) == EFFECT_TOXIC_SPIKES);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_CATERPIE) { HP(1); }
         PLAYER(SPECIES_SCRAFTY) { Ability(ABILITY_INTIMIDATE); }
+        PLAYER(SPECIES_RESHIRAM);
+        OPPONENT(SPECIES_CATERPIE) { HP(1); }
+        OPPONENT(SPECIES_CATERPIE) { HP(1); }
+        OPPONENT(SPECIES_KYOGRE) { Item(ITEM_BLUE_ORB); }
+        OPPONENT(SPECIES_GROUDON) { Item(ITEM_RED_ORB); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_STICKY_WEB);
+               MOVE(opponentLeft, MOVE_SPIKES);
+               MOVE(playerRight, MOVE_TOXIC_SPIKES); }
+        TURN { MOVE(playerLeft, MOVE_EXPLOSION);
+               SEND_OUT(opponentRight, 3);
+               SEND_OUT(opponentLeft, 2);
+               SEND_OUT(playerRight, 3);
+               SEND_OUT(playerLeft, 2); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STICKY_WEB, playerLeft);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPIKES, opponentLeft);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_TOXIC_SPIKES, playerRight);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_EXPLOSION, playerLeft);
+        ABILITY_POPUP(playerLeft, ABILITY_INTIMIDATE);
+        ABILITY_POPUP(playerRight, ABILITY_TURBOBLAZE);
+        ABILITY_POPUP(opponentLeft, ABILITY_PRIMORDIAL_SEA);
+        ABILITY_POPUP(opponentRight, ABILITY_DESOLATE_LAND);
+    } THEN {
+        EXPECT_NE(playerLeft->hp, playerLeft->maxHP);
+        EXPECT_NE(playerRight->hp, playerRight->maxHP);
+        EXPECT_EQ(opponentLeft->status1, STATUS1_POISON);
+        EXPECT_EQ(opponentRight->status1, STATUS1_POISON);
+        EXPECT_EQ(opponentLeft->statStages[STAT_ATK], DEFAULT_STAT_STAGE - 1);
+        EXPECT_EQ(opponentRight->statStages[STAT_ATK], DEFAULT_STAT_STAGE - 1);
+        EXPECT_EQ(opponentLeft->statStages[STAT_SPEED], DEFAULT_STAT_STAGE - 1);
+        EXPECT_EQ(opponentRight->statStages[STAT_SPEED], DEFAULT_STAT_STAGE - 1);
+    }
+}
+
+DOUBLE_BATTLE_TEST("INNATE: Primal reversion and other switch-in effects trigger for all battlers if multiple fainted the previous turn")
+{
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_EXPLOSION) == EFFECT_EXPLOSION);
+        ASSUME(GetMoveTarget(MOVE_EXPLOSION) == MOVE_TARGET_FOES_AND_ALLY);
+        ASSUME(GetMoveEffect(MOVE_STICKY_WEB) == EFFECT_STICKY_WEB);
+        ASSUME(GetMoveEffect(MOVE_SPIKES) == EFFECT_SPIKES);
+        ASSUME(GetMoveEffect(MOVE_TOXIC_SPIKES) == EFFECT_TOXIC_SPIKES);
+        PLAYER(SPECIES_WOBBUFFET);
+        PLAYER(SPECIES_CATERPIE) { HP(1); }
+        PLAYER(SPECIES_SCRAFTY) { Ability(ABILITY_SHED_SKIN); Innates(ABILITY_INTIMIDATE); }
         PLAYER(SPECIES_RESHIRAM);
         OPPONENT(SPECIES_CATERPIE) { HP(1); }
         OPPONENT(SPECIES_CATERPIE) { HP(1); }

@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_ION_DELUGE].effect == EFFECT_ION_DELUGE);
+    ASSUME(GetMoveEffect(MOVE_ION_DELUGE) == EFFECT_ION_DELUGE);
 }
 
 // For some reason SINGLE_BATTLE_TEST didn't catch these two issues.
@@ -51,7 +51,7 @@ WILD_BATTLE_TEST("Ion Deluge works the same way as always when used by a mon wit
 SINGLE_BATTLE_TEST("Ion Deluge makes Normal type moves Electric type")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_TACKLE].type == TYPE_NORMAL);
+        ASSUME(GetMoveType(MOVE_TACKLE) == TYPE_NORMAL);
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_GOLBAT);
     } WHEN {
@@ -61,5 +61,24 @@ SINGLE_BATTLE_TEST("Ion Deluge makes Normal type moves Electric type")
         MESSAGE("A deluge of ions showers the battlefield!");
         MESSAGE("Wobbuffet used Tackle!");
         MESSAGE("It's super effective!"); // Because Tackle is now electric type.
+    }
+}
+
+// For some reason SINGLE_BATTLE_TEST didn't catch these two issues.
+WILD_BATTLE_TEST("INNATE: Ion Deluge works the same way as always when used by a mon with Volt Absorb")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_LANTURN) { Ability(ABILITY_ILLUMINATE); Innates(ABILITY_VOLT_ABSORB); HP(1); }
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_ION_DELUGE); }
+    } SCENE {
+        MESSAGE("The wild Lanturn used Ion Deluge!");
+        NONE_OF {
+            ABILITY_POPUP(opponent, ABILITY_VOLT_ABSORB);
+            HP_BAR(opponent);
+            MESSAGE("Wild Lanturn restored HP using its Volt Absorb!");
+        }
+        MESSAGE("A deluge of ions showers the battlefield!");
     }
 }

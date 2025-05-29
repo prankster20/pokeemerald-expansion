@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_SPICY_EXTRACT].effect == EFFECT_SPICY_EXTRACT);
+    ASSUME(GetMoveEffect(MOVE_SPICY_EXTRACT) == EFFECT_SPICY_EXTRACT);
 }
 
 SINGLE_BATTLE_TEST("Spicy Extract raises target's Attack by 2 stages and lowers target's Defense by 2 stages")
@@ -33,7 +33,7 @@ SINGLE_BATTLE_TEST("Spicy Extract is prevented by target's ability if it's Attac
     PARAMETRIZE { ability = ABILITY_LIGHT_METAL; }
 
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_SWORDS_DANCE].effect == EFFECT_ATTACK_UP_2);
+        ASSUME(GetMoveEffect(MOVE_SWORDS_DANCE) == EFFECT_ATTACK_UP_2);
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_BELDUM) { Ability(ability); }
     } WHEN {
@@ -204,5 +204,71 @@ AI_DOUBLE_BATTLE_TEST("Spicy Extract user will not choose the move if it does no
         TURN {
             EXPECT_MOVE(opponentRight, MOVE_TACKLE);
         }
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Spicy Extract Defense loss is prevented by Big Pecks")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_PIDGEY) { Ability(ABILITY_KEEN_EYE); Innates(ABILITY_BIG_PECKS); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SPICY_EXTRACT); }
+    } SCENE {
+        MESSAGE("Wobbuffet used Spicy Extract!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPICY_EXTRACT, player);
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, opponent);
+        MESSAGE("The opposing Pidgey's Attack sharply rose!");
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, opponent);
+            MESSAGE("The opposing Wobbuffet's Defense harshly fell!");
+        }
+        ABILITY_POPUP(opponent, ABILITY_BIG_PECKS);
+        MESSAGE("The opposing Pidgey's Big Pecks prevents Defense loss!");
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Spicy Extract stat changes will be inverted by Contrary")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_SNIVY) { Ability(ABILITY_OVERGROW); Innates(ABILITY_CONTRARY); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SPICY_EXTRACT); }
+    } SCENE {
+        MESSAGE("Wobbuffet used Spicy Extract!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPICY_EXTRACT, player);
+
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, opponent);
+        MESSAGE("The opposing Snivy's Attack harshly fell!");
+
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, opponent);
+        MESSAGE("The opposing Snivy's Defense sharply rose!");
+    } THEN {
+        EXPECT_EQ(opponent->statStages[STAT_ATK], DEFAULT_STAT_STAGE - 2);
+        EXPECT_EQ(opponent->statStages[STAT_DEF], DEFAULT_STAT_STAGE + 2);
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Spicy Extract against Clear Amulet and Contrary raises Defense only")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_SNIVY) { Ability(ABILITY_OVERGROW); Innates(ABILITY_CONTRARY); Item(ITEM_CLEAR_AMULET); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SPICY_EXTRACT); }
+    } SCENE {
+        MESSAGE("Wobbuffet used Spicy Extract!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_SPICY_EXTRACT, player);
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, opponent);
+            MESSAGE("The opposing Snivy's Attack harshly fell!");
+        }
+        MESSAGE("The effects of the Clear Amulet held by the opposing Snivy prevents its stats from being lowered!");
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, opponent);
+        MESSAGE("The opposing Snivy's Defense sharply rose!");
+    } THEN {
+        EXPECT_EQ(opponent->statStages[STAT_ATK], DEFAULT_STAT_STAGE);
+        EXPECT_EQ(opponent->statStages[STAT_DEF], DEFAULT_STAT_STAGE + 2);
     }
 }

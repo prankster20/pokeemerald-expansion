@@ -3,12 +3,12 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_REVELATION_DANCE].effect == EFFECT_REVELATION_DANCE);
-    ASSUME(gMovesInfo[MOVE_REVELATION_DANCE].danceMove == TRUE);
-    ASSUME(MoveHasAdditionalEffectSelfArg(MOVE_BURN_UP, MOVE_EFFECT_REMOVE_ARG_TYPE, TYPE_FIRE));
-    ASSUME(gMovesInfo[MOVE_FORESTS_CURSE].effect == EFFECT_THIRD_TYPE);
-    ASSUME(gMovesInfo[MOVE_FORESTS_CURSE].argument == TYPE_GRASS);
-    ASSUME(gMovesInfo[MOVE_ROOST].effect == EFFECT_ROOST);
+    ASSUME(GetMoveEffect(MOVE_REVELATION_DANCE) == EFFECT_REVELATION_DANCE);
+    ASSUME(IsDanceMove(MOVE_REVELATION_DANCE));
+    ASSUME(IsMoveEffectRemoveSpeciesType(MOVE_BURN_UP, MOVE_EFFECT_REMOVE_ARG_TYPE, TYPE_FIRE));
+    ASSUME(GetMoveEffect(MOVE_FORESTS_CURSE) == EFFECT_THIRD_TYPE);
+    ASSUME(GetMoveArgType(MOVE_FORESTS_CURSE) == TYPE_GRASS);
+    ASSUME(GetMoveEffect(MOVE_ROOST) == EFFECT_ROOST);
 }
 
 SINGLE_BATTLE_TEST("Revelation Dance changes its type depending on the user's 1st Type")
@@ -122,6 +122,43 @@ SINGLE_BATTLE_TEST("Revelation Dance becomes Normal type if used by a Typeless P
 
     GIVEN {
         PLAYER(SPECIES_ORICORIO_BAILE) { Ability(ABILITY_DANCER); }
+        OPPONENT(speciesOpponent);
+    } WHEN {
+        TURN { MOVE(player, MOVE_BURN_UP); MOVE(opponent, MOVE_TACKLE); }
+        TURN { MOVE(player, MOVE_ROOST); MOVE(opponent, MOVE_REVELATION_DANCE); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_BURN_UP, player);
+        HP_BAR(opponent);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ROOST, player);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_REVELATION_DANCE, opponent);
+        HP_BAR(player);
+        ABILITY_POPUP(player, ABILITY_DANCER);
+        if (speciesOpponent == SPECIES_AGGRON) {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_REVELATION_DANCE, player);
+            HP_BAR(opponent);
+            MESSAGE("It's not very effective…");
+        }
+        else {
+            NONE_OF {
+                ANIMATION(ANIM_TYPE_MOVE, MOVE_REVELATION_DANCE, player);
+                HP_BAR(opponent);
+                MESSAGE("It's not very effective…");
+            }
+        }
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Revelation Dance becomes Normal type if used by a Typeless Pokemon due to Roost")
+{
+    u16 speciesOpponent;
+
+    PARAMETRIZE { speciesOpponent = SPECIES_SABLEYE; }
+    PARAMETRIZE { speciesOpponent = SPECIES_AGGRON; }
+
+    ASSUME(B_ROOST_PURE_FLYING >= GEN_5);
+
+    GIVEN {
+        PLAYER(SPECIES_ORICORIO_BAILE) { Ability(ABILITY_LIGHT_METAL); Innates(ABILITY_DANCER); }
         OPPONENT(speciesOpponent);
     } WHEN {
         TURN { MOVE(player, MOVE_BURN_UP); MOVE(opponent, MOVE_TACKLE); }

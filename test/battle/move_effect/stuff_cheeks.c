@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_STUFF_CHEEKS].effect == EFFECT_STUFF_CHEEKS);
+    ASSUME(GetMoveEffect(MOVE_STUFF_CHEEKS) == EFFECT_STUFF_CHEEKS);
     ASSUME(gItemsInfo[ITEM_LIECHI_BERRY].pocket == POCKET_BERRIES);
     ASSUME(gItemsInfo[ITEM_LIECHI_BERRY].holdEffect == HOLD_EFFECT_ATTACK_UP);
 }
@@ -92,7 +92,7 @@ SINGLE_BATTLE_TEST("Stuff Cheeks can be used even if Magic Room is active")
 SINGLE_BATTLE_TEST("Stuff Cheeks fails if the user's berry is removed before they use the move")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_KNOCK_OFF].effect == EFFECT_KNOCK_OFF);
+        ASSUME(GetMoveEffect(MOVE_KNOCK_OFF) == EFFECT_KNOCK_OFF);
         PLAYER(SPECIES_SKWOVET) { Item(ITEM_LIECHI_BERRY); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
@@ -101,5 +101,18 @@ SINGLE_BATTLE_TEST("Stuff Cheeks fails if the user's berry is removed before the
         ANIMATION(ANIM_TYPE_MOVE, MOVE_KNOCK_OFF, opponent);
         MESSAGE("Skwovet used Stuff Cheeks!");
         MESSAGE("But it failed!");
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Stuff Cheeks can be used even if Unnerve is present")
+{
+    GIVEN {
+        PLAYER(SPECIES_SKWOVET) { Item(ITEM_LIECHI_BERRY); }
+        OPPONENT(SPECIES_EKANS) { Ability(ABILITY_SHED_SKIN); Innates(ABILITY_UNNERVE); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_STUFF_CHEEKS); }
+    } SCENE {
+        MESSAGE("Skwovet used Stuff Cheeks!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STUFF_CHEEKS, player);
     }
 }

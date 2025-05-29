@@ -72,7 +72,7 @@ void SwapTurnOrder(u8 id1, u8 id2);
 u32 GetBattlerTotalSpeedStatArgs(u32 battler, u32 ability, u32 holdEffect);
 u32 GetBattlerTotalSpeedStat(u32 battler);
 s8 GetChosenMovePriority(u32 battlerId);
-s8 GetMovePriority(u32 battlerId, u16 move);
+s8 GetBattleMovePriority(u32 battlerId, u16 move);
 s32 GetWhichBattlerFasterArgs(u32 battler1, u32 battler2, bool32 ignoreChosenMoves, u32 ability1, u32 ability2,
                               u32 holdEffectBattler1, u32 holdEffectBattler2, u32 speedBattler1, u32 speedBattler2, s32 priority1, s32 priority2);
 s32 GetWhichBattlerFasterOrTies(u32 battler1, u32 battler2, bool32 ignoreChosenMoves);
@@ -105,5 +105,15 @@ extern const u8 gStatusConditionString_ConfusionJpn[8];
 extern const u8 gStatusConditionString_LoveJpn[8];
 
 extern const u8 *const gStatusConditionStringsTable[7][2];
+
+static inline u32 SearchTraits(u16 *battlerTraits, u32 abilityToCheck)
+{
+  for (u32 i = 0; i < MAX_MON_TRAITS; i++)
+  {
+    if (battlerTraits[i] == abilityToCheck)
+      return i + 1;
+  }
+  return 0;
+}
 
 #endif // GUARD_BATTLE_MAIN_H

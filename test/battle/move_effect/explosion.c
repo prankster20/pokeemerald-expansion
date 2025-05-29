@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_EXPLOSION].effect == EFFECT_EXPLOSION);
+    ASSUME(GetMoveEffect(MOVE_EXPLOSION) == EFFECT_EXPLOSION);
 }
 
 SINGLE_BATTLE_TEST("Explosion causes the user to faint")
@@ -54,7 +54,7 @@ SINGLE_BATTLE_TEST("Explosion causes the user to faint even if it misses")
 SINGLE_BATTLE_TEST("Explosion causes the user to faint even if it has no effect")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_EXPLOSION].type == TYPE_NORMAL);
+        ASSUME(GetMoveType(MOVE_EXPLOSION) == TYPE_NORMAL);
         ASSUME(gSpeciesInfo[SPECIES_GASTLY].types[0] == TYPE_GHOST);
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_GASTLY);
@@ -82,10 +82,10 @@ DOUBLE_BATTLE_TEST("Explosion causes everyone to faint in a double battle")
         HP_BAR(playerLeft, hp: 0);
         ANIMATION(ANIM_TYPE_MOVE, MOVE_EXPLOSION, playerLeft);
         HP_BAR(opponentLeft, hp: 0);
-        MESSAGE("The opposing Abra fainted!");
         HP_BAR(playerRight, hp: 0);
-        MESSAGE("Wynaut fainted!");
         HP_BAR(opponentRight, hp: 0);
+        MESSAGE("The opposing Abra fainted!");
+        MESSAGE("Wynaut fainted!");
         MESSAGE("The opposing Kadabra fainted!");
         MESSAGE("Wobbuffet fainted!");
     }
@@ -139,8 +139,47 @@ DOUBLE_BATTLE_TEST("Explosion boosted by Galvanize is correctly blocked by Volt 
         ABILITY_POPUP(opponentLeft, ABILITY_VOLT_ABSORB);
         NOT HP_BAR(opponentLeft, hp: 0);
         HP_BAR(playerRight, hp: 0);
-        MESSAGE("Wynaut fainted!");
         HP_BAR(opponentRight, hp: 0);
+        MESSAGE("Wynaut fainted!");
+        MESSAGE("The opposing Wobbuffet fainted!");
+        MESSAGE("Geodude fainted!");
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Explosion is blocked by Ability Damp")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_GOLDUCK) { Ability(ABILITY_CLOUD_NINE); Innates(ABILITY_DAMP); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_EXPLOSION); }
+    } SCENE {
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_EXPLOSION, player);
+            HP_BAR(player, hp: 0);
+        }
+        ABILITY_POPUP(opponent, ABILITY_DAMP);
+        MESSAGE("The opposing Golduck's Damp prevents Wobbuffet from using Explosion!");
+    }
+}
+
+DOUBLE_BATTLE_TEST("INNATE: Explosion boosted by Galvanize is correctly blocked by Volt Absorb")
+{
+    GIVEN {
+        PLAYER(SPECIES_GEODUDE_ALOLA) { Ability(ABILITY_STURDY); Innates(ABILITY_GALVANIZE); }
+        PLAYER(SPECIES_WYNAUT) { HP(1); }
+        OPPONENT(SPECIES_LANTURN) { Ability(ABILITY_ILLUMINATE); Innates(ABILITY_VOLT_ABSORB); }
+        OPPONENT(SPECIES_WOBBUFFET) { HP(1); }
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_EXPLOSION); }
+    } SCENE {
+        MESSAGE("Geodude used Explosion!");
+        HP_BAR(playerLeft, hp: 0);
+        ABILITY_POPUP(opponentLeft, ABILITY_VOLT_ABSORB);
+        NOT HP_BAR(opponentLeft, hp: 0);
+        HP_BAR(playerRight, hp: 0);
+        HP_BAR(opponentRight, hp: 0);
+        MESSAGE("Wynaut fainted!");
         MESSAGE("The opposing Wobbuffet fainted!");
         MESSAGE("Geodude fainted!");
     }

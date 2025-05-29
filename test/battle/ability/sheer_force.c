@@ -7,7 +7,7 @@ ASSUMPTIONS
     ASSUME(MoveIsAffectedBySheerForce(MOVE_ELECTRO_SHOT) == TRUE);
 }
 
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Magnitude", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Magnitude", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -24,7 +24,41 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Magnitude", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Eruption", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Eruption", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_ERUPTION); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Water Spout", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_WATER_SPOUT); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Present", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -41,41 +75,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Eruption", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Water Spout", s16 damage)
-{
-    u16 ability = 0;
-    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
-    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
-    GIVEN {
-        PLAYER(SPECIES_TAUROS) { Ability(ability); }
-        OPPONENT(SPECIES_WOBBUFFET);
-    } WHEN {
-        TURN { MOVE(player, MOVE_PRESENT); }
-    } SCENE {
-        HP_BAR(opponent, captureDamage: &results[i].damage);
-    } FINALLY {
-        EXPECT_EQ(results[0].damage, results[1].damage);
-        EXPECT_NE(results[0].damage, 0);
-    }
-}
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Present", s16 damage)
-{
-    u16 ability = 0;
-    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
-    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
-    GIVEN {
-        PLAYER(SPECIES_TAUROS) { Ability(ability); }
-        OPPONENT(SPECIES_WOBBUFFET);
-    } WHEN {
-        TURN { MOVE(player, MOVE_PRESENT); }
-    } SCENE {
-        HP_BAR(opponent, captureDamage: &results[i].damage);
-    } FINALLY {
-        EXPECT_EQ(results[0].damage, results[1].damage);
-        EXPECT_NE(results[0].damage, 0);
-    }
-}
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Psywave", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Psywave", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -92,7 +92,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Psywave", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Round", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Round", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -109,7 +109,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Round", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Gyro Ball", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Gyro Ball", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -126,7 +126,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Gyro Ball", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Electro Ball", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Electro Ball", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -143,7 +143,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Electro Ball", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Dragon Energy", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Dragon Energy", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -160,7 +160,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Dragon Energy", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Belch", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Belch", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -177,7 +177,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Belch", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Shell Trap", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Shell Trap", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -194,7 +194,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Shell Trap", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Burn Up", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Burn Up", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -211,7 +211,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Burn Up", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Double Shock", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Double Shock", s16 damage)
 {
     u16 move = 0;
     PARAMETRIZE { move = MOVE_SKILL_SWAP; }
@@ -228,7 +228,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Double Shock", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Steel Roller", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Steel Roller", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -245,7 +245,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Steel Roller", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Synchronoise", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Synchronoise", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -262,7 +262,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Synchronoise", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Aura Wheel", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Aura Wheel", s16 damage)
 {
     u16 move = 0;
     PARAMETRIZE { move = MOVE_SKILL_SWAP; }
@@ -279,7 +279,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Aura Wheel", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Hyperspace Fury", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Hyperspace Fury", s16 damage)
 {
     u16 move = 0;
     PARAMETRIZE { move = MOVE_SKILL_SWAP; }
@@ -296,7 +296,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Hyperspace Fury", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Bolt Beak", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Bolt Beak", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -313,7 +313,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Bolt Beak", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Fishious Rend", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Fishious Rend", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -330,7 +330,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Fishious Rend", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Comeuppance", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Comeuppance", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -347,7 +347,7 @@ SINGLE_BATTLE_TEST("Sheer Force doesn't boost Comeuppance", s16 damage)
         EXPECT_NE(results[0].damage, 0);
     }
 }
-SINGLE_BATTLE_TEST("Sheer Force doesn't boost Comeuppance", s16 damage)
+SINGLE_BATTLE_TEST("ABILITY: Sheer Force doesn't boost Payback", s16 damage)
 {
     u16 ability = 0;
     PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
@@ -611,12 +611,12 @@ static inline bool32 IsMoveSheerForceBoosted(u32 move)
 }
 
 // Test split into four parts that handles ~1/4 of all moves each
-DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to boost 1")
+DOUBLE_BATTLE_TEST("ABILITY: Sheer Force only boosts the damage of moves it's supposed to boost 1")
 {
     s16 damage1, damage2;
     u32 move = 0;
     for (u32 j = 1; j < MOVES_COUNT; j += 4)
-        if (gMovesInfo[j].category != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
             PARAMETRIZE { move = j; }
     GIVEN {
         PLAYER(SPECIES_STEELIX) { Ability(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
@@ -653,23 +653,26 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
         }
         else
             TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
-        if (gMovesInfo[move].effect == EFFECT_TWO_TURNS_ATTACK || gMovesInfo[move].effect == EFFECT_SEMI_INVULNERABLE || gMovesInfo[move].effect == EFFECT_SOLAR_BEAM || gMovesInfo[move].effect == EFFECT_SKY_DROP)
+        switch (GetMoveEffect(move))
         {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_FUTURE_SIGHT)
-        {
-            TURN { ; }
-            TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_BIDE)
-        {
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
                 TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
         }
     } SCENE {
-        if (gMovesInfo[move].effect != EFFECT_FUTURE_SIGHT)
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
         {
             HP_BAR(opponentRight, captureDamage: &damage1);
             HP_BAR(playerRight, captureDamage: &damage2);
@@ -686,12 +689,12 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
             EXPECT_EQ(damage2, damage1);
     }
 }
-DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to boost 2")
+DOUBLE_BATTLE_TEST("ABILITY: Sheer Force only boosts the damage of moves it's supposed to boost 2")
 {
     s16 damage1, damage2;
     u32 move = 0;
     for (u32 j = 2; j < MOVES_COUNT; j += 4)
-        if (gMovesInfo[j].category != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
             PARAMETRIZE { move = j; }
     GIVEN {
         PLAYER(SPECIES_STEELIX) { Ability(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
@@ -728,23 +731,26 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
         }
         else
             TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
-        if (gMovesInfo[move].effect == EFFECT_TWO_TURNS_ATTACK || gMovesInfo[move].effect == EFFECT_SEMI_INVULNERABLE || gMovesInfo[move].effect == EFFECT_SOLAR_BEAM || gMovesInfo[move].effect == EFFECT_SKY_DROP)
+        switch (GetMoveEffect(move))
         {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_FUTURE_SIGHT)
-        {
-            TURN { ; }
-            TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_BIDE)
-        {
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
                 TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
         }
     } SCENE {
-        if (gMovesInfo[move].effect != EFFECT_FUTURE_SIGHT)
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
         {
             HP_BAR(opponentRight, captureDamage: &damage1);
             HP_BAR(playerRight, captureDamage: &damage2);
@@ -761,12 +767,12 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
             EXPECT_EQ(damage2, damage1);
     }
 }
-DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to boost 3")
+DOUBLE_BATTLE_TEST("ABILITY: Sheer Force only boosts the damage of moves it's supposed to boost 3")
 {
     s16 damage1, damage2;
     u32 move = 0;
     for (u32 j = 3; j < MOVES_COUNT; j += 4)
-        if (gMovesInfo[j].category != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
             PARAMETRIZE { move = j; }
     GIVEN {
         PLAYER(SPECIES_STEELIX) { Ability(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
@@ -803,23 +809,26 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
         }
         else
             TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
-        if (gMovesInfo[move].effect == EFFECT_TWO_TURNS_ATTACK || gMovesInfo[move].effect == EFFECT_SEMI_INVULNERABLE || gMovesInfo[move].effect == EFFECT_SOLAR_BEAM || gMovesInfo[move].effect == EFFECT_SKY_DROP)
+        switch (GetMoveEffect(move))
         {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_FUTURE_SIGHT)
-        {
-            TURN { ; }
-            TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_BIDE)
-        {
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
                 TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
         }
     } SCENE {
-        if (gMovesInfo[move].effect != EFFECT_FUTURE_SIGHT)
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
         {
             HP_BAR(opponentRight, captureDamage: &damage1);
             HP_BAR(playerRight, captureDamage: &damage2);
@@ -836,13 +845,13 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
             EXPECT_EQ(damage2, damage1);
     }
 }
-DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to boost 4")
+DOUBLE_BATTLE_TEST("ABILITY: Sheer Force only boosts the damage of moves it's supposed to boost 4")
 {
     s16 damage1, damage2;
     u32 move = 0;
     for (u32 j = 4; j < MOVES_COUNT; j += 4)
     {
-        if (gMovesInfo[j].category != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
             PARAMETRIZE { move = j; }
     }
     GIVEN {
@@ -880,23 +889,700 @@ DOUBLE_BATTLE_TEST("Sheer Force only boosts the damage of moves it's supposed to
         }
         else
             TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
-        if (gMovesInfo[move].effect == EFFECT_TWO_TURNS_ATTACK || gMovesInfo[move].effect == EFFECT_SEMI_INVULNERABLE || gMovesInfo[move].effect == EFFECT_SOLAR_BEAM || gMovesInfo[move].effect == EFFECT_SKY_DROP)
+        switch (GetMoveEffect(move))
         {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_FUTURE_SIGHT)
-        {
-            TURN { ; }
-            TURN { ; }
-        }
-        if (gMovesInfo[move].effect == EFFECT_BIDE)
-        {
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
                 TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
                 TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
         }
     } SCENE {
-        if (gMovesInfo[move].effect != EFFECT_FUTURE_SIGHT)
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
+        {
+            HP_BAR(opponentRight, captureDamage: &damage1);
+            HP_BAR(playerRight, captureDamage: &damage2);
+        }
+        else
+        {
+            HP_BAR(playerRight, captureDamage: &damage2);
+            HP_BAR(opponentRight, captureDamage: &damage1);
+        }
+    } THEN {
+        if (IsMoveSheerForceBoosted(move))
+            EXPECT_GT(damage1, damage2);
+        else
+            EXPECT_EQ(damage2, damage1);
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Magnitude", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_MAGNITUDE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Eruption", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_ERUPTION); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Water Spout", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_WATER_SPOUT); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Present", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_PRESENT); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Psywave", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_PSYWAVE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Round", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_ROUND); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Gyro Ball", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_GYRO_BALL); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Electro Ball", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_ELECTRO_BALL); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Dragon Energy", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_DRAGON_ENERGY); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Belch", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); HP(1); Item(ITEM_SITRUS_BERRY); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_BELCH); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Shell Trap", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_SHELL_TRAP); MOVE(opponent, MOVE_TACKLE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Burn Up", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ZEN_MODE; }
+    GIVEN {
+        PLAYER(SPECIES_DARMANITAN) { Ability(ABILITY_ZEN_MODE); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_BURN_UP); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Double Shock", s16 damage)
+{
+    u16 move = 0;
+    PARAMETRIZE { move = MOVE_SKILL_SWAP; }
+    PARAMETRIZE { move = MOVE_CELEBRATE; }
+    GIVEN {
+        PLAYER(SPECIES_PIKACHU) { Innates(ABILITY_SHEER_FORCE); };
+        OPPONENT(SPECIES_TAUROS) { Ability(ABILITY_MINUS); };
+    } WHEN {
+        TURN { MOVE(opponent, move); MOVE(player, MOVE_DOUBLE_SHOCK); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Steel Roller", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_GRASSY_TERRAIN); MOVE(player, MOVE_STEEL_ROLLER); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Synchronoise", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); HP(1); Item(ITEM_SITRUS_BERRY); }
+        OPPONENT(SPECIES_CHANSEY);
+    } WHEN {
+        TURN { MOVE(player, MOVE_SYNCHRONOISE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Aura Wheel", s16 damage)
+{
+    u16 move = 0;
+    PARAMETRIZE { move = MOVE_SKILL_SWAP; }
+    PARAMETRIZE { move = MOVE_CELEBRATE; }
+    GIVEN {
+        PLAYER(SPECIES_MORPEKO) { Innates(ABILITY_SHEER_FORCE); };
+        OPPONENT(SPECIES_TAUROS) { Ability(ABILITY_MINUS); };
+    } WHEN {
+        TURN { MOVE(opponent, move); MOVE(player, MOVE_AURA_WHEEL); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Hyperspace Fury", s16 damage)
+{
+    u16 move = 0;
+    PARAMETRIZE { move = MOVE_SKILL_SWAP; }
+    PARAMETRIZE { move = MOVE_CELEBRATE; }
+    GIVEN {
+        PLAYER(SPECIES_HOOPA_UNBOUND) { Innates(ABILITY_SHEER_FORCE); }
+        OPPONENT(SPECIES_TAUROS) { Ability(ABILITY_MINUS); };
+    } WHEN {
+        TURN { MOVE(opponent, move); MOVE(player, MOVE_HYPERSPACE_FURY); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Bolt Beak", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_BOLT_BEAK); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Fishious Rend", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_FISHIOUS_REND); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Comeuppance", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_TACKLE); MOVE(player, MOVE_COMEUPPANCE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+SINGLE_BATTLE_TEST("INNATE: Sheer Force doesn't boost Payback", s16 damage)
+{
+    u16 ability = 0;
+    PARAMETRIZE { ability = ABILITY_SHEER_FORCE; }
+    PARAMETRIZE { ability = ABILITY_ANGER_POINT; }
+    GIVEN {
+        PLAYER(SPECIES_TAUROS) { Ability(ABILITY_ANGER_POINT); Innates(ability); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_PAYBACK); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_EQ(results[0].damage, results[1].damage);
+        EXPECT_NE(results[0].damage, 0);
+    }
+}
+
+// Test split into four parts that handles ~1/4 of all moves each
+DOUBLE_BATTLE_TEST("INNATE: Sheer Force only boosts the damage of moves it's supposed to boost 1")
+{
+    s16 damage1, damage2;
+    u32 move = 0;
+    for (u32 j = 1; j < MOVES_COUNT; j += 4)
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+            PARAMETRIZE { move = j; }
+    GIVEN {
+        PLAYER(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
+        PLAYER(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_STURDY); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+    } WHEN {
+        if (move == MOVE_ALLURING_VOICE || move == MOVE_BURNING_JEALOUSY) // Alluring Voice requires the target to boost stats to have an effect
+            TURN { MOVE(opponentRight, MOVE_AGILITY); MOVE(playerRight, MOVE_AGILITY); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_UPPER_HAND) // Upper Hand requires the target to be using a damaging priority move
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft); MOVE(playerRight, move, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_COUNTER || move == MOVE_UPPER_HAND)
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft);
+                   MOVE(playerRight, MOVE_QUICK_ATTACK, target: opponentLeft);
+                   MOVE(playerLeft, move, target: opponentRight);
+                   MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_MIRROR_COAT || move == MOVE_METAL_BURST)
+            TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_SUCKER_PUNCH || move == MOVE_THUNDERCLAP)
+            TURN { MOVE(opponentRight, MOVE_TACKLE, target: playerLeft); MOVE(playerRight, MOVE_TACKLE, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_DREAM_EATER)
+        {
+            TURN { MOVE(playerLeft, MOVE_HYPNOSIS, target: opponentRight); MOVE(opponentLeft, MOVE_HYPNOSIS, target: playerRight); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SNORE)
+        {
+            TURN { MOVE(opponentRight, MOVE_HYPNOSIS, target: playerLeft); MOVE(playerRight, MOVE_HYPNOSIS, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SPIT_UP || move == MOVE_LAST_RESORT)
+        {
+            TURN { MOVE(playerLeft, MOVE_STOCKPILE); MOVE(opponentLeft, MOVE_STOCKPILE); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        switch (GetMoveEffect(move))
+        {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { ; }
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
+                TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
+        }
+    } SCENE {
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
+        {
+            HP_BAR(opponentRight, captureDamage: &damage1);
+            HP_BAR(playerRight, captureDamage: &damage2);
+        }
+        else
+        {
+            HP_BAR(playerRight, captureDamage: &damage2);
+            HP_BAR(opponentRight, captureDamage: &damage1);
+        }
+    } THEN {
+        if (IsMoveSheerForceBoosted(move))
+            EXPECT_GT(damage1, damage2);
+        else
+            EXPECT_EQ(damage2, damage1);
+    }
+}
+DOUBLE_BATTLE_TEST("INNATE: Sheer Force only boosts the damage of moves it's supposed to boost 2")
+{
+    s16 damage1, damage2;
+    u32 move = 0;
+    for (u32 j = 2; j < MOVES_COUNT; j += 4)
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+            PARAMETRIZE { move = j; }
+    GIVEN {
+        PLAYER(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
+        PLAYER(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_STURDY); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+    } WHEN {
+        if (move == MOVE_ALLURING_VOICE || move == MOVE_BURNING_JEALOUSY) // Alluring Voice requires the target to boost stats to have an effect
+            TURN { MOVE(opponentRight, MOVE_AGILITY); MOVE(playerRight, MOVE_AGILITY); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_UPPER_HAND) // Upper Hand requires the target to be using a damaging priority move
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft); MOVE(playerRight, move, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_COUNTER || move == MOVE_UPPER_HAND)
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft);
+                   MOVE(playerRight, MOVE_QUICK_ATTACK, target: opponentLeft);
+                   MOVE(playerLeft, move, target: opponentRight);
+                   MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_MIRROR_COAT || move == MOVE_METAL_BURST)
+            TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_SUCKER_PUNCH || move == MOVE_THUNDERCLAP)
+            TURN { MOVE(opponentRight, MOVE_TACKLE, target: playerLeft); MOVE(playerRight, MOVE_TACKLE, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_DREAM_EATER)
+        {
+            TURN { MOVE(playerLeft, MOVE_HYPNOSIS, target: opponentRight); MOVE(opponentLeft, MOVE_HYPNOSIS, target: playerRight); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SNORE)
+        {
+            TURN { MOVE(opponentRight, MOVE_HYPNOSIS, target: playerLeft); MOVE(playerRight, MOVE_HYPNOSIS, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SPIT_UP || move == MOVE_LAST_RESORT)
+        {
+            TURN { MOVE(playerLeft, MOVE_STOCKPILE); MOVE(opponentLeft, MOVE_STOCKPILE); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        switch (GetMoveEffect(move))
+        {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { ; }
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
+                TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
+        }
+    } SCENE {
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
+        {
+            HP_BAR(opponentRight, captureDamage: &damage1);
+            HP_BAR(playerRight, captureDamage: &damage2);
+        }
+        else
+        {
+            HP_BAR(playerRight, captureDamage: &damage2);
+            HP_BAR(opponentRight, captureDamage: &damage1);
+        }
+    } THEN {
+        if (IsMoveSheerForceBoosted(move))
+            EXPECT_GT(damage1, damage2);
+        else
+            EXPECT_EQ(damage2, damage1);
+    }
+}
+DOUBLE_BATTLE_TEST("INNATE: Sheer Force only boosts the damage of moves it's supposed to boost 3")
+{
+    s16 damage1, damage2;
+    u32 move = 0;
+    for (u32 j = 3; j < MOVES_COUNT; j += 4)
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+            PARAMETRIZE { move = j; }
+    GIVEN {
+        PLAYER(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
+        PLAYER(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_STURDY); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+    } WHEN {
+        if (move == MOVE_ALLURING_VOICE || move == MOVE_BURNING_JEALOUSY) // Alluring Voice requires the target to boost stats to have an effect
+            TURN { MOVE(opponentRight, MOVE_AGILITY); MOVE(playerRight, MOVE_AGILITY); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_UPPER_HAND) // Upper Hand requires the target to be using a damaging priority move
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft); MOVE(playerRight, move, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_COUNTER || move == MOVE_UPPER_HAND)
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft);
+                   MOVE(playerRight, MOVE_QUICK_ATTACK, target: opponentLeft);
+                   MOVE(playerLeft, move, target: opponentRight);
+                   MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_MIRROR_COAT || move == MOVE_METAL_BURST)
+            TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_SUCKER_PUNCH || move == MOVE_THUNDERCLAP)
+            TURN { MOVE(opponentRight, MOVE_TACKLE, target: playerLeft); MOVE(playerRight, MOVE_TACKLE, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_DREAM_EATER)
+        {
+            TURN { MOVE(playerLeft, MOVE_HYPNOSIS, target: opponentRight); MOVE(opponentLeft, MOVE_HYPNOSIS, target: playerRight); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SNORE)
+        {
+            TURN { MOVE(opponentRight, MOVE_HYPNOSIS, target: playerLeft); MOVE(playerRight, MOVE_HYPNOSIS, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SPIT_UP || move == MOVE_LAST_RESORT)
+        {
+            TURN { MOVE(playerLeft, MOVE_STOCKPILE); MOVE(opponentLeft, MOVE_STOCKPILE); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        switch (GetMoveEffect(move))
+        {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { ; }
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
+                TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
+        }
+    } SCENE {
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
+        {
+            HP_BAR(opponentRight, captureDamage: &damage1);
+            HP_BAR(playerRight, captureDamage: &damage2);
+        }
+        else
+        {
+            HP_BAR(playerRight, captureDamage: &damage2);
+            HP_BAR(opponentRight, captureDamage: &damage1);
+        }
+    } THEN {
+        if (IsMoveSheerForceBoosted(move))
+            EXPECT_GT(damage1, damage2);
+        else
+            EXPECT_EQ(damage2, damage1);
+    }
+}
+DOUBLE_BATTLE_TEST("INNATE: Sheer Force only boosts the damage of moves it's supposed to boost 4")
+{
+    s16 damage1, damage2;
+    u32 move = 0;
+    for (u32 j = 4; j < MOVES_COUNT; j += 4)
+    {
+        if (GetMoveCategory(j) != DAMAGE_CATEGORY_STATUS && !IgnoreMoveForSheerForceBoost(j))
+            PARAMETRIZE { move = j; }
+    }
+    GIVEN {
+        PLAYER(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_SHEER_FORCE); Item(ITEM_BLUK_BERRY); }
+        PLAYER(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_STEELIX) { Ability(ABILITY_STURDY); Innates(ABILITY_STURDY); Item(ITEM_BLUK_BERRY); }
+        OPPONENT(SPECIES_WOBBUFFET) { Ability(ABILITY_SHADOW_TAG); Innates(ABILITY_TELEPATHY); Level(100); Item(ITEM_BLUK_BERRY); }
+    } WHEN {
+        if (move == MOVE_ALLURING_VOICE || move == MOVE_BURNING_JEALOUSY) // Alluring Voice requires the target to boost stats to have an effect
+            TURN { MOVE(opponentRight, MOVE_AGILITY); MOVE(playerRight, MOVE_AGILITY); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_UPPER_HAND) // Upper Hand requires the target to be using a damaging priority move
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft); MOVE(playerRight, move, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_COUNTER || move == MOVE_UPPER_HAND)
+            TURN { MOVE(opponentRight, MOVE_QUICK_ATTACK, target: playerLeft);
+                   MOVE(playerRight, MOVE_QUICK_ATTACK, target: opponentLeft);
+                   MOVE(playerLeft, move, target: opponentRight);
+                   MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_MIRROR_COAT || move == MOVE_METAL_BURST)
+            TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_SUCKER_PUNCH || move == MOVE_THUNDERCLAP)
+            TURN { MOVE(opponentRight, MOVE_TACKLE, target: playerLeft); MOVE(playerRight, MOVE_TACKLE, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        else if (move == MOVE_DREAM_EATER)
+        {
+            TURN { MOVE(playerLeft, MOVE_HYPNOSIS, target: opponentRight); MOVE(opponentLeft, MOVE_HYPNOSIS, target: playerRight); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SNORE)
+        {
+            TURN { MOVE(opponentRight, MOVE_HYPNOSIS, target: playerLeft); MOVE(playerRight, MOVE_HYPNOSIS, target: opponentLeft); MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else if (move == MOVE_SPIT_UP || move == MOVE_LAST_RESORT)
+        {
+            TURN { MOVE(playerLeft, MOVE_STOCKPILE); MOVE(opponentLeft, MOVE_STOCKPILE); }
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        }
+        else
+            TURN { MOVE(playerLeft, move, target: opponentRight); MOVE(opponentLeft, move, target: playerRight); }
+        switch (GetMoveEffect(move))
+        {
+            case EFFECT_TWO_TURNS_ATTACK:
+            case EFFECT_SEMI_INVULNERABLE:
+            case EFFECT_SOLAR_BEAM:
+            case EFFECT_SKY_DROP:
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { ; }
+                break;
+            case EFFECT_FUTURE_SIGHT:
+                TURN { ; }
+                TURN { ; }
+                break;
+            case EFFECT_BIDE:
+                TURN { MOVE(opponentRight, MOVE_WATER_GUN, target: playerLeft); MOVE(playerRight, MOVE_WATER_GUN, target: opponentLeft); SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                TURN { SKIP_TURN(playerLeft); SKIP_TURN(opponentLeft); }
+                break;
+        }
+    } SCENE {
+        if (GetMoveEffect(move) != EFFECT_FUTURE_SIGHT)
         {
             HP_BAR(opponentRight, captureDamage: &damage1);
             HP_BAR(playerRight, captureDamage: &damage2);

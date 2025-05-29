@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_STEEL_BEAM].effect == EFFECT_MAX_HP_50_RECOIL);
+    ASSUME(GetMoveEffect(MOVE_STEEL_BEAM) == EFFECT_MAX_HP_50_RECOIL);
 }
 
 SINGLE_BATTLE_TEST("Steel Beam makes the user lose 1/2 of its Max HP")
@@ -136,6 +136,37 @@ SINGLE_BATTLE_TEST("Steel Beam is not blocked by Damp")
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { HP(400); MaxHP(400); }
         OPPONENT(SPECIES_GOLDUCK) { Ability(ABILITY_DAMP); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_STEEL_BEAM); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STEEL_BEAM, player);
+        HP_BAR(player, damage: 200);
+        NONE_OF {
+            ABILITY_POPUP(opponent, ABILITY_DAMP);
+            MESSAGE("The opposing Golduck's Damp prevents Wobbuffet from using Steel Beam!");
+        }
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Steel Beam hp loss is prevented by Magic Guard")
+{
+    GIVEN {
+        PLAYER(SPECIES_CLEFAIRY) { Ability(ABILITY_FRIEND_GUARD); Innates(ABILITY_MAGIC_GUARD); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_STEEL_BEAM); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_STEEL_BEAM, player);
+        HP_BAR(opponent);
+        NOT HP_BAR(player);
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Steel Beam is not blocked by Damp")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { HP(400); MaxHP(400); }
+        OPPONENT(SPECIES_GOLDUCK) { Ability(ABILITY_CLOUD_NINE); Innates(ABILITY_DAMP); }
     } WHEN {
         TURN { MOVE(player, MOVE_STEEL_BEAM); }
     } SCENE {

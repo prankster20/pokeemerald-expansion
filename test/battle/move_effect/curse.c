@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_CURSE].effect == EFFECT_CURSE);
+    ASSUME(GetMoveEffect(MOVE_CURSE) == EFFECT_CURSE);
 }
 
 SINGLE_BATTLE_TEST("Curse lowers Speed, raises Attack, and raises Defense when used by non-Ghost-types")
@@ -15,7 +15,9 @@ SINGLE_BATTLE_TEST("Curse lowers Speed, raises Attack, and raises Defense when u
         TURN { MOVE(player, MOVE_CURSE); }
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_CURSE, player);
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, player);
         MESSAGE("Wobbuffet's Speed fell!");
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, player);
         MESSAGE("Wobbuffet's Attack rose!");
         MESSAGE("Wobbuffet's Defense rose!");
     }
@@ -69,3 +71,19 @@ SINGLE_BATTLE_TEST("Curse applies to the opponent if user is afflicted by Trick-
 }
 
 TO_DO_BATTLE_TEST("Baton Pass passes Cursed status");
+
+SINGLE_BATTLE_TEST("INNATE: Curse applies to the user if used with Protean")
+{
+    GIVEN {
+        PLAYER(SPECIES_KECLEON) { Ability(ABILITY_LIGHT_METAL); Innates(ABILITY_PROTEAN); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_CURSE, target: player); }
+    } SCENE {
+        s32 playerMaxHP = GetMonData(&PLAYER_PARTY[0], MON_DATA_MAX_HP);
+        ABILITY_POPUP(player, ABILITY_PROTEAN);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_CURSE, player);
+        HP_BAR(player, damage: playerMaxHP / 2);
+        HP_BAR(player, damage: playerMaxHP / 4);
+    }
+}

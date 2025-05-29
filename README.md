@@ -1,3 +1,32 @@
+# Trait System (Full Release)
+
+This is the full release of the Multi-Ability function I'm calling the Trait System!
+Currently updated to Pokeemerald Expansion 1.11.1
+
+The Trait System allows you to assign more than one ability to each pokemon for more complex and more interesting setups.
+
+- General terminology I'm going for is:
+   - Ability = Same as vanilla.
+   - Innate = Additional abilities that are the same for all members of a species.
+   - Trait = Encompassing term for either one
+  Note: for the sake of making merging a little easier, "Ability" is still used in many places when "Trait" is intended.
+- Abilities work exactly the same as vanilla where a pokemon could have one of 3 ability options, however Innates are fixed to each species and don't change.
+- To add Innates you just need to add a new .innates parameter underneath the existing .abilities one using the same formatting.  Example innate setups have been included commented out for all pokemon in the Gen 1 families.
+   - ex: .innates = { ABILITY_PROTEAN, ABILITY_ROUGH_SKIN, ABILITY_CLEAR_BODY },
+- Uses the MAX_MON_INNATES variable to control how many Innates are available, default is 3 totaling up to 4 active abilities per pokemon.  If you assign more innates than the max, surplus entries will simply be ignored.  This means you could even set MAX_MON_INATES to 0 and you would functionally just get the original vanilla system.
+- There is a new Summary Page "Traits" to display the four slots along with some color changes across the vanilla pages for color balance.
+- Most effects that target Abilities still only target a pokemon's prmary Ability, ignoring their Innates.  Neutralizing Gas, Worry Seed, Trace, and Mummy for example all only affect Abilities but not Innates.  Mold Breaker type Traits however work on everything, including Innates.  (NOTE: Trace is also not designed to be an Innate since it replaces itself as part of its effect.  Trace in particular should ALWAYS be assigned as an Ability or else you'll get an infinite loop lock.)
+- The basic code design is all Ability checks have been replaced with Trait checks, reading all passives a pokemon has whenever an Ability is looked for.  All previously mutually exclusive abilities like the weather ones which use a Switch Case format has been replaced with If statements so that they can all be called anyway (though natually any abilities that actually conflict will overwrite by code order, Drought and Snow Warning will both activate, but Snow Warning is later in the list so ultimately the weather will be snow/hail.  Really this is only a consideration for future randomizer settings.
+- Ability popups have been modified into a Stack system so that when multiple abilities are triggered at once, they are stored then read out in the correct order.  Battle Message logic has also been updated to account for the new timings.
+- Make Test system updated to account for Innates as well, original vanilla ability tests prefixed with "ABILITY:" while Innate versions prefixed with "INNATE:".  Tests that account for abilities but aren't in the ability group have still been given "INNATE:" versions, but their vanilla tests were left alone.
+- A useful template for organizing pokemon and assigning Traits can be found here: https://docs.google.com/spreadsheets/d/1pNtGGapXx20svfM0PpztHYHJnbgvXHS8tc_i-h0a0Po/edit?gid=0#gid=0
+Note that the Data sheet includes a collumn for automatically generating the .innate line to be added into Expansion's lists based on how you fill out the Pokemon's innate list.
+
+Basic code bedrock design comes from old Emerald Redux code with permission.
+
+Huge thanks to the RH Hideout discord community for their help, advice, and testing, especially Alex, Surskitty, Kleem, Meister_anon, and MGriffin who helped make this possible.
+
+
 # pokeemerald-expansion
 
 pokeemerald-expansion is ***a romhack base*** based off pret's [pokeemerald](https://github.com/pret/pokeemerald) decompilation project. ***It is NOT a playable romhack,*** but it has multiple features available to romhackers so that they can create their own games, so it's not meant to be played on its own.
@@ -10,7 +39,7 @@ The main advantage of using vanilla pokeemerald as a base is being able to link 
 If you use pokeemerald-expansion in your hack, please add RHH (Rom Hacking Hideout) to your credits list. Optionally, you can list the version used, so it can help players know what features to expect.
 You can phrase it as the following:
 ```
-Based off RHH's pokeemerald-expansion 1.10.1 https://github.com/rh-hideout/pokeemerald-expansion/
+Based off RHH's pokeemerald-expansion 1.11.1 https://github.com/rh-hideout/pokeemerald-expansion/
 ```
 
 #### Important: DO NOT use GitHub's "Download Zip" option. Using this option will not download the commit history required to update your expansion version or merge other feature branches. Instead, please read [this guide](https://github.com/Pawkkie/Team-Aquas-Asset-Repo/wiki/The-Basics-of-GitHub) to learn how to fork the repository and clone locally from there.
@@ -33,7 +62,7 @@ With this, you'll get the latest version of pokeemerald-expansion, plus a couple
     - You can check in the debug menu's `Utilities -> Expansion Version` option.
     - If the option is not available, you possibly have version 1.6.2 or older. In that case, please check the [changelogs](docs/CHANGELOG.md) to determine your version based on the features available on your repository.
 - ***Important:*** If you are several versions behind, we recommend updating one minor version at a time, skipping directly to the latest patch version (eg, 1.5.3 -> 1.6.2 -> 1.7.4 and so on. Check the [online documentation site](https://rh-hideout.github.io/pokeemerald-expansion/CHANGELOG.html) to see the latest versions of each step.)
-- Once you have your remote set up, run the command `git pull RHH expansion/X.Y.Z`, replacing X, Y and Z with the digits of the respective version you want to update to (eg, to update to 1.9.3, use `git pull RHH expansion/1.9.3`).
+- Once you have your remote set up, run the command `git pull RHH expansion/X.Y.Z`, replacing X, Y and Z with the digits of the respective version you want to update to (eg, to update to 1.11.1, use `git pull RHH expansion/1.11.1`).
     - ***Important:*** If you are several versions behind, we recommend updating one minor version at a time, skipping directly to the latest patch version (eg, 1.5.3 -> 1.6.2 -> 1.7.4 and so on)
 - Alternatively, you can update to unreleased versions of the expansion.
     - ***master (stable):*** It contains unreleased **bugfixes** that will come in the next patch version. To merge, use `git pull RHH master`.
@@ -67,7 +96,7 @@ Also, *please follow the Pull Request template and feel free to discuss how the 
     - Fairy Type (configurable).
     - Physical/Special/Status Category (configurable).
     - New moves and abilities up to Scarlet and Violet.
-        - Custom Contest data up to SwSh, newer moves are WIP. ([source](https://pokemonurpg.com/info/contests/rse-move-list/))
+        - Custom Contest data up to SwSh, newer moves are WIP. ([source](https://web.archive.org/web/20240910012333/https://pokemonurpg.com/info/contests/rse-move-list/))
     - Battle gimmick support:
         - Mega Evolution
         - Primal Reversion

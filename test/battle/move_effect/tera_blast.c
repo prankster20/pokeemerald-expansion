@@ -3,13 +3,13 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_TERA_BLAST].effect == EFFECT_TERA_BLAST);
+    ASSUME(GetMoveEffect(MOVE_TERA_BLAST) == EFFECT_TERA_BLAST);
 }
 
 SINGLE_BATTLE_TEST("Tera Blast changes from Normal-type to the user's Tera Type")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_TERA_BLAST].type == TYPE_NORMAL);
+        ASSUME(GetMoveType(MOVE_TERA_BLAST) == TYPE_NORMAL);
         PLAYER(SPECIES_WOBBUFFET) { TeraType(TYPE_DARK); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
@@ -176,6 +176,21 @@ SINGLE_BATTLE_TEST("Flying-type Tera Blast does not have its priority boosted by
 {
     GIVEN {
         PLAYER(SPECIES_TALONFLAME) { Ability(ABILITY_GALE_WINGS); TeraType(TYPE_FLYING); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(player, MOVE_TERA_BLAST, gimmick: GIMMICK_TERA); MOVE(opponent, MOVE_QUICK_ATTACK); }
+    } SCENE {
+        MESSAGE("The opposing Wobbuffet used Quick Attack!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_QUICK_ATTACK, opponent);
+        MESSAGE("Talonflame used Tera Blast!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_TERA_BLAST, player);
+    }
+}
+
+SINGLE_BATTLE_TEST("INNATE: Flying-type Tera Blast does not have its priority boosted by Gale Wings")
+{
+    GIVEN {
+        PLAYER(SPECIES_TALONFLAME) { Ability(ABILITY_FLAME_BODY); Innates(ABILITY_GALE_WINGS); TeraType(TYPE_FLYING); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
         TURN { MOVE(player, MOVE_TERA_BLAST, gimmick: GIMMICK_TERA); MOVE(opponent, MOVE_QUICK_ATTACK); }
