@@ -57,7 +57,7 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_LIMBER] =
     {
         .name = _("Limber"),
-        .description = COMPOUND_STRING("Prevents paralysis."),
+        .description = COMPOUND_STRING("Prevents paralysis.\nBoosts Speed by 10%."),
         .aiRating = 3,
         .breakable = TRUE,
     },
@@ -164,9 +164,9 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
 
     [ABILITY_SUCTION_CUPS] =
     {
-        .name = _("Suction Cups"),
-        .description = COMPOUND_STRING("Firmly anchors the body."),
-        .aiRating = 2,
+        .name = _("Iron Grip"),
+        .description = COMPOUND_STRING("Prevents item loss and\nforced switching out."),
+        .aiRating = 3,
         .breakable = TRUE,
     },
 
@@ -361,7 +361,7 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_THICK_FAT] =
     {
         .name = _("Thick Fat"),
-        .description = COMPOUND_STRING("Heat-and-cold protection."),
+        .description = COMPOUND_STRING("Halves dmg from Fire and Ice. Ignores BRN/FBT drops."),
         .aiRating = 7,
         .breakable = TRUE,
     },
@@ -1088,7 +1088,7 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_BIG_PECKS] =
     {
         .name = _("Big Pecks"),
-        .description = COMPOUND_STRING("Prevents Defense loss."),
+        .description = COMPOUND_STRING("Takes 30% less damage from Contact moves."),
         .aiRating = 1,
         .breakable = TRUE,
     },
@@ -1389,7 +1389,7 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
 
     [ABILITY_PARENTAL_BOND] =
     {
-        .name = _("Parental Bond"),
+        .name = _("Aggression"),
         .description = COMPOUND_STRING("Moves hit twice."),
         .aiRating = 10,
     },

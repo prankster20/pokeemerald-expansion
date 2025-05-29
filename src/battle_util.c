@@ -10411,11 +10411,13 @@ static inline uq4_12_t GetBurnOrFrostBiteModifier(struct DamageCalculationData *
     if (gBattleMons[battlerAtk].status1 & STATUS1_BURN
         && IsBattleMovePhysical(move)
         && (B_BURN_FACADE_DMG < GEN_6 || moveEffect != EFFECT_FACADE)
-        && !BattlerHasTrait(battlerAtk, ABILITY_GUTS))
+        && !BattlerHasTrait(battlerAtk, ABILITY_GUTS)
+        && !BattlerHasTrait(battlerAtk, ABILITY_THICK_FAT))
         return UQ_4_12(0.5);
     if (gBattleMons[battlerAtk].status1 & STATUS1_FROSTBITE
         && IsBattleMoveSpecial(move)
-        && (B_BURN_FACADE_DMG < GEN_6 || moveEffect != EFFECT_FACADE))
+        && (B_BURN_FACADE_DMG < GEN_6 || moveEffect != EFFECT_FACADE)
+        && !BattlerHasTrait(battlerAtk, ABILITY_THICK_FAT))
         return UQ_4_12(0.5);
     return UQ_4_12(1.0);
 }
@@ -10532,6 +10534,12 @@ static inline uq4_12_t GetDefenderAbilitiesModifier(u32 move, u32 moveType, u32 
             return UQ_4_12(2.0);
         if (IsMoveMakingContact(move, battlerAtk) && moveType != TYPE_FIRE)
             return UQ_4_12(0.5);
+    }
+
+    if (SearchTraits(battlerTraits, ABILITY_BIG_PECKS))
+    {
+        if (IsMoveMakingContact(move, battlerAtk))
+            return UQ_4_12(0.7);
     }
 
     if (SearchTraits(battlerTraits, ABILITY_PUNK_ROCK) 

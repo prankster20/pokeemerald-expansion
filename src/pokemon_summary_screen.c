@@ -3801,8 +3801,8 @@ static void PrintMonTraits(u8 innateIndex)
     }
     else
     {
-        PrintTextOnWindow(AddWindowFromTemplateList(sPageTraitsTemplate, innateIndex), gAbilitiesInfo[trait].name, x, 1, 0, 1);
-        PrintTextOnWindow(AddWindowFromTemplateList(sPageTraitsTemplate, innateIndex), gAbilitiesInfo[trait].description, 0, 17, 0, 0);
+        PrintTextOnWindowWithFont(AddWindowFromTemplateList(sPageTraitsTemplate, innateIndex), gAbilitiesInfo[trait].name, 0, 0, 0, 1, FONT_SMALL);
+        PrintTextOnWindowWithFont(AddWindowFromTemplateList(sPageTraitsTemplate, innateIndex), gAbilitiesInfo[trait].description, 0, 0+8+2, -2, 0, FONT_SMALL);
     }
 }
 

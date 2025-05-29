@@ -1802,8 +1802,6 @@ bool32 ShouldLowerStat(u32 battlerAtk, u32 battlerDef, u32 battlerAbility, u32 s
         {
             case STAT_ATK:
                 return !(AISearchTraits(AIBattlerTraits, ABILITY_HYPER_CUTTER));
-            case STAT_DEF:
-                return !(AISearchTraits(AIBattlerTraits, ABILITY_BIG_PECKS));
             case STAT_SPEED:
                 // If AI is faster and doesn't have any mons left, lowering speed doesn't give any
                 return !(AI_IsFaster(battlerAtk, battlerDef, AI_THINKING_STRUCT->moveConsidered)

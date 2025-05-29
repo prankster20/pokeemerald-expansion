@@ -6091,8 +6091,7 @@ static void Cmd_playstatchangeanimation(void)
                         && !SearchTraits(battlerTraits, ABILITY_WHITE_SMOKE)
                         && !((SearchTraits(battlerTraits, ABILITY_KEEN_EYE) || SearchTraits(battlerTraits, ABILITY_MINDS_EYE)) && currStat == STAT_ACC)
                         && !(B_ILLUMINATE_EFFECT >= GEN_9 && SearchTraits(battlerTraits, ABILITY_ILLUMINATE) && currStat == STAT_ACC)
-                        && !(SearchTraits(battlerTraits, ABILITY_HYPER_CUTTER) && currStat == STAT_ATK)
-                        && !(SearchTraits(battlerTraits, ABILITY_BIG_PECKS) && currStat == STAT_DEF))
+                        && !(SearchTraits(battlerTraits, ABILITY_HYPER_CUTTER) && currStat == STAT_ATK))
                 {
                     if (gBattleMons[battler].statStages[currStat] > MIN_STAT_STAGE)
                     {
@@ -12618,8 +12617,7 @@ static u32 ChangeStatBuffs(s8 statValue, u32 statId, u32 flags, const u8 *BS_ptr
         else if (!certain
                 && (((SearchTraits(battlerTraits, ABILITY_KEEN_EYE) || SearchTraits(battlerTraits, ABILITY_MINDS_EYE)) && statId == STAT_ACC)
                 || (B_ILLUMINATE_EFFECT >= GEN_9 && SearchTraits(battlerTraits, ABILITY_ILLUMINATE) && statId == STAT_ACC)
-                || (SearchTraits(battlerTraits, ABILITY_HYPER_CUTTER) && statId == STAT_ATK)
-                || (SearchTraits(battlerTraits, ABILITY_BIG_PECKS) && statId == STAT_DEF)))
+                || (SearchTraits(battlerTraits, ABILITY_HYPER_CUTTER) && statId == STAT_ATK)))
         {
             if (flags == STAT_CHANGE_ALLOW_PTR)
             {
@@ -12631,8 +12629,6 @@ static u32 ChangeStatBuffs(s8 statValue, u32 statId, u32 flags, const u8 *BS_ptr
                     battlerAbility = ABILITY_ILLUMINATE;
                 else if (SearchTraits(battlerTraits, ABILITY_HYPER_CUTTER) && statId == STAT_ATK)
                     battlerAbility = ABILITY_HYPER_CUTTER;
-                else if (SearchTraits(battlerTraits, ABILITY_BIG_PECKS)&& statId == STAT_DEF)
-                    battlerAbility = ABILITY_BIG_PECKS;
                 BattleScriptPush(BS_ptr);
                 gBattleScripting.battler = battler;
                 gBattlerAbility = battler;

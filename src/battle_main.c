@@ -4768,6 +4768,8 @@ u32 GetBattlerTotalSpeedStatArgs(u32 battler, u32 ability, u32 holdEffect)
         speed += (GetHighestStatId(battler) == STAT_SPEED) ? baseSpeed / 2 : 0;
     if (SearchTraits(battlerTraits, ABILITY_SLOW_START) && gDisableStructs[battler].slowStartTimer != 0)
         speed /= 2;
+    if (SearchTraits(battlerTraits, ABILITY_LIMBER))
+        speed += baseSpeed / 10;
 
     // stat stages
     speed *= gStatStageRatios[gBattleMons[battler].statStages[STAT_SPEED]][0];
