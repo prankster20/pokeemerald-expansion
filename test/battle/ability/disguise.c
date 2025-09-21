@@ -3,14 +3,33 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gMovesInfo[MOVE_AERIAL_ACE].category == DAMAGE_CATEGORY_PHYSICAL);
+    ASSUME(GetMoveCategory(MOVE_AERIAL_ACE) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("Disguised Mimikyu will lose 1/8 of its max HP upon changing to its busted form")
+SINGLE_BATTLE_TEST("Disguised Mimikyu doesn't lose 1/8 of its max HP upon changing to its busted form (Gen7)")
+{
+    GIVEN {
+        WITH_CONFIG(GEN_CONFIG_DISGUISE_HP_LOSS, GEN_7);
+        PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_AERIAL_ACE); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_AERIAL_ACE, opponent);
+        NOT HP_BAR(player);
+        ABILITY_POPUP(player, ABILITY_DISGUISE);
+    } THEN {
+        EXPECT_EQ(player->species, SPECIES_MIMIKYU_BUSTED);
+        EXPECT_EQ(player->hp, player->maxHP);
+    }
+}
+
+SINGLE_BATTLE_TEST("Disguised Mimikyu will lose 1/8 of its max HP upon changing to its busted form (Gen8+)")
 {
     s16 disguiseDamage;
 
     GIVEN {
+        WITH_CONFIG(GEN_CONFIG_DISGUISE_HP_LOSS, GEN_8);
         PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
@@ -28,7 +47,7 @@ SINGLE_BATTLE_TEST("Disguised Mimikyu will lose 1/8 of its max HP upon changing 
 SINGLE_BATTLE_TEST("Disguised Mimikyu takes no damage from a confusion hit and changes to its busted form")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_CONFUSE_RAY].effect == EFFECT_CONFUSE);
+        ASSUME(GetMoveEffect(MOVE_CONFUSE_RAY) == EFFECT_CONFUSE);
         PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
@@ -69,7 +88,7 @@ SINGLE_BATTLE_TEST("Disguised Mimikyu's Air Balloon will pop upon changing to it
 SINGLE_BATTLE_TEST("Disguised Mimikyu takes damage from secondary damage without breaking the disguise")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_STEALTH_ROCK].effect == EFFECT_STEALTH_ROCK);
+        ASSUME(GetMoveEffect(MOVE_STEALTH_ROCK) == EFFECT_STEALTH_ROCK);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); }
         OPPONENT(SPECIES_WOBBUFFET);
@@ -138,17 +157,17 @@ SINGLE_BATTLE_TEST("Disguised Mimikyu is ignored by Mold Breaker")
 SINGLE_BATTLE_TEST("Disguised Mimikyu's types revert back to Ghost/Fairy when Disguise is broken")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_SHADOW_CLAW].type == TYPE_GHOST);
+        ASSUME(GetMoveType(MOVE_SHADOW_CLAW) == TYPE_GHOST);
         PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
         TURN { MOVE(opponent, MOVE_SOAK); }
-        TURN { MOVE(opponent, MOVE_TACKLE); }
+        TURN { MOVE(opponent, MOVE_SCRATCH); }
         TURN { MOVE(opponent, MOVE_SHADOW_CLAW); }
     } SCENE {
         MESSAGE("The opposing Wobbuffet used Soak!");
         MESSAGE("Mimikyu transformed into the Water type!");
-        MESSAGE("The opposing Wobbuffet used Tackle!");
+        MESSAGE("The opposing Wobbuffet used Scratch!");
         ABILITY_POPUP(player, ABILITY_DISGUISE);
         MESSAGE("The opposing Wobbuffet used Shadow Claw!");
         MESSAGE("It's super effective!");
@@ -158,7 +177,7 @@ SINGLE_BATTLE_TEST("Disguised Mimikyu's types revert back to Ghost/Fairy when Di
 SINGLE_BATTLE_TEST("Disguised Mimikyu blocks a move after getting Gastro Acid Batton Passed")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_BATON_PASS].effect == EFFECT_BATON_PASS);
+        ASSUME(GetMoveEffect(MOVE_BATON_PASS) == EFFECT_BATON_PASS);
         PLAYER(SPECIES_WOBBUFFET);
         PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); }
         OPPONENT(SPECIES_WOBBUFFET);
@@ -177,7 +196,7 @@ SINGLE_BATTLE_TEST("Disguised Mimikyu blocks a move after getting Gastro Acid Ba
 SINGLE_BATTLE_TEST("Disguise does not break from a teammate's Wish")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_WISH].effect == EFFECT_WISH);
+        ASSUME(GetMoveEffect(MOVE_WISH) == EFFECT_WISH);
         PLAYER(SPECIES_JIRACHI);
         PLAYER(SPECIES_MIMIKYU_DISGUISED) { Ability(ABILITY_DISGUISE); HP(219); MaxHP(220); }
         OPPONENT(SPECIES_WOBBUFFET);

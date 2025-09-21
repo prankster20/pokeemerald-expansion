@@ -6,8 +6,8 @@ TO_DO_BATTLE_TEST("Endure allows the user to survive any attack with 1 HP left")
 SINGLE_BATTLE_TEST("Endure does not prevent multiple hits and stat changes occur at the end of the turn")
 {
     GIVEN {
-        ASSUME(gMovesInfo[MOVE_SCALE_SHOT].effect == EFFECT_MULTI_HIT);
-        ASSUME(gMovesInfo[MOVE_ENDURE].effect == EFFECT_ENDURE);
+        ASSUME(GetMoveEffect(MOVE_SCALE_SHOT) == EFFECT_MULTI_HIT);
+        ASSUME(GetMoveEffect(MOVE_ENDURE) == EFFECT_ENDURE);
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WOBBUFFET) { HP(1); }
     } WHEN {
@@ -24,6 +24,33 @@ SINGLE_BATTLE_TEST("Endure does not prevent multiple hits and stat changes occur
         MESSAGE("Wobbuffet's Defense fell!");
         ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, player);
         MESSAGE("Wobbuffet's Speed rose!");
+    }
+}
+
+DOUBLE_BATTLE_TEST("Endure is not transferred to a mon that is switched in due to Eject Button")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET);
+        PLAYER(SPECIES_WYNAUT);
+        OPPONENT(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WYNAUT) { HP(1); Item(ITEM_EJECT_BUTTON); }
+        OPPONENT(SPECIES_SQUIRTLE) { HP(1); }
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN {
+            MOVE(opponentRight, MOVE_ENDURE);
+            MOVE(playerLeft, MOVE_POUND, target: opponentRight);
+            SEND_OUT(opponentRight, 2);
+            MOVE(playerRight, MOVE_POUND, target: opponentRight);
+            SEND_OUT(opponentRight, 3);
+        }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ENDURE, opponentRight);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_POUND, playerLeft);
+        MESSAGE("The opposing Wynaut endured the hit!");
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_HELD_ITEM_EFFECT, opponentRight);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_POUND, playerRight);
+        NOT MESSAGE("The opposing Squirtle endured the hit!");
     }
 }
 
