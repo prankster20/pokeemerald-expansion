@@ -1280,6 +1280,7 @@ static const struct FormChange sEnamorusFormChangeTable[] = {
 };
 #endif //P_FAMILY_ENAMORUS
 
+
 #if P_FAMILY_FINIZEN
 static const struct FormChange sPalafinZeroFormChangeTable[] =
 {
