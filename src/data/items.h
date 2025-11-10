@@ -1340,16 +1340,17 @@ const struct Item gItemsInfo[] =
     [ITEM_HP_UP] =
     {
         .name = ITEM_NAME("HP Up"),
-        .price = (I_PRICE >= GEN_7) ? 10000 : 9800,
+        .price = 0,
         .description = COMPOUND_STRING(
-            "Raises the base HP\n"
-            "of one Pokémon."),
+            "Boosts HP EV of a\n"
+            "Pokémon by 64.\n"
+            "Fling: 50 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_DRINK,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_HPUp,
-        .flingPower = 30,
+        .flingPower = 50,
         .iconPic = gItemIcon_HPUp,
         .iconPalette = gItemIconPalette_HPUp,
     },
@@ -1357,17 +1358,17 @@ const struct Item gItemsInfo[] =
     [ITEM_PROTEIN] =
     {
         .name = ITEM_NAME("Protein"),
-        .price = (I_PRICE >= GEN_7) ? 10000 : 9800,
+        .price = 0,
         .description = COMPOUND_STRING(
-            "Raises the base\n"
-            "Attack stat of one\n"
-            "Pokémon."),
+            "Boosts Atk EV of a\n"
+            "Pokémon by 64.\n"
+            "Fling: 50 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_DRINK,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_Protein,
-        .flingPower = 30,
+        .flingPower = 50,
         .iconPic = gItemIcon_Vitamin,
         .iconPalette = gItemIconPalette_Protein,
     },
@@ -1375,17 +1376,17 @@ const struct Item gItemsInfo[] =
     [ITEM_IRON] =
     {
         .name = ITEM_NAME("Iron"),
-        .price = (I_PRICE >= GEN_7) ? 10000 : 9800,
+        .price = 0,
         .description = COMPOUND_STRING(
-            "Raises the base\n"
-            "Defense stat of\n"
-            "one Pokémon."),
+            "Boosts Def EV of a\n"
+            "Pokémon by 64.\n"
+            "Fling: 50 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_DRINK,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_Iron,
-        .flingPower = 30,
+        .flingPower = 50,
         .iconPic = gItemIcon_Vitamin,
         .iconPalette = gItemIconPalette_Iron,
     },
@@ -1393,17 +1394,17 @@ const struct Item gItemsInfo[] =
     [ITEM_CALCIUM] =
     {
         .name = ITEM_NAME("Calcium"),
-        .price = (I_PRICE >= GEN_7) ? 10000 : 9800,
+        .price = 0,
         .description = COMPOUND_STRING(
-            "Raises the base\n"
-            "Sp. Atk stat of one\n"
-            "Pokémon."),
+            "Boosts SpA EV of a\n"
+            "Pokémon by 64.\n"
+            "Fling: 50 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_DRINK,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_Calcium,
-        .flingPower = 30,
+        .flingPower = 50,
         .iconPic = gItemIcon_Vitamin,
         .iconPalette = gItemIconPalette_Calcium,
     },
@@ -1411,17 +1412,17 @@ const struct Item gItemsInfo[] =
     [ITEM_ZINC] =
     {
         .name = ITEM_NAME("Zinc"),
-        .price = (I_PRICE >= GEN_7) ? 10000 : 9800,
+        .price = 0,
         .description = COMPOUND_STRING(
-            "Raises the base\n"
-            "Sp. Def stat of one\n"
-            "Pokémon."),
+            "Boosts SpD EV of a\n"
+            "Pokémon by 64.\n"
+            "Fling: 50 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_DRINK,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_Zinc,
-        .flingPower = 30,
+        .flingPower = 50,
         .iconPic = gItemIcon_Vitamin,
         .iconPalette = gItemIconPalette_Zinc,
     },
@@ -1430,17 +1431,17 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Carbos"),
         .pluralName = ITEM_PLURAL_NAME("Carbos"),
-        .price = (I_PRICE >= GEN_7) ? 10000 : 9800,
+        .price = 0,
         .description = COMPOUND_STRING(
-            "Raises the base\n"
-            "Speed stat of one\n"
-            "Pokémon."),
+            "Boosts Speed EV of a\n"
+            "Pokémon by 64.\n"
+            "Fling: 50 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_DRINK,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_Carbos,
-        .flingPower = 30,
+        .flingPower = 50,
         .iconPic = gItemIcon_Vitamin,
         .iconPalette = gItemIconPalette_Carbos,
     },
@@ -1487,14 +1488,17 @@ const struct Item gItemsInfo[] =
     [ITEM_HEALTH_FEATHER] =
     {
         .name = ITEM_NAME("Health Feather"),
-        .price = (I_PRICE >= GEN_7) ? 300 : 3000,
-        .description = sHealthFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts HP EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_FEATHER,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_HpFeather,
-        .flingPower = 20,
+        .flingPower = 10,
         .iconPic = gItemIcon_HealthFeather,
         .iconPalette = gItemIconPalette_HealthFeather,
     },
@@ -1502,14 +1506,17 @@ const struct Item gItemsInfo[] =
     [ITEM_MUSCLE_FEATHER] =
     {
         .name = ITEM_NAME("Muscle Feather"),
-        .price = (I_PRICE >= GEN_7) ? 300 : 3000,
-        .description = sMuscleFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts Atk EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_FEATHER,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_AtkFeather,
-        .flingPower = 20,
+        .flingPower = 10,
         .iconPic = gItemIcon_MuscleFeather,
         .iconPalette = gItemIconPalette_MuscleFeather,
     },
@@ -1517,14 +1524,17 @@ const struct Item gItemsInfo[] =
     [ITEM_RESIST_FEATHER] =
     {
         .name = ITEM_NAME("Resist Feather"),
-        .price = (I_PRICE >= GEN_7) ? 300 : 3000,
-        .description = sResistFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts Def EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_FEATHER,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_DefFeather,
-        .flingPower = 20,
+        .flingPower = 10,
         .iconPic = gItemIcon_ResistFeather,
         .iconPalette = gItemIconPalette_ResistFeather,
     },
@@ -1532,14 +1542,17 @@ const struct Item gItemsInfo[] =
     [ITEM_GENIUS_FEATHER] =
     {
         .name = ITEM_NAME("Genius Feather"),
-        .price = (I_PRICE >= GEN_7) ? 300 : 3000,
-        .description = sGeniusFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts SpA EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_FEATHER,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_SpatkFeather,
-        .flingPower = 20,
+        .flingPower = 10,
         .iconPic = gItemIcon_GeniusFeather,
         .iconPalette = gItemIconPalette_GeniusFeather,
     },
@@ -1547,14 +1560,17 @@ const struct Item gItemsInfo[] =
     [ITEM_CLEVER_FEATHER] =
     {
         .name = ITEM_NAME("Clever Feather"),
-        .price = (I_PRICE >= GEN_7) ? 300 : 3000,
-        .description = sCleverFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts SpD EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_FEATHER,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_SpdefFeather,
-        .flingPower = 20,
+        .flingPower = 10,
         .iconPic = gItemIcon_CleverFeather,
         .iconPalette = gItemIconPalette_CleverFeather,
     },
@@ -1562,14 +1578,17 @@ const struct Item gItemsInfo[] =
     [ITEM_SWIFT_FEATHER] =
     {
         .name = ITEM_NAME("Swift Feather"),
-        .price = (I_PRICE >= GEN_7) ? 300 : 3000,
-        .description = sSwiftFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts Speed EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_FEATHER,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_SpeedFeather,
-        .flingPower = 20,
+        .flingPower = 10,
         .iconPic = gItemIcon_SwiftFeather,
         .iconPalette = gItemIconPalette_SwiftFeather,
     },
@@ -10054,11 +10073,12 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Pomeg Berry"),
         .pluralName = ITEM_PLURAL_NAME("Pomeg Berries"),
-        .price = (I_BERRY_PRICE >= GEN_8) ? 80 : 20,
+        .price = 0,
         .description = COMPOUND_STRING(
             "Makes a Pokémon\n"
             "friendly but lowers\n"
-            "base HP."),
+            "HP EV by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_BERRIES,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ReduceEV,
@@ -10072,11 +10092,12 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Kelpsy Berry"),
         .pluralName = ITEM_PLURAL_NAME("Kelpsy Berries"),
-        .price = (I_BERRY_PRICE >= GEN_8) ? 80 : 20,
+        .price = 0,
         .description = COMPOUND_STRING(
             "Makes a Pokémon\n"
             "friendly but lowers\n"
-            "base Attack."),
+            "Atk EV by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_BERRIES,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ReduceEV,
@@ -10090,11 +10111,12 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Qualot Berry"),
         .pluralName = ITEM_PLURAL_NAME("Qualot Berries"),
-        .price = (I_BERRY_PRICE >= GEN_8) ? 80 : 20,
+        .price = 0,
         .description = COMPOUND_STRING(
             "Makes a Pokémon\n"
             "friendly but lowers\n"
-            "base Defense."),
+            "Def EV by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_BERRIES,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ReduceEV,
@@ -10108,11 +10130,12 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Hondew Berry"),
         .pluralName = ITEM_PLURAL_NAME("Hondew Berries"),
-        .price = (I_BERRY_PRICE >= GEN_8) ? 80 : 20,
+        .price = 0,
         .description = COMPOUND_STRING(
             "Makes a Pokémon\n"
             "friendly but lowers\n"
-            "base Sp. Atk."),
+            "SpA EV by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_BERRIES,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ReduceEV,
@@ -10126,11 +10149,12 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Grepa Berry"),
         .pluralName = ITEM_PLURAL_NAME("Grepa Berries"),
-        .price = (I_BERRY_PRICE >= GEN_8) ? 80 : 20,
+        .price = 0,
         .description = COMPOUND_STRING(
             "Makes a Pokémon\n"
             "friendly but lowers\n"
-            "base Sp. Def."),
+            "SpD EV by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_BERRIES,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ReduceEV,
@@ -10144,11 +10168,12 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Tamato Berry"),
         .pluralName = ITEM_PLURAL_NAME("Tamato Berries"),
-        .price = (I_BERRY_PRICE >= GEN_8) ? 80 : 20,
+        .price = 0,
         .description = COMPOUND_STRING(
             "Makes a Pokémon\n"
             "friendly but lowers\n"
-            "base Speed."),
+            "Speed EV by 4.\n"
+            "Fling: 10 BP"),
         .pocket = POCKET_BERRIES,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_ReduceEV,
@@ -14204,14 +14229,17 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Health Mochi"),
         .pluralName = ITEM_PLURAL_NAME("Health Mochi"),
-        .price = 500,
-        .description = sHealthFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts HP EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 40 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_HpMochi,
-        .flingPower = 30,
+        .flingPower = 40,
         .iconPic = gItemIcon_Mochi,
         .iconPalette = gItemIconPalette_HealthMochi,
     },
@@ -14220,14 +14248,17 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Muscle Mochi"),
         .pluralName = ITEM_PLURAL_NAME("Muscle Mochi"),
-        .price = 500,
-        .description = sMuscleFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts Atk EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 40 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_AtkMochi,
-        .flingPower = 30,
+        .flingPower = 40,
         .iconPic = gItemIcon_Mochi,
         .iconPalette = gItemIconPalette_MuscleMochi,
     },
@@ -14236,14 +14267,17 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Resist Mochi"),
         .pluralName = ITEM_PLURAL_NAME("Resist Mochi"),
-        .price = 500,
-        .description = sResistFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts Def EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 40 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_DefMochi,
-        .flingPower = 30,
+        .flingPower = 40,
         .iconPic = gItemIcon_Mochi,
         .iconPalette = gItemIconPalette_ResistMochi,
     },
@@ -14252,14 +14286,17 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Genius Mochi"),
         .pluralName = ITEM_PLURAL_NAME("Genius Mochi"),
-        .price = 500,
-        .description = sGeniusFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts SpA EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 40 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_SpatkMochi,
-        .flingPower = 30,
+        .flingPower = 40,
         .iconPic = gItemIcon_Mochi,
         .iconPalette = gItemIconPalette_GeniusMochi,
     },
@@ -14268,14 +14305,17 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Clever Mochi"),
         .pluralName = ITEM_PLURAL_NAME("Clever Mochi"),
-        .price = 500,
-        .description = sCleverFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts SpD EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 40 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_SpdefMochi,
-        .flingPower = 30,
+        .flingPower = 40,
         .iconPic = gItemIcon_Mochi,
         .iconPalette = gItemIconPalette_CleverMochi,
     },
@@ -14284,27 +14324,31 @@ const struct Item gItemsInfo[] =
     {
         .name = ITEM_NAME("Swift Mochi"),
         .pluralName = ITEM_PLURAL_NAME("Swift Mochi"),
-        .price = 500,
-        .description = sSwiftFeatherDesc,
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Boosts Speed EV of a\n"
+            "Pokémon by 4.\n"
+            "Fling: 40 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_Medicine,
         .effect = gItemEffect_SpeedMochi,
-        .flingPower = 30,
+        .flingPower = 40,
         .iconPic = gItemIcon_Mochi,
         .iconPalette = gItemIconPalette_SwiftMochi,
     },
 
     [ITEM_FRESH_START_MOCHI] =
     {
-        .name = ITEM_NAME("Fresh Start Mochi"),
-        .pluralName = ITEM_PLURAL_NAME("Fresh Start Mochi"),
-        .price = 300,
+        .name = ITEM_NAME("Reset Mochi"),
+        .pluralName = ITEM_PLURAL_NAME("Reset Mochi"),
+        .price = 0,
         .description = COMPOUND_STRING(
             "An item that resets\n"
-            "all base points of\n"
-            "a Pokémon."),
+            "all EVs of\n"
+            "a Pokémon.\n"
+            "Fling: 30 BP"),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_STAT_BOOST_MOCHI,
         .type = ITEM_USE_PARTY_MENU,
