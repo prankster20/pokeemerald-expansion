@@ -49,28 +49,34 @@ SINGLE_BATTLE_TEST("Revival Blessing fails if no party members are fainted")
     }
 }
 
-DOUBLE_BATTLE_TEST("Revival Blessing cannot revive a partner's party member")
+AI_MULTI_BATTLE_TEST("AI will not revive a partner's party member with Revival Blessing")
 {
-    KNOWN_FAILING;
     struct BattlePokemon *user = NULL;
-    gBattleTypeFlags |= BATTLE_TYPE_TWO_OPPONENTS;
-    PARAMETRIZE { user = opponentLeft; }
-    PARAMETRIZE { user = opponentRight; }
+    enum Move move1, move2, move3;
+    PARAMETRIZE { user = opponentLeft, move1 = MOVE_REVIVAL_BLESSING, move2 = MOVE_CELEBRATE, move3 = MOVE_CELEBRATE; }
+    PARAMETRIZE { user = playerRight, move1 = MOVE_CELEBRATE, move2 = MOVE_REVIVAL_BLESSING, move3 = MOVE_CELEBRATE; }
+    PARAMETRIZE { user = opponentRight, move1 = MOVE_CELEBRATE, move2 = MOVE_CELEBRATE, move3 = MOVE_REVIVAL_BLESSING; }
     GIVEN {
-        ASSUME((gBattleTypeFlags & BATTLE_TYPE_TWO_OPPONENTS) != FALSE);
-        PLAYER(SPECIES_WOBBUFFET);
-        PLAYER(SPECIES_WOBBUFFET);
-        OPPONENT(SPECIES_WOBBUFFET);
-        OPPONENT(SPECIES_WOBBUFFET);
-        OPPONENT(SPECIES_WOBBUFFET);
-        OPPONENT(SPECIES_WYNAUT);
-        OPPONENT(SPECIES_WYNAUT) { HP(0); }
-        OPPONENT(SPECIES_WYNAUT);
+        PLAYER(SPECIES_CLEFABLE);
+        PLAYER(SPECIES_CLEFABLE) { HP(0); }
+        PLAYER(SPECIES_CLEFABLE);
+        PARTNER(SPECIES_CLEFAIRY) { Moves(move2); }
+        PARTNER(SPECIES_CLEFAIRY);
+        PARTNER(SPECIES_CLEFAIRY);
+        OPPONENT_A(SPECIES_WOBBUFFET) { Moves(move1); }
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_A(SPECIES_WOBBUFFET);
+        OPPONENT_B(SPECIES_WYNAUT) { Moves(move3); }
+        OPPONENT_B(SPECIES_WYNAUT) { HP(0); }
+        OPPONENT_B(SPECIES_WYNAUT);
     } WHEN {
-        TURN { MOVE(user, MOVE_REVIVAL_BLESSING, partyIndex:4); }
+        TURN { EXPECT_MOVE(playerRight, move2); } // EXPECT_MOVE makes battler2 AI-controlled
     } SCENE {
         if (user == opponentLeft) {
             MESSAGE("The opposing Wobbuffet used Revival Blessing!");
+            MESSAGE("But it failed!");
+        } else if (user == playerRight) {
+            MESSAGE("Clefairy used Revival Blessing!");
             MESSAGE("But it failed!");
         } else {
             MESSAGE("The opposing Wynaut used Revival Blessing!");
@@ -112,17 +118,17 @@ DOUBLE_BATTLE_TEST("Revival Blessing correctly updates battler absent flags")
     } SCENE {
         // Turn 1
         MESSAGE("Salamence used Earthquake!");
-        HP_BAR(opponentLeft);
-        MESSAGE("The opposing Geodude fainted!");
         MESSAGE("It doesn't affect Pidgeot…");
         MESSAGE("It doesn't affect the opposing Starly…");
+        HP_BAR(opponentLeft);
+        MESSAGE("The opposing Geodude fainted!");
         MESSAGE("The opposing Starly used Revival Blessing!");
         MESSAGE("Geodude was revived and is ready to fight again!"); // Should have prefix but it doesn't currently.
         // Turn 2
         MESSAGE("Salamence used Earthquake!");
-        HP_BAR(opponentLeft);
-        MESSAGE("The opposing Geodude fainted!");
         MESSAGE("It doesn't affect Pidgeot…");
         MESSAGE("It doesn't affect the opposing Starly…");
+        HP_BAR(opponentLeft);
+        MESSAGE("The opposing Geodude fainted!");
     }
 }
