@@ -258,14 +258,16 @@ struct BoxPokemon
     u32 personality;
     u32 otId;
     u8 nickname[min(10, POKEMON_NAME_LENGTH)];
-    u8 language:3;
-    u8 hiddenNatureModifier:5; // 31 natures.
+    u8 hiddenNatureModifier:7; // 127 natures (100 used by the custom Archetype system). Widened from 5 bits.
     u8 isBadEgg:1;
+    // ^ byte boundary: 7+1 = 8/8 bits, no spillover.
+    u8 language:3;
     u8 hasSpecies:1;
     u8 isEgg:1;
-    u8 blockBoxRS:1; // Unused, but Pokémon Box Ruby & Sapphire will refuse to deposit a Pokémon with this flag set.
     u8 daysSinceFormChange:3; // 7 days.
-    u8 unused_13:1;
+    // ^ byte boundary: 3+1+1+3 = 8/8 bits, no spillover.
+    // blockBoxRS and unused_13 removed: their 2 bits were reclaimed to widen hiddenNatureModifier from 5->7 bits.
+    // blockBoxRS confirmed dead (grep: declared but never read or written anywhere in this codebase) before removal.
     u8 otName[PLAYER_NAME_LENGTH];
     u8 markings:4;
     u8 compressedStatus:4;

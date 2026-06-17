@@ -74,7 +74,7 @@ struct TrainerMon
     u8 lvl;
     enum PokeBall ball:8;
     u8 friendship;
-    u8 nature:5;
+    u8 nature:7; // Widened from 5 bits to fit the expanded 100-nature Archetype system (2^7=128 > 100; old 5-bit width maxed at 31 and would've truncated any custom nature).
     bool8 gender:2;
     bool8 isShiny:1;
     enum Type teraType:5;
