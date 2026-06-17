@@ -452,9 +452,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_25] =
+    [NATURE_ABRASIVE] =
     {
-        .name = COMPOUND_STRING("Archetype25"),
+        .name = COMPOUND_STRING("Abrasive"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -464,9 +464,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_26] =
+    [NATURE_AFFABLE] =
     {
-        .name = COMPOUND_STRING("Archetype26"),
+        .name = COMPOUND_STRING("Affable"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -476,9 +476,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_27] =
+    [NATURE_AMBITIOUS] =
     {
-        .name = COMPOUND_STRING("Archetype27"),
+        .name = COMPOUND_STRING("Ambitious"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -488,9 +488,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_28] =
+    [NATURE_APATHETIC] =
     {
-        .name = COMPOUND_STRING("Archetype28"),
+        .name = COMPOUND_STRING("Apathetic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -500,9 +500,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_29] =
+    [NATURE_ARROGANT] =
     {
-        .name = COMPOUND_STRING("Archetype29"),
+        .name = COMPOUND_STRING("Arrogant"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -512,9 +512,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_30] =
+    [NATURE_AUSTERE] =
     {
-        .name = COMPOUND_STRING("Archetype30"),
+        .name = COMPOUND_STRING("Austere"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -524,9 +524,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_31] =
+    [NATURE_AUTHENTIC] =
     {
-        .name = COMPOUND_STRING("Archetype31"),
+        .name = COMPOUND_STRING("Authentic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -536,9 +536,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_32] =
+    [NATURE_BAD_TEMPERED] =
     {
-        .name = COMPOUND_STRING("Archetype32"),
+        .name = COMPOUND_STRING("Bad-Tempered"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -548,9 +548,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_33] =
+    [NATURE_BENEVOLENT] =
     {
-        .name = COMPOUND_STRING("Archetype33"),
+        .name = COMPOUND_STRING("Benevolent"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -560,9 +560,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_34] =
+    [NATURE_BITTER] =
     {
-        .name = COMPOUND_STRING("Archetype34"),
+        .name = COMPOUND_STRING("Bitter"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -572,9 +572,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_35] =
+    [NATURE_BRAGGART] =
     {
-        .name = COMPOUND_STRING("Archetype35"),
+        .name = COMPOUND_STRING("Braggart"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -584,9 +584,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_36] =
+    [NATURE_CALCULATING] =
     {
-        .name = COMPOUND_STRING("Archetype36"),
+        .name = COMPOUND_STRING("Calculating"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -596,9 +596,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_37] =
+    [NATURE_CALLOUS] =
     {
-        .name = COMPOUND_STRING("Archetype37"),
+        .name = COMPOUND_STRING("Callous"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -608,9 +608,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_38] =
+    [NATURE_CALLOW] =
     {
-        .name = COMPOUND_STRING("Archetype38"),
+        .name = COMPOUND_STRING("Callow"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -620,9 +620,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_39] =
+    [NATURE_CANTANKEROUS] =
     {
-        .name = COMPOUND_STRING("Archetype39"),
+        .name = COMPOUND_STRING("Cantankerous"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -632,9 +632,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_40] =
+    [NATURE_CHARITABLE] =
     {
-        .name = COMPOUND_STRING("Archetype40"),
+        .name = COMPOUND_STRING("Charitable"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -644,9 +644,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_41] =
+    [NATURE_CHILDISH] =
     {
-        .name = COMPOUND_STRING("Archetype41"),
+        .name = COMPOUND_STRING("Childish"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -656,9 +656,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_42] =
+    [NATURE_COMPULSIVE] =
     {
-        .name = COMPOUND_STRING("Archetype42"),
+        .name = COMPOUND_STRING("Compulsive"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -668,9 +668,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_43] =
+    [NATURE_COWARDLY] =
     {
-        .name = COMPOUND_STRING("Archetype43"),
+        .name = COMPOUND_STRING("Cowardly"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -680,9 +680,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_44] =
+    [NATURE_DECEITFUL] =
     {
-        .name = COMPOUND_STRING("Archetype44"),
+        .name = COMPOUND_STRING("Deceitful"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -692,9 +692,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_45] =
+    [NATURE_DELICATE] =
     {
-        .name = COMPOUND_STRING("Archetype45"),
+        .name = COMPOUND_STRING("Delicate"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -704,9 +704,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_46] =
+    [NATURE_DEPENDENT] =
     {
-        .name = COMPOUND_STRING("Archetype46"),
+        .name = COMPOUND_STRING("Dependent"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -716,9 +716,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_47] =
+    [NATURE_DRAMATIC] =
     {
-        .name = COMPOUND_STRING("Archetype47"),
+        .name = COMPOUND_STRING("Dramatic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -728,9 +728,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_48] =
+    [NATURE_DREAMY] =
     {
-        .name = COMPOUND_STRING("Archetype48"),
+        .name = COMPOUND_STRING("Dreamy"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -740,9 +740,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_49] =
+    [NATURE_ECCENTRIC] =
     {
-        .name = COMPOUND_STRING("Archetype49"),
+        .name = COMPOUND_STRING("Eccentric"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -752,9 +752,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_50] =
+    [NATURE_ENERGETIC] =
     {
-        .name = COMPOUND_STRING("Archetype50"),
+        .name = COMPOUND_STRING("Energetic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -764,9 +764,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_51] =
+    [NATURE_FASTIDIOUS] =
     {
-        .name = COMPOUND_STRING("Archetype51"),
+        .name = COMPOUND_STRING("Fastidious"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -776,9 +776,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_52] =
+    [NATURE_FLIGHTY] =
     {
-        .name = COMPOUND_STRING("Archetype52"),
+        .name = COMPOUND_STRING("Flighty"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -788,9 +788,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_53] =
+    [NATURE_FLIRTY] =
     {
-        .name = COMPOUND_STRING("Archetype53"),
+        .name = COMPOUND_STRING("Flirty"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -800,9 +800,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_54] =
+    [NATURE_FORGIVING] =
     {
-        .name = COMPOUND_STRING("Archetype54"),
+        .name = COMPOUND_STRING("Forgiving"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -812,9 +812,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_55] =
+    [NATURE_FRIVOLOUS] =
     {
-        .name = COMPOUND_STRING("Archetype55"),
+        .name = COMPOUND_STRING("Frivolous"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -824,9 +824,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_56] =
+    [NATURE_FRUGAL] =
     {
-        .name = COMPOUND_STRING("Archetype56"),
+        .name = COMPOUND_STRING("Frugal"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -836,9 +836,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_57] =
+    [NATURE_GREEDY] =
     {
-        .name = COMPOUND_STRING("Archetype57"),
+        .name = COMPOUND_STRING("Greedy"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -848,9 +848,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_58] =
+    [NATURE_GULLIBLE] =
     {
-        .name = COMPOUND_STRING("Archetype58"),
+        .name = COMPOUND_STRING("Gullible"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -860,9 +860,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_59] =
+    [NATURE_HEDONISTIC] =
     {
-        .name = COMPOUND_STRING("Archetype59"),
+        .name = COMPOUND_STRING("Hedonistic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -872,9 +872,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_60] =
+    [NATURE_HUMBLE] =
     {
-        .name = COMPOUND_STRING("Archetype60"),
+        .name = COMPOUND_STRING("Humble"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -884,9 +884,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_61] =
+    [NATURE_INGENIOUS] =
     {
-        .name = COMPOUND_STRING("Archetype61"),
+        .name = COMPOUND_STRING("Ingenious"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -896,9 +896,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_62] =
+    [NATURE_INSIGHTFUL] =
     {
-        .name = COMPOUND_STRING("Archetype62"),
+        .name = COMPOUND_STRING("Insightful"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -908,9 +908,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_63] =
+    [NATURE_IRRITABLE] =
     {
-        .name = COMPOUND_STRING("Archetype63"),
+        .name = COMPOUND_STRING("Irritable"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -920,9 +920,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_64] =
+    [NATURE_JEALOUS] =
     {
-        .name = COMPOUND_STRING("Archetype64"),
+        .name = COMPOUND_STRING("Jealous"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -932,9 +932,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_65] =
+    [NATURE_LAZY] =
     {
-        .name = COMPOUND_STRING("Archetype65"),
+        .name = COMPOUND_STRING("Lazy"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -944,9 +944,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_66] =
+    [NATURE_LOYAL] =
     {
-        .name = COMPOUND_STRING("Archetype66"),
+        .name = COMPOUND_STRING("Loyal"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -956,9 +956,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_67] =
+    [NATURE_MEDDLESOME] =
     {
-        .name = COMPOUND_STRING("Archetype67"),
+        .name = COMPOUND_STRING("Meddlesome"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -968,9 +968,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_68] =
+    [NATURE_MERCURIAL] =
     {
-        .name = COMPOUND_STRING("Archetype68"),
+        .name = COMPOUND_STRING("Mercurial"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -980,9 +980,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_69] =
+    [NATURE_NOBLE] =
     {
-        .name = COMPOUND_STRING("Archetype69"),
+        .name = COMPOUND_STRING("Noble"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -992,9 +992,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_70] =
+    [NATURE_OBEDIENT] =
     {
-        .name = COMPOUND_STRING("Archetype70"),
+        .name = COMPOUND_STRING("Obedient"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1004,9 +1004,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_71] =
+    [NATURE_OBSERVANT] =
     {
-        .name = COMPOUND_STRING("Archetype71"),
+        .name = COMPOUND_STRING("Observant"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1016,9 +1016,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_72] =
+    [NATURE_ORGANIZED] =
     {
-        .name = COMPOUND_STRING("Archetype72"),
+        .name = COMPOUND_STRING("Organized"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1028,9 +1028,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_73] =
+    [NATURE_PERCEPTIVE] =
     {
-        .name = COMPOUND_STRING("Archetype73"),
+        .name = COMPOUND_STRING("Perceptive"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1040,9 +1040,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_74] =
+    [NATURE_PERFECTIONIST] =
     {
-        .name = COMPOUND_STRING("Archetype74"),
+        .name = COMPOUND_STRING("Perfectionist"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1052,9 +1052,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_75] =
+    [NATURE_PHOBIC] =
     {
-        .name = COMPOUND_STRING("Archetype75"),
+        .name = COMPOUND_STRING("Phobic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1064,9 +1064,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_76] =
+    [NATURE_PRODIGIOUS] =
     {
-        .name = COMPOUND_STRING("Archetype76"),
+        .name = COMPOUND_STRING("Prodigious"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1076,9 +1076,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_77] =
+    [NATURE_PROUD] =
     {
-        .name = COMPOUND_STRING("Archetype77"),
+        .name = COMPOUND_STRING("Proud"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1088,9 +1088,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_78] =
+    [NATURE_RELENTLESS] =
     {
-        .name = COMPOUND_STRING("Archetype78"),
+        .name = COMPOUND_STRING("Relentless"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1100,9 +1100,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_79] =
+    [NATURE_RESILIENT] =
     {
-        .name = COMPOUND_STRING("Archetype79"),
+        .name = COMPOUND_STRING("Resilient"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1112,9 +1112,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_80] =
+    [NATURE_RESOLUTE] =
     {
-        .name = COMPOUND_STRING("Archetype80"),
+        .name = COMPOUND_STRING("Resolute"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1124,9 +1124,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_81] =
+    [NATURE_RUSTIC] =
     {
-        .name = COMPOUND_STRING("Archetype81"),
+        .name = COMPOUND_STRING("Rustic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1136,9 +1136,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_82] =
+    [NATURE_SCROUNGER] =
     {
-        .name = COMPOUND_STRING("Archetype82"),
+        .name = COMPOUND_STRING("Scrounger"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1148,9 +1148,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_83] =
+    [NATURE_SHREWD] =
     {
-        .name = COMPOUND_STRING("Archetype83"),
+        .name = COMPOUND_STRING("Shrewd"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1160,9 +1160,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_84] =
+    [NATURE_SNOBBISH] =
     {
-        .name = COMPOUND_STRING("Archetype84"),
+        .name = COMPOUND_STRING("Snobbish"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1172,9 +1172,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_85] =
+    [NATURE_SOFT_HEARTED] =
     {
-        .name = COMPOUND_STRING("Archetype85"),
+        .name = COMPOUND_STRING("Soft-Hearted"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1184,9 +1184,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_86] =
+    [NATURE_SPOILED] =
     {
-        .name = COMPOUND_STRING("Archetype86"),
+        .name = COMPOUND_STRING("Spoiled"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1196,9 +1196,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_87] =
+    [NATURE_STOIC] =
     {
-        .name = COMPOUND_STRING("Archetype87"),
+        .name = COMPOUND_STRING("Stoic"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1208,9 +1208,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_88] =
+    [NATURE_STUBBORN] =
     {
-        .name = COMPOUND_STRING("Archetype88"),
+        .name = COMPOUND_STRING("Stubborn"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1220,9 +1220,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_89] =
+    [NATURE_TEMPESTUOUS] =
     {
-        .name = COMPOUND_STRING("Archetype89"),
+        .name = COMPOUND_STRING("Tempestuous"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1232,9 +1232,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_90] =
+    [NATURE_TERRITORIAL] =
     {
-        .name = COMPOUND_STRING("Archetype90"),
+        .name = COMPOUND_STRING("Territorial"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1244,9 +1244,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_91] =
+    [NATURE_TONGUE_TIED] =
     {
-        .name = COMPOUND_STRING("Archetype91"),
+        .name = COMPOUND_STRING("Tongue-Tied"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1256,9 +1256,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_92] =
+    [NATURE_TOUGH] =
     {
-        .name = COMPOUND_STRING("Archetype92"),
+        .name = COMPOUND_STRING("Tough"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1268,9 +1268,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_93] =
+    [NATURE_VAIN] =
     {
-        .name = COMPOUND_STRING("Archetype93"),
+        .name = COMPOUND_STRING("Vain"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1280,9 +1280,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_94] =
+    [NATURE_VIGILANT] =
     {
-        .name = COMPOUND_STRING("Archetype94"),
+        .name = COMPOUND_STRING("Vigilant"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1292,9 +1292,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_95] =
+    [NATURE_VORACIOUS] =
     {
-        .name = COMPOUND_STRING("Archetype95"),
+        .name = COMPOUND_STRING("Voracious"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1304,9 +1304,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_96] =
+    [NATURE_YOUTHFUL] =
     {
-        .name = COMPOUND_STRING("Archetype96"),
+        .name = COMPOUND_STRING("Youthful"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1316,9 +1316,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
     },
-    [NATURE_ARCHETYPE_97] =
+    [NATURE_ZEALOUS] =
     {
-        .name = COMPOUND_STRING("Archetype97"),
+        .name = COMPOUND_STRING("Zealous"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
