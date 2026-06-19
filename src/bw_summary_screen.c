@@ -50,6 +50,7 @@
 #include "constants/items.h"
 #include "constants/moves.h"
 #include "constants/party_menu.h"
+#include "constants/pokedex.h"
 #include "constants/region_map_sections.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
@@ -292,6 +293,7 @@ static void PrintMonOTID(void);
 static void PrintMonDexNumberSpecies(void);
 static void PrintMonAbilityName(void);
 static void PrintMonAbilityDescription(void);
+static void AppendWrappedNatureDescription(u8 *, const u8 *, u32, u32);
 static void BufferMonTrainerMemo(void);
 static void PrintMonTrainerMemo(void);
 static void BufferNatureString(void);
@@ -379,6 +381,7 @@ static void CB2_PssChangePokemonNickname(void);
 // const rom data
 
 static const u8 sMemoNatureTextColor[]                      = _("{COLOR DYNAMIC_COLOR2}{SHADOW DYNAMIC_COLOR3}");
+static u8 sMemoEffectBuffer[300];
 static const u8 sMemoMiscTextColor[]                        = _("{COLOR WHITE}{SHADOW DARK_GRAY}");
 static const u8 sStatsHPLayout[]                            = _("{DYNAMIC 0}/{DYNAMIC 1}");
 static const u8 sStatsHPIVEVLayout[]                        = _("{DYNAMIC 0}");
@@ -2368,6 +2371,8 @@ static void RestoreSummaryPageDisplay(void)
 {
     if (BW_SUMMARY_SHOW_CONTEST_MOVES)
     {
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_1] = TILE_BLACK_SQUARE;
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_2] = TILE_BLACK_SQUARE;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_1] = TILE_INACTIVE_SQUARE_TOP;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_2] = TILE_INACTIVE_SQUARE_BOTTOM;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_3_TILE_1] = TILE_INACTIVE_SQUARE_TOP;
@@ -2377,6 +2382,8 @@ static void RestoreSummaryPageDisplay(void)
     }
     else
     {
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_1_RECENTERED] = TILE_BLACK_SQUARE;
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_2_RECENTERED] = TILE_BLACK_SQUARE;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_1_RECENTERED] = TILE_INACTIVE_SQUARE_TOP;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_2_RECENTERED] = TILE_INACTIVE_SQUARE_BOTTOM;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_3_TILE_1_RECENTERED] = TILE_INACTIVE_SQUARE_TOP;
@@ -3927,6 +3934,7 @@ static void PrintInfoPageText(void)
         PrintMonDexNumberSpecies();
         PrintEggState();
         PrintEggMemo();
+        LimitEggSummaryPageDisplay();
     }
     else
     {
@@ -3936,6 +3944,7 @@ static void PrintInfoPageText(void)
         PrintHeldItemName();
         BufferMonTrainerMemo();
         PrintMonTrainerMemo();
+        RestoreSummaryPageDisplay();
     }
 }
 
@@ -3961,6 +3970,10 @@ static void Task_PrintInfoPage(u8 taskId)
         break;
     case 6:
         PrintMonTrainerMemo();
+        if (sMonSummaryScreen->summary.isEgg)
+            LimitEggSummaryPageDisplay();
+        else
+            RestoreSummaryPageDisplay();
         break;
     case 7:
         DestroyTask(taskId);
@@ -3975,7 +3988,7 @@ static void PrintMonDexNumberSpecies(void)
     struct Pokemon *mon = &sMonSummaryScreen->currentMon;
     struct PokeSummary *summary = &sMonSummaryScreen->summary;
 
-    u16 dexNum = SpeciesToPokedexNum(summary->species);
+    u16 dexNum = SpeciesToNationalPokedexNum(summary->species);
     windowId = AddWindowFromTemplateList(sPageInfoTemplate, PSS_DATA_WINDOW_INFO_DEX_NUMBER_NAME);
 
     if (sMonSummaryScreen->summary.isEgg)
@@ -3987,9 +4000,9 @@ static void PrintMonDexNumberSpecies(void)
     {
         PrintTextOnWindowToFitPx(windowId, GetSpeciesName(summary->species2), 4, 12, 0, 0, WindowWidthPx(windowId) - 9);
 
-        if (dexNum != 0xFFFF)
+        if (dexNum != NATIONAL_DEX_NONE)
         {
-            u8 digitCount = (NATIONAL_DEX_COUNT > 999 && IsNationalPokedexEnabled()) ? 4 : 3;
+            u8 digitCount = 4;
 
             StringCopy(gStringVar1, &gText_NumberClear01[0]);
             ConvertIntToDecimalStringN(gStringVar2, dexNum, STR_CONV_MODE_LEADING_ZEROS, digitCount);
@@ -4061,6 +4074,74 @@ static void PrintMonAbilityDescription(void)
     PrintTextOnWindow_BW_Font(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_ABILITY), gAbilitiesInfo[ability].description, 4, 15, 0, 0);
 }
 
+static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 fontId, u32 maxWidthPx)
+{
+    const u8 *src = description;
+    u32 lineCount = 0;
+    u8 lineBuffer[64];
+
+    if (description == NULL)
+        return;
+
+    while (*src != EOS && lineCount < 3)
+    {
+        u32 lineLen = 0;
+        const u8 *lastSpace = NULL;
+        u32 lastSpaceLen = 0;
+        const u8 *scan = src;
+
+        while (*scan != EOS)
+        {
+            lineBuffer[lineLen] = *scan;
+            lineBuffer[lineLen + 1] = EOS;
+            if (GetStringWidth(fontId, lineBuffer, 0) > maxWidthPx)
+                break;
+            if (*scan == CHAR_SPACE)
+            {
+                lastSpace = scan;
+                lastSpaceLen = lineLen;
+            }
+            lineLen++;
+            scan++;
+            if (lineLen >= sizeof(lineBuffer) - 1)
+                break;
+        }
+
+        if (*scan == EOS)
+        {
+            lineBuffer[lineLen] = EOS;
+            src = scan;
+        }
+        else if (lastSpace != NULL)
+        {
+            lineBuffer[lastSpaceLen] = EOS;
+            src = lastSpace + 1;
+        }
+        else
+        {
+            lineBuffer[lineLen] = EOS;
+            src = scan;
+        }
+
+        lineCount++;
+
+        if (lineCount == 3 && *src != EOS)
+        {
+            u32 len = StringLength(lineBuffer);
+            while (len > 0 && GetStringWidth(fontId, lineBuffer, 0) > maxWidthPx - GetStringWidth(fontId, COMPOUND_STRING("..."), 0))
+            {
+                lineBuffer[len - 1] = EOS;
+                len--;
+            }
+            StringAppend(lineBuffer, COMPOUND_STRING("..."));
+        }
+
+        StringAppend(dest, lineBuffer);
+        if (lineCount < 3 && *src != EOS)
+            StringAppend(dest, COMPOUND_STRING("\n"));
+    }
+}
+
 static void BufferMonTrainerMemo(void)
 {
     struct PokeSummary *sum = &sMonSummaryScreen->summary;
@@ -4074,7 +4155,7 @@ static void BufferMonTrainerMemo(void)
 
     if (InBattleFactory() == TRUE || InSlateportBattleTent() == TRUE || IsInGamePartnerMon() == TRUE)
     {
-        DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, gText_XNature);
+        DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, gText_BWXNature);
     }
     else
     {
@@ -4088,26 +4169,26 @@ static void BufferMonTrainerMemo(void)
             DynamicPlaceholderTextUtil_SetPlaceholderPtr(4, metLocationString);
         }
 
-        text = gText_XNature;
+        text = gText_BWXNature;
 
         if (DoesMonOTMatchOwner() == TRUE)
         {
             if (sum->metLevel == 0)
-                text = (!locationFound) ? gText_XNatureHatchedSomewhereAt : gText_XNatureHatchedAtYZ;
+                text = (!locationFound) ? gText_BWHatchedSomewhereAt_XNature : gText_BWHatchedAtYZ_XNature;
             else
-                text = (!locationFound) ? gText_XNatureMetSomewhereAt : gText_XNatureMetAtYZ;
+                text = (!locationFound) ? gText_BWMetSomewhereAt_XNature : gText_BWMetAtYZ_XNature;
         }
         else if (sum->metLocation == METLOC_FATEFUL_ENCOUNTER)
         {
-            text = gText_XNatureFatefulEncounter;
+            text = gText_BWFatefulEncounter_XNature;
         }
         else if (sum->metLocation != METLOC_IN_GAME_TRADE && DidMonComeFromGBAGames())
         {
-            text = (!locationFound) ? gText_XNatureObtainedInTrade : gText_XNatureProbablyMetAt;
+            text = (!locationFound) ? gText_BWObtainedInTrade_XNature : gText_BWProbablyMetAt_XNature;
         }
         else
         {
-            text = gText_XNatureObtainedInTrade;
+            text = gText_BWObtainedInTrade_XNature;
         }
 
         DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, text);
@@ -4115,17 +4196,53 @@ static void BufferMonTrainerMemo(void)
         Free(metLevelString);
         Free(metLocationString);
     }
+
+    // TEMP DEBUG: show both the true (personality-based) nature and the
+    // effective (post-mint) nature, since there's currently no way to
+    // verify mints are actually taking effect via in-game stat/effect
+    // differences (the new 72 custom natures have no implemented effects
+    // yet). Remove this once mint verification isn't needed anymore.
+    // {
+    //     u8 *withMintDebug = Alloc(400);
+    //     StringCopy(withMintDebug, gStringVar4);
+    //     StringAppend(withMintDebug, COMPOUND_STRING(" ("));
+    //     StringAppend(withMintDebug, gNaturesInfo[sum->mintNature].name);
+    //     StringAppend(withMintDebug, COMPOUND_STRING(" as mint)"));
+    //     StringCopy(gStringVar4, withMintDebug);
+    //     Free(withMintDebug);
+    // }
+
+    // Append the nature's effect text below (word-wrapped to 2 lines, no
+    // "Effect:" prefix). Printed at a smaller font than the met-at/nature
+    // lines above via a separate buffer, since one print call can't mix
+    // font sizes - see PrintMonTrainerMemo.
+    {
+        const u8 *description = gNaturesInfo[sum->mintNature].description;
+        sMemoEffectBuffer[0] = EOS;
+        if (description != NULL)
+            AppendWrappedNatureDescription(sMemoEffectBuffer, description, FONT_SMALL_NARROW, 200);
+    }
 }
 
 static void PrintMonTrainerMemo(void)
 {
-    PrintTextOnWindow_BW_Font(AddWindowFromTemplateList(sPageInfoTemplate, PSS_DATA_WINDOW_INFO_MEMO), gStringVar4, 16, 4, 0, 0);
+    u8 windowId = AddWindowFromTemplateList(sPageInfoTemplate, PSS_DATA_WINDOW_INFO_MEMO);
+    // Two lines of FONT_BW_SUMMARY_SCREEN text precede this. Its declared
+    // maxLetterHeight is 14px, but the font is a deliberately vertically-
+    // compressed variant (see the comment on PrintTextOnWindow_BW_Font), so
+    // real rendered line advance is tighter than 14px - using 2*12 rather
+    // than 2*14 to close the oversized gap you flagged. This is an estimate;
+    // nudge the constant below if it's still off once you see it rendered.
+    u32 topHeight = 2 * 12;
+
+    PrintTextOnWindow_BW_Font(windowId, gStringVar4, 16, 4, 0, 0);
+    PrintTextOnWindowWithFont(windowId, sMemoEffectBuffer, 16, 2 + topHeight, 1, 0, FONT_SMALL_NARROW);
 }
 
 static void BufferNatureString(void)
 {
     struct PokemonSummaryScreenData *sumStruct = sMonSummaryScreen;
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, gNaturesInfo[sumStruct->summary.nature].name);
+    DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, gNaturesInfo[sumStruct->summary.mintNature].name);
     DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, gText_EmptyString5);
 }
 
@@ -5532,7 +5649,7 @@ static inline bool32 ShouldShowMoveRelearner(void)
 static void ShowMoveRelearner(void)
 {
     if (sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT] == SPRITE_NONE)
-        sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT] = CreateSprite(&sSpriteTemplate_RelearnPrompt, 199, 20, 0); // jimh
+        sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT] = CreateSprite(&sSpriteTemplate_RelearnPrompt, 199, 20, 0);
     
     gSprites[sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT]].invisible = FALSE;
 }
