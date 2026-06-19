@@ -463,6 +463,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("While on the field, increases indirect damage suffered by foes by 10%."),
     },
     [NATURE_AFFABLE] =
     {
@@ -475,6 +476,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("While on the field, newly caught Wild Pokémon are set to 200 Friendship and are fully healed."),
     },
     [NATURE_AMBITIOUS] =
     {
@@ -487,6 +489,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts all non-HP stats by 10%, with the boost decreasing every 10 levels, up to a minimum of 1% for Lv 90+."),
     },
     [NATURE_APATHETIC] =
     {
@@ -499,6 +502,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Does not care for field effects like Weather, Terrain or Entry Hazards, ignoring them fully."),
     },
     [NATURE_ARROGANT] =
     {
@@ -511,6 +515,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Deals 20% more damage to higher-level targets."),
     },
     [NATURE_AUSTERE] =
     {
@@ -523,18 +528,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_AUTHENTIC] =
-    {
-        .name = COMPOUND_STRING("Authentic"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Refuses to hold items. In return, gets +12% to all non-HP stats."),
     },
     [NATURE_BAD_TEMPERED] =
     {
@@ -547,6 +541,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("If a move fails by any means, grants a 1.5x damage boost on the next turn."),
     },
     [NATURE_BENEVOLENT] =
     {
@@ -559,6 +554,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("While on the field, healing moves recover 25% more for ALL Pokémon. Also affects Charitable Nature."),
     },
     [NATURE_BITTER] =
     {
@@ -571,6 +567,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Amplifies the effects of any Berry with Bitter flavor (see the SwSh list) by 1.5x. +10% SpDef."),
     },
     [NATURE_BRAGGART] =
     {
@@ -583,6 +580,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts damage dealt by 10% while at full HP."),
     },
     [NATURE_CALCULATING] =
     {
@@ -595,6 +593,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Hits the targets' weaker defense stat while attacking."),
     },
     [NATURE_CALLOUS] =
     {
@@ -607,6 +606,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Immune to Frostbite. Attacks have a 10% chance to inflict Frostbite."),
     },
     [NATURE_CALLOW] =
     {
@@ -619,6 +619,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Changes EXP Curve to Slow. Evolves 3 levels late."),
     },
     [NATURE_CANTANKEROUS] =
     {
@@ -631,6 +632,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("On entry, lowers HP of all Pokémon on the field (including itself and allies) by 1/16 of their respective max HP."),
     },
     [NATURE_CHARITABLE] =
     {
@@ -643,6 +645,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Can use the move “Share Rations” from the overworld, sacrificing 20% of own max HP to heal another party Pokémon."),
     },
     [NATURE_CHILDISH] =
     {
@@ -655,6 +658,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Deals 20% less damage. Gains 20% more EXP."),
     },
     [NATURE_COMPULSIVE] =
     {
@@ -667,6 +671,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("The Pokémon can only run either all damaging moves or all status moves - no in-between."),
     },
     [NATURE_COWARDLY] =
     {
@@ -679,6 +684,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Wimps Out when HP falls to 25%."),
     },
     [NATURE_DECEITFUL] =
     {
@@ -691,6 +697,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Claims moves were always super-effective for the purposes of triggering items or abilities. (Weakness Policy, Rattled, etc)"),
     },
     [NATURE_DELICATE] =
     {
@@ -703,6 +710,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Suffers 1.5x damage from entry hazards. Receives 1.5x more healing."),
     },
     [NATURE_DEPENDENT] =
     {
@@ -715,6 +723,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Does not gain EXP. Instead, this Pokémon's level is always the average level of the party. Level may change when a Party Member is added or removed. Does not de-level or de-evolve. Depositing into PC has no effect on level."),
     },
     [NATURE_DRAMATIC] =
     {
@@ -727,6 +736,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("On entry, triggers entry ability of the user twice."),
     },
     [NATURE_DREAMY] =
     {
@@ -739,6 +749,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Can act even while asleep. Does not block other status conditions, however. -10% Speed."),
     },
     [NATURE_ECCENTRIC] =
     {
@@ -751,6 +762,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("After each battle, replaces its Pokéball out for a different one from the player's bag. (Replaces btw, so the player doesn't RUN OUT of Pokéballs lmao)"),
     },
     [NATURE_ENERGETIC] =
     {
@@ -763,6 +775,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Speed cannot be lowered. Eggs hatch twice as fast."),
     },
     [NATURE_FASTIDIOUS] =
     {
@@ -775,6 +788,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Cleans status conditions after each battle. Refuses to use “dirty” held items (Poison/Burn-related)."),
     },
     [NATURE_FLIGHTY] =
     {
@@ -787,6 +801,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Twice as hard to catch. Ignores trapping effects."),
     },
     [NATURE_FLIRTY] =
     {
@@ -799,6 +814,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("10% chance to infatuate while using a move or when an attacker makes contact."),
     },
     [NATURE_FORGIVING] =
     {
@@ -811,6 +827,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Friendship never decreases. Cannot use Revenge-style moves. (Revenge, Avalanche, Payback, Bide, Counter, Mirror Coat, Metal Burst, Comeuppance, Last Respects)."),
     },
     [NATURE_FRIVOLOUS] =
     {
@@ -823,6 +840,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("When purchasing an item, 10% chance that a different item is also secretly purchased by this Pokémon (within money limits btw lol, so if you run out of money, frivolous purchases won't happen)."),
     },
     [NATURE_FRUGAL] =
     {
@@ -835,6 +853,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Gets a 5% discount at PokéMarts. Refuses to utilize held items that cost above 5k."),
     },
     [NATURE_GREEDY] =
     {
@@ -847,6 +866,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Steals held items after attacking. +10% more money from battles."),
     },
     [NATURE_GULLIBLE] =
     {
@@ -859,6 +879,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Volatile & non-volatile status effects are amplified by 1.5x on the user."),
     },
     [NATURE_HEDONISTIC] =
     {
@@ -871,6 +892,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Recovers 1/16 max HP at the end of each turn. Refuses to use moves with recoil or ones that lower own stats."),
     },
     [NATURE_HUMBLE] =
     {
@@ -883,6 +905,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Cannot accumulate more than a +1 in any stat. In return, all non-HP stats are boosted by 5%."),
     },
     [NATURE_INGENIOUS] =
     {
@@ -895,6 +918,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Can use Potions and other man-made medicines as held items."),
     },
     [NATURE_INSIGHTFUL] =
     {
@@ -907,30 +931,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_IRRITABLE] =
-    {
-        .name = COMPOUND_STRING("Irritable"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_JEALOUS] =
-    {
-        .name = COMPOUND_STRING("Jealous"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("“Identifies” both foes on entry, makign the user's moves bypass type immunities."),
     },
     [NATURE_LAZY] =
     {
@@ -943,6 +944,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Loss of turn recovers 1/8 max HP. -10% Speed."),
     },
     [NATURE_LOYAL] =
     {
@@ -955,6 +957,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("All moves become upto +10% stronger based on Friendship"),
     },
     [NATURE_MEDDLESOME] =
     {
@@ -967,6 +970,20 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("ALWAYS redirects moves intended for allies. Boosts ally Def & SpDef by 5%."),
+    },
+    [NATURE_MEEK] =
+    {
+        .name = COMPOUND_STRING("Meek"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Always moves last in a turn. +20% SpDef."),
     },
     [NATURE_MERCURIAL] =
     {
@@ -979,6 +996,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Changes Nature after every battle. This effect stays forever."),
     },
     [NATURE_NOBLE] =
     {
@@ -991,6 +1009,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Always spares wild Pokémon at 1 HP, preventing them from being knocked out. +10% Def."),
     },
     [NATURE_OBEDIENT] =
     {
@@ -1003,6 +1022,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Ignores statuses that limit move choices such as Taunt, Encore, etc."),
     },
     [NATURE_OBSERVANT] =
     {
@@ -1015,6 +1035,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("May find hidden items in the overworld ala Itemfinder. Wild Pokémon are twice as likely to hold items, does not stack with itself."),
     },
     [NATURE_ORGANIZED] =
     {
@@ -1027,18 +1048,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_PERCEPTIVE] =
-    {
-        .name = COMPOUND_STRING("Perceptive"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("After each fight, sorts the player's Bag."),
     },
     [NATURE_PERFECTIONIST] =
     {
@@ -1051,6 +1061,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Refuses to learn or use moves that are under 100% accuracy. Always max rolls damage."),
     },
     [NATURE_PHOBIC] =
     {
@@ -1063,6 +1074,20 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Takes 10% more damage from super-effective moves. Wimps Out when hit by one."),
+    },
+    [NATURE_PRETENTIOUS] =
+    {
+        .name = COMPOUND_STRING("Pretentious"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Grants a different bonus based on the Pokéball it occupies. Refuses to be a follower Pokémon as it prefers staying inside its Ball."),
     },
     [NATURE_PRODIGIOUS] =
     {
@@ -1075,6 +1100,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Learns moves and evolves 1 level early."),
     },
     [NATURE_PROUD] =
     {
@@ -1087,6 +1113,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("The Pokémon's highest non-HP stat is boosted by 8% and its lowest non-HP stat is reduced by 8%."),
     },
     [NATURE_RELENTLESS] =
     {
@@ -1099,6 +1126,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts move damage and secondary effects chances by flat 20% but consumes 2 PP."),
     },
     [NATURE_RESILIENT] =
     {
@@ -1111,6 +1139,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Takes 10% less damage from attacks."),
     },
     [NATURE_RESOLUTE] =
     {
@@ -1123,6 +1152,33 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Keeps fighting when things get hard. When HP falls to half, cleanses all harmful effects"),
+    },
+    [NATURE_RESOURCEFUL] =
+    {
+        .name = COMPOUND_STRING("Resourceful"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("The weaker a held item is, the bigger bonus it receives."),
+    },
+    [NATURE_RESTLESS] =
+    {
+        .name = COMPOUND_STRING("Restless"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Switches out at the end of the Pokémon's 3rd turn. +15% Speed."),
     },
     [NATURE_RUSTIC] =
     {
@@ -1135,6 +1191,20 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Organic Held Items are 25% more effective (Berries, Leftovers, Big Root, Shell Bell)."),
+    },
+    [NATURE_SCHOLARLY] =
+    {
+        .name = COMPOUND_STRING("Scholarly"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts moves that are not naturally learned by 10%."),
     },
     [NATURE_SCROUNGER] =
     {
@@ -1147,6 +1217,20 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("1/3 chance to pick up bootleg items after battle."),
+    },
+    [NATURE_SHORTSIGHTED] =
+    {
+        .name = COMPOUND_STRING("Shortsighted"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts damage dealt by 1.25x on the user's first turn. Future-turn moves / Charge-turn moves do 0.75x damage."),
     },
     [NATURE_SHREWD] =
     {
@@ -1159,18 +1243,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_SNOBBISH] =
-    {
-        .name = COMPOUND_STRING("Snobbish"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("25% for a purchased item to be upgraded. (Item selling costs HAVE TO BE 1/4 for this to not break the game btw)."),
     },
     [NATURE_SOFT_HEARTED] =
     {
@@ -1183,6 +1256,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("When knocking out a Pokémon, suffers 1/12 max HP as damage. +10% SpDef."),
     },
     [NATURE_SPOILED] =
     {
@@ -1195,18 +1269,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_STOIC] =
-    {
-        .name = COMPOUND_STRING("Stoic"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("For every item used on this Pokémon, boosts HP by 1%, upto a max of 10%."),
     },
     [NATURE_STUBBORN] =
     {
@@ -1219,6 +1282,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Prevents loss of held items and forced switching out."),
     },
     [NATURE_TEMPESTUOUS] =
     {
@@ -1231,6 +1295,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts all non-HP stats by 5% in any Weather."),
     },
     [NATURE_TERRITORIAL] =
     {
@@ -1243,6 +1308,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Boosts all non-HP stats by 5% on any Terrain."),
     },
     [NATURE_TONGUE_TIED] =
     {
@@ -1255,6 +1321,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("The first Sound-move after switching-in deals 30% less damage."),
     },
     [NATURE_TOUGH] =
     {
@@ -1267,6 +1334,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Has a 25% chance to shake off a status condition each turn."),
     },
     [NATURE_VAIN] =
     {
@@ -1279,6 +1347,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("+10% all stats until ANY stat is lowered."),
     },
     [NATURE_VIGILANT] =
     {
@@ -1291,6 +1360,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Priority moves targeting the user or allies have their priority reduced by 1."),
     },
     [NATURE_VORACIOUS] =
     {
@@ -1303,6 +1373,33 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Consumes pinch berries at 1/2 max HP. Boosts Leftovers by 1.5x."),
+    },
+    [NATURE_WAYFARING] =
+    {
+        .name = COMPOUND_STRING("Wayfaring"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Always knows its way home. Can use the field move “Retreat” from the overworld, two uses per badge. Uses stack."),
+    },
+    [NATURE_WORLDLY] =
+    {
+        .name = COMPOUND_STRING("Worldly"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("While leading the party, does not trigger fights with lower-level wild Pokémon. (Wild levels HAVE TO SCALE & be different for different Pokémon for this to work)."),
     },
     [NATURE_YOUTHFUL] =
     {
@@ -1315,6 +1412,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Gains +20% Atk, SpA & Spe as long as the Pokémon is past its evolution level but has not evolved even once, or Level 50+ if the Pokémon evolves with an evolutionary stone."),
     },
     [NATURE_ZEALOUS] =
     {
@@ -1327,30 +1425,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_ARCHETYPE_98] =
-    {
-        .name = COMPOUND_STRING("Archetype98"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-    },
-    [NATURE_ARCHETYPE_99] =
-    {
-        .name = COMPOUND_STRING("Archetype99"),
-        .statUp = STAT_ATK,
-        .statDown = STAT_ATK,
-        .backAnim = 0,
-        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
-        .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
-        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
-        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
-        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Enhances weaknesses and resistances of the Primary typing from 2x and 0.5x to 3x and 0.33x respectively."),
     },
 };
 
@@ -1627,7 +1702,7 @@ static const u32 sCompressedStatuses[] =
 UNUSED static const struct BoxPokemon sBoxPokemonConstantsFit =
 {
     .language = NUM_LANGUAGES - 1,
-    .hiddenNatureModifier = NUM_NATURES - 1,
+    .hiddenNatureModifier = 12,
     .compressedStatus = ARRAY_COUNT(sCompressedStatuses) - 1,
     .secure.substructs[0].type0 = {
         .species = NUM_SPECIES - 1,

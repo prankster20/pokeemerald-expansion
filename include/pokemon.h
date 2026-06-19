@@ -608,6 +608,7 @@ struct NatureInfo
     u8 battlePalaceFlavorText;
     u8 battlePalaceSmokescreen;
     const u8 *natureGirlMessage;
+    const u8 *description;
 };
 
 struct LevelUpMove
