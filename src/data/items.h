@@ -2029,6 +2029,42 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_YellowMint,
     },
 
+// New Archetype mints
+
+    [ITEM_RANDOM_MINT] =
+    {
+        .name = ITEM_NAME("Random Mint"),
+        .price = (I_PRICE >= GEN_9) ? 20000 : 20,
+        .description = COMPOUND_STRING(
+            "Can be smelled. It\n"
+            "changes a Pokémon's\n"
+            "nature at random."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_RandomMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
+    [ITEM_UNIVERSAL_MINT] =
+    {
+        .name = ITEM_NAME("Universal Mint"),
+        .price = (I_PRICE >= GEN_9) ? 20000 : 20,
+        .description = COMPOUND_STRING(
+            "Can be smelled. It\n"
+            "lets you choose any\n"
+            "nature you want."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_UniversalMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
 // Candy
 
     [ITEM_RARE_CANDY] =

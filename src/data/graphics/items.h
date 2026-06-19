@@ -240,6 +240,7 @@ const u16 gItemIconPalette_LightBlueMint[] = INCGFX_U16("graphics/items/icon_pal
 const u16 gItemIconPalette_PinkMint[] = INCGFX_U16("graphics/items/icon_palettes/pink_mint.pal", ".gbapal");
 const u16 gItemIconPalette_GreenMint[] = INCGFX_U16("graphics/items/icon_palettes/green_mint.pal", ".gbapal");
 const u16 gItemIconPalette_YellowMint[] = INCGFX_U16("graphics/items/icon_palettes/yellow_mint.pal", ".gbapal");
+const u16 gItemIconPalette_PurpleMint[] = INCGFX_U16("graphics/items/icon_palettes/purple_mint.pal", ".gbapal");
 
 // Candy
 

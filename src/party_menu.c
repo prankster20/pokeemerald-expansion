@@ -38,6 +38,7 @@
 #include "caps.h"
 #include "link.h"
 #include "link_rfu.h"
+#include "list_menu.h"
 #include "mail.h"
 #include "main.h"
 #include "menu.h"
@@ -55,6 +56,7 @@
 #include "pokemon_storage_system.h"
 #include "pokemon_summary_screen.h"
 #include "pokerus.h"
+#include "random.h"
 #include "region_map.h"
 #include "reshow_battle_screen.h"
 #include "scanline_effect.h"
@@ -5248,11 +5250,423 @@ void ItemUseCB_Mint(u8 taskId, TaskFunc task)
     gTasks[taskId].func = Task_Mint;
 }
 
+// Holds the nature to exclude while RandomUniformExcept rolls a replacement.
+// Needed because the reject callback below takes no extra arguments and so
+// can't have the current nature passed in directly (same limitation noted by
+// MoodyCantRaiseStat/MoodyCantLowerStat in battle_util.c).
+static u32 sMintExcludedNature;
+
+static bool32 IsExcludedMintNature(u32 nature)
+{
+    return (nature == sMintExcludedNature);
+}
+
+void ItemUseCB_RandomMint(u8 taskId, TaskFunc task)
+{
+    s16 *data = gTasks[taskId].data;
+
+    tState = 0;
+    tMonId = gPartyMenu.slotId;
+    tOldNature = GetMonData(&gParties[B_TRAINER_PLAYER][tMonId], MON_DATA_HIDDEN_NATURE);
+    sMintExcludedNature = tOldNature;
+    tNewNature = RandomUniformExcept(RNG_MINT, 0, NUM_NATURES - 1, IsExcludedMintNature);
+    SetWordTaskArg(taskId, tOldFunc, (uintptr_t)(gTasks[taskId].func));
+    gTasks[taskId].func = Task_Mint;
+}
+
 #undef tState
 #undef tMonId
 #undef tOldNature
 #undef tNewNature
 #undef tOldFunc
+
+// --- Universal Mint: alphabetical nature picker ---
+// Visual style mirrors move_relearner.c's actual screen layout: left box
+// shows the highlighted nature's description, right box is the scrollable
+// alphabetical list, bottom bar shows the prompt - reusing that screen's
+// real windows (RELEARNERWIN_*) rather than hand-rolled ones.
+
+struct UniversalMintMenuData
+{
+    struct ListMenuItem items[NUM_NATURES];
+    u8 listTaskId;
+    u8 partyMonId;
+    u8 promptText[40];
+    u32 selectedNature;
+    u32 confirmState;
+};
+
+static EWRAM_DATA struct UniversalMintMenuData *sUniversalMintMenu = NULL;
+
+static void BuildSortedNatureList(struct ListMenuItem *items)
+{
+    u32 i, j;
+
+    // Seed with natural nature order, then insertion-sort by display name.
+    // Insertion sort is a deliberate choice over qsort (unused elsewhere in
+    // this codebase) since the data is already sorted within two blocks
+    // (vanilla 0-24, Archetype 25+), making this fast in practice and simple.
+    for (i = 0; i < NUM_NATURES; i++)
+    {
+        items[i].name = gNaturesInfo[i].name;
+        items[i].id = i;
+    }
+
+    for (i = 1; i < NUM_NATURES; i++)
+    {
+        struct ListMenuItem key = items[i];
+        j = i;
+        while (j > 0 && StringCompare(items[j - 1].name, key.name) > 0)
+        {
+            items[j] = items[j - 1];
+            j--;
+        }
+        items[j] = key;
+    }
+}
+
+// --- Universal Mint standalone screen ---
+// Runs as its own full screen (SetMainCallback2), the same category of
+// transition party menu already uses to show the summary screen. Needed
+// because every attempt to draw this list *inside* the still-active party
+// menu screen collided with its live windows/tiles/palettes - party menu
+// uses all 4 BG layers and most of bg 0's tile space already, leaving no
+// genuinely safe spot. Built to mirror move_relearner.c's actual screen
+// layout closely (reusing its RELEARNERWIN_* windows via the existing
+// InitMoveRelearnerWindows()) rather than hand-rolled windows, since that's
+// the real, working reference rather than something built from scratch.
+
+static const struct BgTemplate sUniversalMintBgTemplates[] =
+{
+    {
+        .bg = 0,
+        .charBaseIndex = 0,
+        .mapBaseIndex = 31,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 0,
+        .baseTile = 0,
+    },
+    {
+        .bg = 1,
+        .charBaseIndex = 0,
+        .mapBaseIndex = 30,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 1,
+        .baseTile = 0,
+    },
+};
+
+// Greedy word-wrap into up to maxLines lines, breaking at the last space
+// that still fits. Same core approach as bw_summary_screen.c's
+// AppendWrappedNatureDescription, but not hardcoded to 2 lines - this
+// screen's description box is much larger (128x96px vs the cramped memo
+// box), so it can show more.
+static void WrapNatureDescription(u8 *dest, const u8 *description, u32 fontId, u32 maxWidthPx, u32 maxLines)
+{
+    const u8 *src = description;
+    u32 lineCount = 0;
+    u8 lineBuffer[80];
+
+    dest[0] = EOS;
+    if (description == NULL)
+        return;
+
+    while (*src != EOS && lineCount < maxLines)
+    {
+        u32 lineLen = 0;
+        const u8 *lastSpace = NULL;
+        u32 lastSpaceLen = 0;
+        const u8 *scan = src;
+
+        while (*scan != EOS)
+        {
+            lineBuffer[lineLen] = *scan;
+            lineBuffer[lineLen + 1] = EOS;
+            if (GetStringWidth(fontId, lineBuffer, 0) > maxWidthPx)
+                break;
+            if (*scan == CHAR_SPACE)
+            {
+                lastSpace = scan;
+                lastSpaceLen = lineLen;
+            }
+            lineLen++;
+            scan++;
+            if (lineLen >= sizeof(lineBuffer) - 1)
+                break;
+        }
+
+        if (*scan == EOS)
+        {
+            lineBuffer[lineLen] = EOS;
+            src = scan;
+        }
+        else if (lastSpace != NULL)
+        {
+            lineBuffer[lastSpaceLen] = EOS;
+            src = lastSpace + 1;
+        }
+        else
+        {
+            lineBuffer[lineLen] = EOS;
+            src = scan;
+        }
+
+        lineCount++;
+
+        if (lineCount == maxLines && *src != EOS)
+        {
+            u32 len = StringLength(lineBuffer);
+            while (len > 0 && GetStringWidth(fontId, lineBuffer, 0) > maxWidthPx - GetStringWidth(fontId, COMPOUND_STRING("..."), 0))
+            {
+                lineBuffer[len - 1] = EOS;
+                len--;
+            }
+            StringAppend(lineBuffer, COMPOUND_STRING("..."));
+        }
+
+        StringAppend(dest, lineBuffer);
+        if (lineCount < maxLines && *src != EOS)
+            StringAppend(dest, COMPOUND_STRING("\n"));
+    }
+}
+
+static void UniversalMint_LoadNatureDescription(s32 natureId)
+{
+    u8 buffer[300];
+
+    FillWindowPixelBuffer(RELEARNERWIN_DESC_BATTLE, PIXEL_FILL(1));
+
+    if (natureId == LIST_CANCEL)
+        return;
+
+    WrapNatureDescription(buffer, gNaturesInfo[natureId].description, FONT_NORMAL, 128, 6);
+    AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_NORMAL, buffer, 4, 1, TEXT_SKIP_DRAW, NULL);
+    CopyWindowToVram(RELEARNERWIN_DESC_BATTLE, COPYWIN_GFX);
+}
+
+static void UniversalMint_CursorCallback(s32 itemIndex, bool8 onInit, struct ListMenu *list)
+{
+    if (onInit != TRUE)
+        PlaySE(SE_SELECT);
+    UniversalMint_LoadNatureDescription(itemIndex);
+}
+
+static void VBlankCB_UniversalMint(void)
+{
+    LoadOam();
+    ProcessSpriteCopyRequests();
+    TransferPlttBuffer();
+}
+
+static void CB2_UniversalMintMain(void)
+{
+    RunTasks();
+    AnimateSprites();
+    BuildOamBuffer();
+    DoScheduledBgTilemapCopiesToVram();
+    UpdatePaletteFade();
+}
+
+static void Task_UniversalMint_HandleInput(u8 taskId);
+
+static void Task_UniversalMint_ConfirmSelection(u8 taskId)
+{
+    static const u8 sText_askText[] = _("It may affect {STR_VAR_1}'s\nstats. Are you sure?");
+    static const u8 sText_doneText[] = _("{STR_VAR_1}'s stats may have changed due\nto the effects of the {STR_VAR_2}!{PAUSE_UNTIL_PRESS}");
+    u32 chosenNature = sUniversalMintMenu->selectedNature;
+    u32 monId = sUniversalMintMenu->partyMonId;
+
+    switch (sUniversalMintMenu->confirmState)
+    {
+    case 0:
+        // Display confirmation message
+        GetMonNickname(&gParties[B_TRAINER_PLAYER][monId], gStringVar1);
+        CopyItemName(gSpecialVar_ItemId, gStringVar2);
+        StringExpandPlaceholders(gStringVar4, sText_askText);
+        PlaySE(SE_SELECT);
+        FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
+        AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, gStringVar4, 4, 1, TEXT_SKIP_DRAW, NULL);
+        CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
+        sUniversalMintMenu->confirmState++;
+        break;
+    case 1:
+        // Wait for text to finish and show YES/NO menu
+        PartyMenuDisplayYesNoMenu();
+        sUniversalMintMenu->confirmState++;
+        break;
+    case 2:
+        // Process YES/NO input
+        switch (Menu_ProcessInputNoWrapClearOnChoose())
+        {
+        case 0:
+            // YES - proceed to apply
+            sUniversalMintMenu->confirmState++;
+            break;
+        case 1:
+        case MENU_B_PRESSED:
+            // NO - return to nature list
+            PlaySE(SE_SELECT);
+            ClearStdWindowAndFrameToTransparent(6, 0);
+            ClearWindowTilemap(6);
+            FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
+            AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, sUniversalMintMenu->promptText, 0, 1, 0, NULL);
+            CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
+            sUniversalMintMenu->confirmState = 0;
+            gTasks[taskId].func = Task_UniversalMint_HandleInput;
+            break;
+        }
+        break;
+    case 3:
+        // Apply the nature
+        PlaySE(SE_USE_ITEM);
+        StringExpandPlaceholders(gStringVar4, sText_doneText);
+        FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
+        AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, gStringVar4, 4, 1, TEXT_SKIP_DRAW, NULL);
+        CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
+        SetMonData(&gParties[B_TRAINER_PLAYER][monId], MON_DATA_HIDDEN_NATURE, &chosenNature);
+        CalculateMonStats(&gParties[B_TRAINER_PLAYER][monId]);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+        sUniversalMintMenu->confirmState++;
+        break;
+    case 4:
+        // Wait for result message to finish
+        if (!IsPartyMenuTextPrinterActive())
+        {
+            // Clean up and return to party menu
+            FreeAllWindowBuffers();
+            Free(sUniversalMintMenu);
+            sUniversalMintMenu = NULL;
+            DestroyTask(taskId);
+            SetMainCallback2(CB2_ReturnToPartyMenuFromSummaryScreen);
+        }
+        break;
+    }
+}
+
+static void Task_UniversalMint_HandleInput(u8 taskId)
+{
+    s32 itemId = ListMenu_ProcessInput(sUniversalMintMenu->listTaskId);
+
+    switch (itemId)
+    {
+    case LIST_NOTHING_CHOSEN:
+        break;
+    case LIST_CANCEL:
+        // User pressed B - exit without selecting
+        PlaySE(SE_SELECT);
+        DestroyListMenuTask(sUniversalMintMenu->listTaskId, NULL, NULL);
+        FreeAllWindowBuffers();
+        Free(sUniversalMintMenu);
+        sUniversalMintMenu = NULL;
+        DestroyTask(taskId);
+        SetMainCallback2(CB2_ReturnToPartyMenuFromSummaryScreen);
+        break;
+    default:
+        // User selected a nature - close list and show confirmation
+        sUniversalMintMenu->selectedNature = itemId;
+        sUniversalMintMenu->confirmState = 0;
+        PlaySE(SE_SELECT);
+        DestroyListMenuTask(sUniversalMintMenu->listTaskId, NULL, NULL);
+        gTasks[taskId].func = Task_UniversalMint_ConfirmSelection;
+        break;
+    }
+}
+
+static void Task_UniversalMint_Init(u8 taskId)
+{
+    struct ListMenuTemplate menuTemplate = {0};
+
+    switch (gMain.state)
+    {
+    case 0:
+        ResetSpriteData();
+        FreeAllSpritePalettes();
+        ResetPaletteFade();
+        ResetVramOamAndBgCntRegs();
+        ResetBgsAndClearDma3BusyFlags(0);
+        InitBgsFromTemplates(0, sUniversalMintBgTemplates, ARRAY_COUNT(sUniversalMintBgTemplates));
+        ResetAllBgsCoordinates();
+        // Explicit backdrop color before anything else draws - the prior
+        // attempt reset bg state here but never gave bg 0 any content,
+        // leaving whatever palette index 0 contained post-reset to show
+        // through as a flat, effectively-undefined color (the green screen).
+        SetBackdropFromColor(RGB_BLACK);
+        SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_MODE_0 | DISPCNT_OBJ_1D_MAP | DISPCNT_OBJ_ON);
+        ShowBg(0);
+        ShowBg(1);
+        SetGpuReg(REG_OFFSET_BLDCNT, 0);
+        SetVBlankCallback(VBlankCB_UniversalMint);
+        gMain.state++;
+        break;
+    case 1:
+        // Reuses move_relearner.c's actual windows (RELEARNERWIN_DESC_BATTLE
+        // = left description box, RELEARNERWIN_MOVE_LIST = right list,
+        // RELEARNERWIN_MSG = bottom message bar) via the existing public
+        // InitMoveRelearnerWindows(), rather than hand-rolled windows.
+        FreeAllWindowBuffers();
+        InitMoveRelearnerWindows(FALSE);
+
+        menuTemplate.items = sUniversalMintMenu->items;
+        menuTemplate.moveCursorFunc = UniversalMint_CursorCallback;
+        menuTemplate.totalItems = NUM_NATURES;
+        menuTemplate.maxShowed = 6;
+        menuTemplate.windowId = RELEARNERWIN_MOVE_LIST;
+        menuTemplate.header_X = 0;
+        menuTemplate.item_X = 8;
+        menuTemplate.cursor_X = 0;
+        menuTemplate.upText_Y = 1;
+        menuTemplate.cursorPal = 2;
+        menuTemplate.fillValue = 1;
+        menuTemplate.cursorShadowPal = 3;
+        menuTemplate.lettersSpacing = 0;
+        menuTemplate.itemVerticalPadding = 0;
+        menuTemplate.scrollMultiple = LIST_NO_MULTIPLE_SCROLL;
+        menuTemplate.fontId = FONT_NORMAL;
+        menuTemplate.cursorKind = CURSOR_BLACK_ARROW;
+        menuTemplate.textNarrowWidth = 68;
+
+        sUniversalMintMenu->listTaskId = ListMenuInit(&menuTemplate, 0, 0);
+
+        FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
+        AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, sUniversalMintMenu->promptText, 0, 1, 0, NULL);
+
+        ScheduleBgCopyTilemapToVram(0);
+        ScheduleBgCopyTilemapToVram(1);
+        gMain.state++;
+        break;
+    case 2:
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
+        gMain.state++;
+        break;
+    default:
+        UpdatePaletteFade();
+        if (!gPaletteFade.active)
+            gTasks[taskId].func = Task_UniversalMint_HandleInput;
+        break;
+    }
+}
+
+void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task)
+{
+    sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
+    sUniversalMintMenu->partyMonId = gPartyMenu.slotId;
+
+    BuildSortedNatureList(sUniversalMintMenu->items);
+
+    GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
+    StringExpandPlaceholders(sUniversalMintMenu->promptText, gText_UniversalMintPrompt);
+
+    // ResetTasks() must happen here, before creating the new screen's task -
+    // not inside that task itself, which would destroy the very task that's
+    // still executing it. This matches move_relearner.c's real pattern for
+    // the same kind of transition (see CB2_InitLearnMoveReturnFromSelectMove).
+    ResetTasks();
+    gMain.state = 0;
+    CreateTask(Task_UniversalMint_Init, 0);
+    SetMainCallback2(CB2_UniversalMintMain);
+}
 
 static void Task_DisplayHPRestoredMessage(u8 taskId)
 {

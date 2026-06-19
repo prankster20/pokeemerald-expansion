@@ -15,6 +15,8 @@ void ItemUseOutOfBattle_Medicine(u8 taskId);
 void ItemUseOutOfBattle_AbilityCapsule(u8 taskId);
 void ItemUseOutOfBattle_AbilityPatch(u8 taskId);
 void ItemUseOutOfBattle_Mint(u8 taskId);
+void ItemUseOutOfBattle_RandomMint(u8 taskId);
+void ItemUseOutOfBattle_UniversalMint(u8 taskId);
 void ItemUseOutOfBattle_ResetEVs(u8 taskId);
 void ItemUseOutOfBattle_ReduceEV(u8 taskId);
 void ItemUseOutOfBattle_SacredAsh(u8 taskId);

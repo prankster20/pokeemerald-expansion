@@ -880,6 +880,18 @@ void ItemUseOutOfBattle_Mint(u8 taskId)
     SetUpItemUseCallback(taskId);
 }
 
+void ItemUseOutOfBattle_RandomMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_RandomMint;
+    SetUpItemUseCallback(taskId);
+}
+
+void ItemUseOutOfBattle_UniversalMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_UniversalMint;
+    SetUpItemUseCallback(taskId);
+}
+
 void ItemUseOutOfBattle_ResetEVs(u8 taskId)
 {
     gItemUseCB = ItemUseCB_ResetEVs;

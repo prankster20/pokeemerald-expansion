@@ -1115,6 +1115,7 @@ const u8 gText_TrainerHill2F[] = _("2F");
 const u8 gText_TrainerHill3F[] = _("3F");
 const u8 gText_TrainerHill4F[] = _("4F");
 const u8 gText_TeachWhichMoveToPkmn[] = _("Teach which {STR_VAR_3} to\n{STR_VAR_1}?");
+const u8 gText_UniversalMintPrompt[] = _("Grant which Nature to\n{STR_VAR_1}?");
 const u8 gText_MoveRelearnerTeachMoveConfirm[] = _("Teach {STR_VAR_2}?");
 const u8 gText_MoveRelearnerTeachMoveConfirmUseTm[] = _("Teach {STR_VAR_2}?\nThis will consume one {STR_VAR_3}.");
 const u8 gText_MoveRelearnerPkmnLearnedMove[] = _("{STR_VAR_1} learned\n{STR_VAR_2}!");
