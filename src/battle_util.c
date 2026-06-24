@@ -8928,8 +8928,13 @@ enum ImmunityHealStatusOutcome TryImmunityAbilityHealStatus(enum BattlerId battl
     return outcome;
 }
 
-uq4_12_t GetBadgeBoostModifier(void)
+uq4_12_t GetBadgeBoostModifier(enum BattlerId battler)
 {
+    // --- Custom Archetype nature: Ambitious ---
+    // Badge Boosts are increased from 10% to 12% for this Pokémon.
+    if (GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE) == NATURE_AMBITIOUS)
+        return UQ_4_12(1.12);
+
     if (GetConfig(B_BADGE_BOOST) < GEN_3)
         return UQ_4_12(1.125);
     else
@@ -8938,7 +8943,12 @@ uq4_12_t GetBadgeBoostModifier(void)
 
 bool32 ShouldGetStatBadgeBoost(u16 badgeFlag, enum BattlerId battler)
 {
-    if (GetConfig(B_BADGE_BOOST) <= GEN_3 && badgeFlag != 0)
+    // --- Custom Archetype nature: Ambitious ---
+    // Always receives Badge Boosts, regardless of the B_BADGE_BOOST setting.
+    bool32 isAmbitious = (badgeFlag != 0
+        && GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE) == NATURE_AMBITIOUS);
+
+    if ((GetConfig(B_BADGE_BOOST) <= GEN_3 || isAmbitious) && badgeFlag != 0)
     {
         if (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_EREADER_TRAINER | BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_FRONTIER))
             return FALSE;

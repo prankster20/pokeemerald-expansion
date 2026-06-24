@@ -489,7 +489,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Boosts all non-HP stats by 10%, with the boost decreasing every 10 levels, up to a minimum of 1% for Lv 90+."),
+        .description = COMPOUND_STRING("Receives Badge Boosts, and increases them from 10% to 12%."),
     },
     [NATURE_APATHETIC] =
     {
