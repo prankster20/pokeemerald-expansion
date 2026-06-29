@@ -149,7 +149,9 @@ static bool32 HandleEndTurnWeatherDamage(enum BattlerId battler)
          && gBattleMons[battler].volatiles.semiInvulnerable != STATE_UNDERGROUND
          && gBattleMons[battler].volatiles.semiInvulnerable != STATE_UNDERWATER
          && GetBattlerHoldEffect(battler) != HOLD_EFFECT_SAFETY_GOGGLES
-         && !IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD))
+         && !IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD)
+         // --- Custom Archetype nature: Rugged ---
+         && !HasNature(battler, NATURE_RUGGED))
         {
             SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SANDSTORM;
@@ -172,7 +174,9 @@ static bool32 HandleEndTurnWeatherDamage(enum BattlerId battler)
              && gBattleMons[battler].volatiles.semiInvulnerable != STATE_UNDERGROUND
              && gBattleMons[battler].volatiles.semiInvulnerable != STATE_UNDERWATER
              && GetBattlerHoldEffect(battler) != HOLD_EFFECT_SAFETY_GOGGLES
-             && !IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD))
+             && !IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD)
+             // --- Custom Archetype nature: Rugged ---
+             && !HasNature(battler, NATURE_RUGGED))
             {
                 SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_HAIL;
@@ -418,6 +422,49 @@ static bool32 HandleEndTurnFirstEventBlock(enum BattlerId battler)
         default:
             break;
         }
+        gBattleStruct->eventState.endTurnBlock++;
+        break;
+    }
+    case FIRST_EVENT_BLOCK_HEDONISTIC_HEAL:
+        if (HasNature(battler, NATURE_HEDONISTIC)
+         && !IsBattlerAtMaxHp(battler)
+         && !gBattleMons[battler].volatiles.healBlock)
+        {
+            gBattlerAttacker = battler;
+            gBattlerTarget = battler;
+            SetHealAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
+            BattleScriptCall(BattleScript_HedonisticHeal);
+            effect = TRUE;
+        }
+        gBattleStruct->eventState.endTurnBlock++;
+        break;
+    case FIRST_EVENT_BLOCK_SUPERSTITIOUS:
+    {
+        struct BattlerState *state = &gBattleStruct->battlerState[battler];
+
+        if (!state->superstitiousUsedMoveThisTurn)
+        {
+            state->superstitiousMove = MOVE_NONE;
+            state->superstitiousCount = 0;
+            state->superstitiousMessage = 0;
+        }
+        else if (HasNature(battler, NATURE_SUPERSTITIOUS) && state->superstitiousMessage != 0)
+        {
+            gBattleScripting.battler = battler;
+            if (state->superstitiousMessage == 1)
+            {
+                BattleScriptCall(BattleScript_SuperstitiousBuilding);
+            }
+            else
+            {
+                PREPARE_MOVE_BUFFER(gBattleTextBuff1, state->superstitiousMove);
+                BattleScriptCall(BattleScript_SuperstitiousScared);
+            }
+            state->superstitiousMessage = 0;
+            effect = TRUE;
+        }
+
+        state->superstitiousUsedMoveThisTurn = FALSE;
         gBattleStruct->eventState.endTurnBlock++;
         break;
     }
@@ -1606,6 +1653,7 @@ static bool32 HandleEndTurnEmergencyExit(enum BattlerId battler)
         gBattleScripting.battler = gBattlerAbility = battler;
         gLastUsedAbility = ability;
         gSpecialStatuses[battler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
+        SetNaturePopupForWimpOut(battler); // pranks / jimh
         BattleScriptCall(BattleScript_EmergencyExit);
         effect = TRUE;
     }

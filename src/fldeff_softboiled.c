@@ -67,8 +67,26 @@ void Task_TryUseSoftboiledOnPartyMon(u8 taskId)
 
 static void Task_SoftboiledRestoreHealth(u8 taskId)
 {
+    u32 healAmount = GetMonData(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], MON_DATA_MAX_HP) / 5;
+
+    // --- Custom Archetype nature: Benevolent ---
+    // Also affects Charitable Nature - this is the same heal used by Care
+    // Package. No "on the field" to check outside battle, so this looks at
+    // whether a Benevolent mon is anywhere in the party instead.
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        enum Species species = GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES_OR_EGG);
+
+        if (species != SPECIES_NONE && species != SPECIES_EGG
+         && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_BENEVOLENT)
+        {
+            healAmount += healAmount / 4; // +25%
+            break;
+        }
+    }
+
     PlaySE(SE_USE_ITEM);
-    PartyMenuModifyHP(taskId, gPartyMenu.slotId2, 1, GetMonData(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], MON_DATA_MAX_HP)/5, Task_DisplayHPRestoredMessage);
+    PartyMenuModifyHP(taskId, gPartyMenu.slotId2, 1, healAmount, Task_DisplayHPRestoredMessage);
 }
 
 static void Task_DisplayHPRestoredMessage(u8 taskId)

@@ -12,6 +12,7 @@
 
 static bool32 FirstEventBlockEvents(struct BattleCalcValues *calcValues);
 static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability, enum HoldEffect holdEffect, enum Hazards hazardType);
+static bool32 TryNatureSwitchInEffects(enum BattlerId battler); // pranks / jimh
 static bool32 SecondEventBlockEvents(struct BattleCalcValues *calcValues);
 
 bool32 DoSwitchInEvents(void)
@@ -195,10 +196,10 @@ static bool32 CanBattlerBeHealed(enum BattlerId battler)
         return TRUE;
 
     if (gBattleStruct->battlerState[battler].storedLunarDance
-     && (gBattleMons[battler].pp[0] < CalculatePPWithBonus(gBattleMons[battler].moves[0], gBattleMons[battler].ppBonuses, 0)
-      || gBattleMons[battler].pp[1] < CalculatePPWithBonus(gBattleMons[battler].moves[1], gBattleMons[battler].ppBonuses, 1)
-      || gBattleMons[battler].pp[2] < CalculatePPWithBonus(gBattleMons[battler].moves[2], gBattleMons[battler].ppBonuses, 2)
-      || gBattleMons[battler].pp[3] < CalculatePPWithBonus(gBattleMons[battler].moves[3], gBattleMons[battler].ppBonuses, 3)))
+     && (gBattleMons[battler].pp[0] < CalculatePPWithBonusForMon(GetBattlerMon(battler), gBattleMons[battler].moves[0], gBattleMons[battler].ppBonuses, 0)
+      || gBattleMons[battler].pp[1] < CalculatePPWithBonusForMon(GetBattlerMon(battler), gBattleMons[battler].moves[1], gBattleMons[battler].ppBonuses, 1)
+      || gBattleMons[battler].pp[2] < CalculatePPWithBonusForMon(GetBattlerMon(battler), gBattleMons[battler].moves[2], gBattleMons[battler].ppBonuses, 2)
+      || gBattleMons[battler].pp[3] < CalculatePPWithBonusForMon(GetBattlerMon(battler), gBattleMons[battler].moves[3], gBattleMons[battler].ppBonuses, 3)))
     {
         return TRUE;
     }
@@ -255,6 +256,7 @@ static bool32 FirstEventBlockEvents(struct BattleCalcValues *calcValues)
             gBattleScripting.battler = gBattlerAbility = battler;
             gBattleStruct->battlerState[battler].forcedSwitch = FALSE;
             gBattleStruct->eventState.switchIn = 0;
+            SetNaturePopupForWimpOut(battler); // pranks / jimh
             BattleScriptCall(BattleScript_EmergencyExitSendReplacement);
             effect = TRUE;
         }
@@ -275,7 +277,8 @@ static bool32 FirstEventBlockEvents(struct BattleCalcValues *calcValues)
     case FIRST_EVENT_BLOCK_GENERAL_ABILITIES:
         if (TryPrimalReversion(battler)
          || AbilityBattleEffects(ABILITYEFFECT_ON_SWITCHIN, battler, calcValues->abilities[battler], MOVE_NONE, gBattleStruct->battlerState[battler].switchIn)
-         || TryClearIllusion(battler, calcValues->abilities[battler]))
+         || TryClearIllusion(battler, calcValues->abilities[battler])
+         || TryNatureSwitchInEffects(battler)) // pranks / jimh
             effect = TRUE;
         gBattleStruct->eventState.battlerSwitchIn++;
         break;
@@ -304,6 +307,86 @@ static void SetDmgHazardsBattlescript(enum BattlerId battler, u8 multistringId)
     BattleScriptCall(BattleScript_DmgHazardsOnBattler);
 }
 
+// --- Custom Archetype natures: Delicate & Rugged ---
+// Delicate suffers 1.5x damage from entry hazards; Rugged is fully immune.
+static inline s32 ApplyHazardDamageNatureMultiplier(enum BattlerId battler, s32 damage)
+{
+    if (HasNature(battler, NATURE_RUGGED))
+        return 0;
+    if (HasNature(battler, NATURE_DELICATE))
+    {
+        gBattleStruct->battlerState[battler].delicateHazardBoosted = TRUE; // pranks / jimh
+        return damage * 3 / 2;
+    }
+    return damage;
+}
+
+// pranks / jimh - Custom Archetype switch-in natures
+// Arrogant/Benevolent/Tempestuous/Territorial/Vain
+// just show a popup - their actual effects (damage boost, healing boost,
+// stat boosts) are implemented elsewhere and don't depend on this trigger
+// at all. Cantankerous's HP-loss-for-everyone IS implemented here, since
+// there's nowhere else for an "all 4 battlers, on switch-in" effect to live.
+static bool32 TryNatureSwitchInEffects(enum BattlerId battler)
+{
+    if (HasNature(battler, NATURE_ARROGANT))
+    {
+        for (enum BattlerId foe = 0; foe < gBattlersCount; foe++)
+        {
+            if (!IsBattlerAlly(foe, battler) && IsBattlerAlive(foe) && gBattleMons[foe].level > gBattleMons[battler].level)
+            {
+                gBattleScripting.battler = battler;
+                gBattleScripting.showNaturePopup = TRUE;
+                gBattleScripting.naturePopupId = NATURE_ARROGANT;
+                BattleScriptCall(BattleScript_ArrogantConfidentRet);
+                return TRUE;
+            }
+        }
+    }
+    else if (HasNature(battler, NATURE_VAIN)
+          && !GetBattlerPartyState(battler)->vainBroken)
+    {
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE;
+        gBattleScripting.naturePopupId = NATURE_VAIN;
+        BattleScriptCall(BattleScript_VainHaughtyRet);
+        return TRUE;
+    }
+    else if (HasNature(battler, NATURE_BENEVOLENT))
+    {
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE;
+        gBattleScripting.naturePopupId = NATURE_BENEVOLENT;
+        BattleScriptCall(BattleScript_BenevolentBoostsHealingRet);
+        return TRUE;
+    }
+    else if (HasNature(battler, NATURE_TEMPESTUOUS) && (gBattleWeather & B_WEATHER_ANY))
+    {
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE;
+        gBattleScripting.naturePopupId = NATURE_TEMPESTUOUS;
+        BattleScriptCall(BattleScript_TempestuousChasesStormsRet);
+        return TRUE;
+    }
+    else if (HasNature(battler, NATURE_TERRITORIAL) && (gFieldStatuses & STATUS_FIELD_TERRAIN_ANY))
+    {
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE;
+        gBattleScripting.naturePopupId = NATURE_TERRITORIAL;
+        BattleScriptCall(BattleScript_TerritorialGuardsTerritoryRet);
+        return TRUE;
+    }
+    else if (HasNature(battler, NATURE_CANTANKEROUS))
+    {
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE;
+        gBattleScripting.naturePopupId = NATURE_CANTANKEROUS;
+        BattleScriptCall(BattleScript_CantankerousActivates);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability, enum HoldEffect holdEffect, enum Hazards hazardType)
 {
     bool32 effect = FALSE;
@@ -317,10 +400,14 @@ static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability,
     case HAZARDS_SPIKES:
         if (!IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD)
          && IsBattlerAffectedByHazards(battler, holdEffect, FALSE)
-         && IsBattlerGrounded(battler, ability, holdEffect))
+         && IsBattlerGrounded(battler, ability, holdEffect)
+         // --- Custom Archetype nature: Rugged ---
+         // (checked here, not via the damage multiplier below, since
+         // SetPassiveDamageAmount clamps a 0 value up to 1)
+         && !HasNature(battler, NATURE_RUGGED))
         {
             s32 spikesDmg = GetNonDynamaxMaxHP(battler) / ((5 - gSideTimers[side].spikesAmount) * 2);
-            SetPassiveDamageAmount(battler, spikesDmg);
+            SetPassiveDamageAmount(battler, ApplyHazardDamageNatureMultiplier(battler, spikesDmg));
             SetDmgHazardsBattlescript(battler, B_MSG_PKMNHURTBYSPIKES);
             effect = TRUE;
         }
@@ -372,7 +459,7 @@ static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability,
     case HAZARDS_STEALTH_ROCK:
         if (IsBattlerAffectedByHazards(battler, holdEffect, FALSE) && ability != ABILITY_MAGIC_GUARD)
         {
-            gBattleStruct->passiveHpUpdate[battler] = GetStealthHazardDamage(TYPE_SIDE_HAZARD_POINTED_STONES, battler);
+            gBattleStruct->passiveHpUpdate[battler] = ApplyHazardDamageNatureMultiplier(battler, GetStealthHazardDamage(TYPE_SIDE_HAZARD_POINTED_STONES, battler));
             if (gBattleStruct->passiveHpUpdate[battler] != 0)
             {
                 SetDmgHazardsBattlescript(battler, B_MSG_STEALTHROCKDMG);
@@ -383,7 +470,7 @@ static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability,
     case HAZARDS_STEELSURGE:
         if (IsBattlerAffectedByHazards(battler, holdEffect, FALSE) && ability != ABILITY_MAGIC_GUARD)
         {
-            gBattleStruct->passiveHpUpdate[battler] = GetStealthHazardDamage(TYPE_SIDE_HAZARD_SHARP_STEEL, battler);
+            gBattleStruct->passiveHpUpdate[battler] = ApplyHazardDamageNatureMultiplier(battler, GetStealthHazardDamage(TYPE_SIDE_HAZARD_SHARP_STEEL, battler));
             if (gBattleStruct->passiveHpUpdate[battler] != 0)
             {
                 SetDmgHazardsBattlescript(battler, B_MSG_SHARPSTEELDMG);

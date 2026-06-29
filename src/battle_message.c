@@ -194,12 +194,13 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
     [STRINGID_PKMNGAINEDEXP]                        = COMPOUND_STRING("{B_BUFF1} gained{B_BUFF2} {B_BUFF3} Exp. Points!\p"),
     [STRINGID_PKMNGREWTOLV]                         = COMPOUND_STRING("{B_BUFF1} grew to Lv. {B_BUFF2}!{WAIT_SE}\p"),
     [STRINGID_PKMNLEARNEDMOVE]                      = COMPOUND_STRING("{B_BUFF1} learned {B_BUFF2}!{WAIT_SE}\p"),
-    [STRINGID_TRYTOLEARNMOVE1]                      = COMPOUND_STRING("{B_BUFF1} wants to learn the move {B_BUFF2}.\p"),
+    [STRINGID_TRYTOLEARNMOVE1]                      = COMPOUND_STRING("{B_BUFF1} can learn the move {B_BUFF2}.\p"),
     [STRINGID_TRYTOLEARNMOVE2]                      = COMPOUND_STRING("However, {B_BUFF1} already knows four moves.\p"),
     [STRINGID_TRYTOLEARNMOVE3]                      = COMPOUND_STRING("Should another move be forgotten and replaced with {B_BUFF2}?"),
     [STRINGID_PKMNFORGOTMOVE]                       = COMPOUND_STRING("{B_BUFF1} forgot {B_BUFF2}…\p"),
     [STRINGID_STOPLEARNINGMOVE]                     = COMPOUND_STRING("{PAUSE 32}Do you want to give up on having {B_BUFF1} learn {B_BUFF2}?"),
     [STRINGID_DIDNOTLEARNMOVE]                      = COMPOUND_STRING("{B_BUFF1} did not learn {B_BUFF2}.\p"),
+    [STRINGID_PKMNNOTKEENONLEARNINGMOVE]            = COMPOUND_STRING("{B_BUFF1} is not too keen on learning {B_BUFF2}...\p"),
     [STRINGID_PKMNLEARNEDMOVE2]                     = COMPOUND_STRING("{B_ATK_NAME_WITH_PREFIX} learned {B_BUFF1}!"),
     [STRINGID_PKMNPROTECTEDITSELF]                  = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} protected itself!"),
     [STRINGID_ITDOESNTAFFECT]                       = COMPOUND_STRING("It doesn't affect {B_DEF_NAME_WITH_PREFIX2}…"),
@@ -886,6 +887,15 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
     [STRINGID_LIGHTSCREENWOREOFF]                   = COMPOUND_STRING("{B_DEF_TEAM1} team's Light Screen wore off!"),
     [STRINGID_AURORAVEILWOREOFF]                    = COMPOUND_STRING("{B_DEF_TEAM1} team's Aurora Veil wore off!"),
     [STRINGID_STICKYWEBDISAPPEAREDFROMYOU]          = COMPOUND_STRING("The sticky web has disappeared from the ground around you!"),
+    // pranks / jimh - Custom Archetype nature popup messages
+    [STRINGID_ARROGANTFEELINGCONFIDENT]             = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} is feeling rather confident…"),
+    [STRINGID_BENEVOLENTBOOSTSHEALING]              = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} mercifully boosts all healing!"),
+    [STRINGID_TEMPESTUOUSCHASESSTORMS]              = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} is raring to chase storms!"),
+    [STRINGID_TERRITORIALGUARDSTERRITORY]           = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} is eager to guard its territory!"),
+    [STRINGID_VAINFEELINGHAUGHTY]                   = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} is feeling rather haughty!"),
+    [STRINGID_VANITYBROKEN]                         = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX}'s vanity is broken!"),
+    [STRINGID_SUPERSTITIONBUILDING]                 = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX}'s superstition is building…"),
+    [STRINGID_SUPERSTITIOUSTOOSCARED]               = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} is too scared to use {B_BUFF1} again!"),
 };
 
 const u16 gTrainerUsedItemStringIds[] =

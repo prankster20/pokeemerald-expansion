@@ -634,7 +634,14 @@ static enum ItemEffect TryLeftovers(enum BattlerId battler, enum HoldEffect hold
     if (gBattleMons[battler].hp < gBattleMons[battler].maxHP
      && !(B_HEAL_BLOCKING >= GEN_5 && gBattleMons[battler].volatiles.healBlock))
     {
-        SetHealAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
+        s32 healAmount = GetNonDynamaxMaxHP(battler) / 16;
+
+        // --- Custom Archetype nature: Voracious ---
+        // Boosts Leftovers by 1.5x (not Black Sludge, which shares this function).
+        if (holdEffect == HOLD_EFFECT_LEFTOVERS && HasNature(battler, NATURE_VORACIOUS))
+            healAmount = healAmount * 3 / 2;
+
+        SetHealAmount(battler, healAmount);
         RecordItemEffectBattle(battler, holdEffect);
         BattleScriptCall(BattleScript_ItemHealHP_Ret);
         effect = ITEM_HP_CHANGE;
@@ -874,7 +881,7 @@ static u32 ItemRestorePp(enum BattlerId battler, enum Item itemId)
 
         if (override && missingMove == MAX_MON_MOVES)
         {
-            u32 maxPP = CalculatePPWithBonus(move, ppBonuses, i);
+            u32 maxPP = CalculatePPWithBonusForMon(mon, move, ppBonuses, i);
             if (currentPP < maxPP)
                 missingMove = i;
         }
@@ -887,7 +894,7 @@ static u32 ItemRestorePp(enum BattlerId battler, enum Item itemId)
     {
         u32 move = GetMonData(mon, MON_DATA_MOVE1 + restoreMove);
         u32 currentPP = GetMonData(mon, MON_DATA_PP1 + restoreMove);
-        u32 maxPP = CalculatePPWithBonus(move, ppBonuses, restoreMove);
+        u32 maxPP = CalculatePPWithBonusForMon(mon, move, ppBonuses, restoreMove);
         u32 ppRestored = GetItemHoldEffectParam(itemId);
 
         if (ability == ABILITY_RIPEN)

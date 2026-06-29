@@ -217,6 +217,7 @@ enum LearnMoveState
     REPLACE_MOVE_1,
 
     DID_NOT_LEARN_1,
+    NATURE_REFUSED_MOVE_2,
 };
 
 static struct BoxPokemon *LearnMove_GetBoxMonFromTaskData(u8 partyIndex)
@@ -241,6 +242,13 @@ s32 LearnMove(const struct MoveLearnUI *ui, u8 taskId)
     switch (state)
     {
     case PROMPT_BEFORE_LEARNING_1:
+        if (DoesBoxMonNatureRefuseMove(boxmon, move))
+        {
+            GetBoxMonNickname(boxmon, gStringVar1);
+            StringCopy(gStringVar2, GetMoveName(move));
+            ui->printMessage(gText_PkmnNotKeenOnLearningMove);
+            return NATURE_REFUSED_MOVE_2;
+        }
         ui->askConfirmation();
         return PROMPT_BEFORE_LEARNING_2;
     case PROMPT_BEFORE_LEARNING_2:
@@ -257,6 +265,11 @@ s32 LearnMove(const struct MoveLearnUI *ui, u8 taskId)
         GetBoxMonNickname(boxmon, gStringVar1);
         StringCopy(gStringVar2, GetMoveName(move));
         gSpecialVar_Result = FALSE;
+        if (DoesBoxMonNatureRefuseMove(boxmon, move))
+        {
+            ui->printMessage(gText_PkmnNotKeenOnLearningMove);
+            return NATURE_REFUSED_MOVE_2;
+        }
         switch(ChooseBoxMon_CanMonLearnMove(boxmon, move))
         {
         case VALID_MON:
@@ -351,6 +364,12 @@ s32 LearnMove(const struct MoveLearnUI *ui, u8 taskId)
         return LEARN_MOVE_END;
     }
     case DID_NOT_LEARN_1:
+        GetBoxMonNickname(boxmon, gStringVar1);
+        StringCopy(gStringVar2, GetMoveName(move));
+        gSpecialVar_Result = FALSE;
+        ui->printMessage(gText_MoveNotLearned);
+        return LEARN_MOVE_END;
+    case NATURE_REFUSED_MOVE_2:
         GetBoxMonNickname(boxmon, gStringVar1);
         StringCopy(gStringVar2, GetMoveName(move));
         gSpecialVar_Result = FALSE;

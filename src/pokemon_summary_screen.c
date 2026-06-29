@@ -3849,6 +3849,35 @@ static void PrintRibbonCount(void)
     PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_RIBBON_COUNT), text, x, 1, 0, 0);
 }
 
+// --- Custom Archetype nature: Proud ---
+// Finds this specific mon's actual highest/lowest non-HP stat (Proud boosts
+// whichever those are, unlike the classic natures' fixed stat pair). Ties
+// break Atk > Def > SpAtk > SpDef > Speed (NOT the Stat enum's actual
+// numeric order, which goes HP/Atk/Def/Speed/SpAtk/SpDef).
+static void GetProudHighLowStats(enum Stat *highStat, enum Stat *lowStat)
+{
+    struct PokeSummary *summary = &sMonSummaryScreen->summary;
+    u32 stats[NUM_STATS];
+    stats[STAT_HP] = 0;
+    stats[STAT_ATK] = summary->atk;
+    stats[STAT_DEF] = summary->def;
+    stats[STAT_SPEED] = summary->speed;
+    stats[STAT_SPATK] = summary->spatk;
+    stats[STAT_SPDEF] = summary->spdef;
+    static const enum Stat sProudTieBreakOrder[] = {STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED};
+
+    *highStat = sProudTieBreakOrder[0];
+    *lowStat = sProudTieBreakOrder[0];
+    for (u32 idx = 1; idx < ARRAY_COUNT(sProudTieBreakOrder); idx++)
+    {
+        enum Stat i = sProudTieBreakOrder[idx];
+        if (stats[i] > stats[*highStat])
+            *highStat = i;
+        if (stats[i] < stats[*lowStat])
+            *lowStat = i;
+    }
+}
+
 static void BufferStat(u8 *dst, enum Stat statIndex, u32 stat, u32 strId, u32 n)
 {
     static const u8 sTextNatureDown[] = _("{COLOR}{08}");
@@ -3856,7 +3885,21 @@ static void BufferStat(u8 *dst, enum Stat statIndex, u32 stat, u32 strId, u32 n)
     static const u8 sTextNatureNeutral[] = _("{COLOR}{01}");
     u8 *txtPtr;
 
-    if (statIndex == 0 || !P_SUMMARY_SCREEN_NATURE_COLORS || gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
+    if (statIndex != 0 && P_SUMMARY_SCREEN_NATURE_COLORS && sMonSummaryScreen->summary.mintNature == NATURE_PROUD)
+    {
+        enum Stat highStat, lowStat;
+        GetProudHighLowStats(&highStat, &lowStat);
+
+        if (highStat == lowStat)
+            txtPtr = StringCopy(dst, sTextNatureNeutral);
+        else if (statIndex == highStat)
+            txtPtr = StringCopy(dst, sTextNatureUp);
+        else if (statIndex == lowStat)
+            txtPtr = StringCopy(dst, sTextNatureDown);
+        else
+            txtPtr = StringCopy(dst, sTextNatureNeutral);
+    }
+    else if (statIndex == 0 || !P_SUMMARY_SCREEN_NATURE_COLORS || gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
         txtPtr = StringCopy(dst, sTextNatureNeutral);
     else if (statIndex == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp)
         txtPtr = StringCopy(dst, sTextNatureUp);
@@ -4073,6 +4116,9 @@ static void PrintMoveNameAndPP(u8 moveIndex)
     if (move != 0)
     {
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
+        // --- Custom Archetype nature: Serious ---
+        if (summary->mintNature == NATURE_SERIOUS)
+            pp += 1;
         PrintTextOnWindowToFit(moveNameWindowId, GetMoveName(move), 0, moveIndex * 16 + 1, 0, 1);
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);
         ConvertIntToDecimalStringN(gStringVar2, pp, STR_CONV_MODE_RIGHT_ALIGN, 2);

@@ -1054,7 +1054,8 @@ enum __attribute__((packed)) Item
 
     // New Archetype mints
     ITEM_RANDOM_MINT = 874,
-    ITEM_UNIVERSAL_MINT = 875,
+    ITEM_SPLIT_MINT = 875,
+    ITEM_UNIVERSAL_MINT = 876,
 
     ITEMS_COUNT,
     ITEM_FIELD_ARROW = ITEMS_COUNT,

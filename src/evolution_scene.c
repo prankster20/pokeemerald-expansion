@@ -21,6 +21,7 @@
 #include "pokedex.h"
 #include "pokemon.h"
 #include "pokemon_summary_screen.h"
+#include "random.h"
 #include "scanline_effect.h"
 #include "sound.h"
 #include "sprite.h"
@@ -604,6 +605,39 @@ static void CreateShedinja(enum Species preEvoSpecies, enum Species postEvoSpeci
     }
 }
 
+// --- Custom Archetype nature: Callow ---
+// Upon evolving, rerolls into a different, non-blacklisted nature.
+// Add more entries here as needed - this array is the single place to edit.
+static const u8 sCallowBlacklistedNatures[] =
+{
+    NATURE_AUSTERE,
+    NATURE_COMPULSIVE,
+    NATURE_DEPENDENT,
+};
+
+static bool32 IsCallowBlacklistedNature(u32 nature)
+{
+    if (nature == NATURE_CALLOW)
+        return TRUE;
+
+    for (u32 i = 0; i < ARRAY_COUNT(sCallowBlacklistedNatures); i++)
+    {
+        if (nature == sCallowBlacklistedNatures[i])
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static void TryRerollCallowNatureOnEvolution(struct Pokemon *mon)
+{
+    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_CALLOW)
+    {
+        u32 newNature = RandomUniformExcept(RNG_CALLOW_EVOLUTION, 0, NUM_NATURES - 1, IsCallowBlacklistedNature);
+        SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
+        AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
+    }
+}
+
 // States for the main switch in Task_EvolutionScene
 enum {
     EVOSTATE_FADE_IN,
@@ -646,6 +680,8 @@ enum {
     MVSTATE_ASK_CANCEL,
     MVSTATE_CANCEL,
     MVSTATE_RETRY_AFTER_HM,
+    MVSTATE_NATURE_REFUSE_MSG_1,
+    MVSTATE_NATURE_REFUSE_MSG_2,
 };
 
 // Task data from CycleEvolutionMonSprite
@@ -787,6 +823,7 @@ static void Task_EvolutionScene(u8 taskId)
             gTasks[taskId].tState++;
             SetMonData(mon, MON_DATA_SPECIES, (void *)(&gTasks[taskId].tPostEvoSpecies));
             SetMonData(mon, MON_DATA_EVOLUTION_TRACKER, &zero);
+            TryRerollCallowNatureOnEvolution(mon);
             CalculateMonStats(mon);
             EvolutionRenameMon(mon, gTasks[taskId].tPreEvoSpecies, gTasks[taskId].tPostEvoSpecies);
             GetSetPokedexFlag(SpeciesToNationalPokedexNum(gTasks[taskId].tPostEvoSpecies), FLAG_SET_SEEN);
@@ -813,7 +850,13 @@ static void Task_EvolutionScene(u8 taskId)
                 GetMonData(mon, MON_DATA_NICKNAME, nickname);
                 StringCopy_Nickname(gBattleTextBuff1, nickname);
 
-                if (var == MON_HAS_MAX_MOVES)
+                if (var == MON_REFUSES_MOVE)
+                {
+                    BufferMoveToLearnIntoBattleTextBuff2();
+                    gTasks[taskId].tLearnMoveState = MVSTATE_NATURE_REFUSE_MSG_1;
+                    gTasks[taskId].tState = EVOSTATE_REPLACE_MOVE;
+                }
+                else if (var == MON_HAS_MAX_MOVES)
                     gTasks[taskId].tState = EVOSTATE_REPLACE_MOVE;
                 else if (var == MON_ALREADY_KNOWS_MOVE)
                     break;
@@ -1067,6 +1110,22 @@ static void Task_EvolutionScene(u8 taskId)
             if (!IsTextPrinterActiveOnWindow(0) && !IsSEPlaying())
                 gTasks[taskId].tLearnMoveState = MVSTATE_SHOW_MOVE_SELECT;
             break;
+        case MVSTATE_NATURE_REFUSE_MSG_1:
+            if (!IsTextPrinterActiveOnWindow(0) && !IsSEPlaying())
+            {
+                BattleStringExpandPlaceholdersToDisplayedString(gBattleStringsTable[STRINGID_PKMNNOTKEENONLEARNINGMOVE]);
+                BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MSG);
+                gTasks[taskId].tLearnMoveState++;
+            }
+            break;
+        case MVSTATE_NATURE_REFUSE_MSG_2:
+            if (!IsTextPrinterActiveOnWindow(0) && !IsSEPlaying())
+            {
+                BattleStringExpandPlaceholdersToDisplayedString(gBattleStringsTable[STRINGID_DIDNOTLEARNMOVE]);
+                BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MSG);
+                gTasks[taskId].tState = EVOSTATE_TRY_LEARN_MOVE;
+            }
+            break;
         }
         break;
     }
@@ -1111,6 +1170,8 @@ enum {
     T_MVSTATE_ASK_CANCEL,
     T_MVSTATE_CANCEL,
     T_MVSTATE_RETRY_AFTER_HM,
+    T_MVSTATE_NATURE_REFUSE_MSG_1,
+    T_MVSTATE_NATURE_REFUSE_MSG_2,
 };
 
 // Compare to Task_EvolutionScene, very similar
@@ -1224,6 +1285,7 @@ static void Task_TradeEvolutionScene(u8 taskId)
             gTasks[taskId].tState++;
             SetMonData(mon, MON_DATA_SPECIES, (&gTasks[taskId].tPostEvoSpecies));
             SetMonData(mon, MON_DATA_EVOLUTION_TRACKER, &zero);
+            TryRerollCallowNatureOnEvolution(mon);
             CalculateMonStats(mon);
             EvolutionRenameMon(mon, gTasks[taskId].tPreEvoSpecies, gTasks[taskId].tPostEvoSpecies);
             GetSetPokedexFlag(SpeciesToNationalPokedexNum(gTasks[taskId].tPostEvoSpecies), FLAG_SET_SEEN);
@@ -1244,7 +1306,13 @@ static void Task_TradeEvolutionScene(u8 taskId)
                 GetMonData(mon, MON_DATA_NICKNAME, nickname);
                 StringCopy_Nickname(gBattleTextBuff1, nickname);
 
-                if (var == MON_HAS_MAX_MOVES)
+                if (var == MON_REFUSES_MOVE)
+                {
+                    BufferMoveToLearnIntoBattleTextBuff2();
+                    gTasks[taskId].tLearnMoveState = T_MVSTATE_NATURE_REFUSE_MSG_1;
+                    gTasks[taskId].tState = T_EVOSTATE_REPLACE_MOVE;
+                }
+                else if (var == MON_HAS_MAX_MOVES)
                     gTasks[taskId].tState = T_EVOSTATE_REPLACE_MOVE;
                 else if (var == MON_ALREADY_KNOWS_MOVE)
                     break;
@@ -1492,6 +1560,22 @@ static void Task_TradeEvolutionScene(u8 taskId)
         case T_MVSTATE_RETRY_AFTER_HM:
             if (!IsTextPrinterActiveOnWindow(0) && !IsSEPlaying())
                 gTasks[taskId].tLearnMoveState = T_MVSTATE_SHOW_MOVE_SELECT;
+            break;
+        case T_MVSTATE_NATURE_REFUSE_MSG_1:
+            if (!IsTextPrinterActiveOnWindow(0) && !IsSEPlaying())
+            {
+                BattleStringExpandPlaceholdersToDisplayedString(gBattleStringsTable[STRINGID_PKMNNOTKEENONLEARNINGMOVE]);
+                DrawTextOnTradeWindow(0, gDisplayedStringBattle, 1);
+                gTasks[taskId].tLearnMoveState++;
+            }
+            break;
+        case T_MVSTATE_NATURE_REFUSE_MSG_2:
+            if (!IsTextPrinterActiveOnWindow(0) && !IsSEPlaying())
+            {
+                BattleStringExpandPlaceholdersToDisplayedString(gBattleStringsTable[STRINGID_DIDNOTLEARNMOVE]);
+                DrawTextOnTradeWindow(0, gDisplayedStringBattle, 1);
+                gTasks[taskId].tState = T_EVOSTATE_TRY_LEARN_MOVE;
+            }
             break;
         }
         break;

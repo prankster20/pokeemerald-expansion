@@ -113,6 +113,8 @@ enum {
     MENU_CATALOG_MOWER,
     MENU_CHANGE_FORM,
     MENU_CHANGE_ABILITY,
+    MENU_CARE_PACKAGE,
+    MENU_HEAD_HOME,
     MENU_FIELD_MOVES
 };
 
@@ -418,6 +420,10 @@ static void Task_TryLearnNewMoves(u8);
 static void PartyMenuTryEvolution(u8);
 static void DisplayMonNeedsToReplaceMove(u8);
 static void DisplayMonLearnedMove(u8, u16);
+static void DisplayMonRefusedMove(u8);
+static void Task_DisplayMonDidNotLearnRefusedMove(u8);
+static void DisplayMonRefusedMoveAndClose(u8, enum Move);
+static void Task_DisplayMonDidNotLearnRefusedMoveAndClose(u8);
 static void UseSacredAsh(u8);
 static void Task_SacredAshLoop(u8);
 static void Task_SacredAshDisplayHPRestored(u8);
@@ -485,6 +491,8 @@ static void CursorCb_CatalogFan(u8);
 static void CursorCb_CatalogMower(u8);
 static void CursorCb_ChangeForm(u8);
 static void CursorCb_ChangeAbility(u8);
+static void CursorCb_CarePackage(u8);
+static void CursorCb_HeadHome(u8);
 void TryItemHoldFormChange(struct Pokemon *mon, s8 slotId, enum BattleTrainer trainer);
 static void ShowMoveSelectWindow(u8 slot);
 static void Task_HandleWhichMoveInput(u8 taskId);
@@ -2897,6 +2905,9 @@ static u8 DisplaySelectionWindow(u8 windowType)
 
         if (sPartyMenuInternal->actions[i] >= MENU_FIELD_MOVES)
             fontColorsId = 4;
+        // --- Custom Archetype natures: Charitable & Wayfaring ---
+        else if (sPartyMenuInternal->actions[i] == MENU_CARE_PACKAGE || sPartyMenuInternal->actions[i] == MENU_HEAD_HOME)
+            fontColorsId = 6;
 
         if (sPartyMenuInternal->actions[i] >= MENU_FIELD_MOVES)
             text = GetMoveName(FieldMove_GetMoveId(sPartyMenuInternal->actions[i] - MENU_FIELD_MOVES));
@@ -2973,6 +2984,18 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
         }
     }
 
+    // --- Custom Archetype natures: Charitable & Wayfaring ---
+    // These grant overworld actions by nature, not by knowing a move.
+    switch (GetMonData(&mons[slotId], MON_DATA_HIDDEN_NATURE))
+    {
+    case NATURE_CHARITABLE:
+        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_CARE_PACKAGE);
+        break;
+    case NATURE_WAYFARING:
+        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_HEAD_HOME);
+        break;
+    }
+
     if (!InBattlePike())
     {
         if (GetMonData(&mons[1], MON_DATA_SPECIES) != SPECIES_NONE)
@@ -2982,7 +3005,14 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
         else
             AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_ITEM);
     }
-    AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_CANCEL1);
+    // --- Bugfix for Custom Archetype natures: Charitable & Wayfaring ---
+    // actions[] is a fixed 8-slot array (see struct PartyMenuInternal). A mon
+    // with 4 field moves already uses 6 slots here (Summary + 4 + Switch/Item),
+    // leaving none for a nature action AND Cancel. Drop Cancel rather than
+    // overflow the array - B press still cancels (see the MENU_B_PRESSED
+    // handler below, which special-cases this).
+    if (sPartyMenuInternal->numActions < 8)
+        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_CANCEL1);
 }
 
 static u8 GetPartyMenuActionsType(struct Pokemon *mon)
@@ -3110,7 +3140,12 @@ static void Task_HandleSelectionMenuInput(u8 taskId)
         case MENU_B_PRESSED:
             PlaySE(SE_SELECT);
             PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[2]);
-            if (sPartyMenuInternal->actions[sPartyMenuInternal->numActions - 1] >= MENU_FIELD_MOVES)
+            // If Cancel isn't the last entry, it was dropped to avoid overflowing
+            // actions[] (see SetPartyMonFieldSelectionActions) - B still cancels.
+            if (sPartyMenuInternal->actions[sPartyMenuInternal->numActions - 1] != MENU_CANCEL1
+             && sPartyMenuInternal->actions[sPartyMenuInternal->numActions - 1] != MENU_CANCEL2)
+                CursorCb_Cancel1(taskId);
+            else if (sPartyMenuInternal->actions[sPartyMenuInternal->numActions - 1] >= MENU_FIELD_MOVES)
                 CursorCb_FieldMove(taskId);
             else
                 sCursorOptions[sPartyMenuInternal->actions[sPartyMenuInternal->numActions - 1]].func(taskId);
@@ -4183,6 +4218,62 @@ static void CursorCb_FieldMove(u8 taskId)
     }
 }
 
+// --- Custom Archetype nature: Charitable ---
+// Can use the field move "Care Package" from the overworld, sacrificing 20%
+// of own max HP to heal another party Pokémon. Reuses the Soft-Boiled/Milk
+// Drink field move mechanic wholesale - it's already exactly this (1/5 max
+// HP), just normally unlocked by knowing one of those moves instead of nature.
+static void CursorCb_CarePackage(u8 taskId)
+{
+    PlaySE(SE_SELECT);
+    PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[0]);
+    PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[1]);
+    if (MenuHelpers_IsLinkActive() == TRUE || InUnionRoom() == TRUE)
+    {
+        DisplayPartyMenuStdMessage(PARTY_MSG_CANT_USE_HERE);
+        gTasks[taskId].func = Task_CancelAfterAorBPress;
+    }
+    else if (SetUpFieldMove_SoftBoiled() == TRUE)
+    {
+        ChooseMonForSoftboiled(taskId);
+    }
+    else
+    {
+        DisplayPartyMenuStdMessage(FieldMove_GetPartyMsgID(FIELD_MOVE_SOFT_BOILED));
+        gTasks[taskId].func = Task_CancelAfterAorBPress;
+    }
+}
+
+// --- Custom Archetype nature: Wayfaring ---
+// Can use the field move "Head Home" from the overworld, teleporting to the
+// last Pokémon Center. Free, unlimited use - reuses the Teleport field
+// move's warp-to-last-healing-spot mechanic wholesale.
+static void CursorCb_HeadHome(u8 taskId)
+{
+    const struct MapHeader *mapHeader;
+
+    PlaySE(SE_SELECT);
+    PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[0]);
+    PartyMenuRemoveWindow(&sPartyMenuInternal->windowId[1]);
+    if (MenuHelpers_IsLinkActive() == TRUE || InUnionRoom() == TRUE)
+    {
+        DisplayPartyMenuStdMessage(PARTY_MSG_CANT_USE_HERE);
+        gTasks[taskId].func = Task_CancelAfterAorBPress;
+    }
+    else if (SetUpFieldMove_Teleport() == TRUE)
+    {
+        mapHeader = Overworld_GetMapHeaderByGroupAndId(gSaveBlock1Ptr->lastHealLocation.mapGroup, gSaveBlock1Ptr->lastHealLocation.mapNum);
+        GetMapNameGeneric(gStringVar1, mapHeader->regionMapSectionId);
+        StringExpandPlaceholders(gStringVar4, gText_ReturnToHealingSpot);
+        DisplayFieldMoveExitAreaMessage(taskId);
+    }
+    else
+    {
+        DisplayPartyMenuStdMessage(FieldMove_GetPartyMsgID(FIELD_MOVE_TELEPORT));
+        gTasks[taskId].func = Task_CancelAfterAorBPress;
+    }
+}
+
 static void DisplayFieldMoveExitAreaMessage(u8 taskId)
 {
     DisplayPartyMenuMessage(gStringVar4, TRUE);
@@ -5174,7 +5265,8 @@ void Task_Mint(u8 taskId)
     {
     case 0:
         // Can't use.
-        if (tOldNature == tNewNature)
+        if (tOldNature == tNewNature
+         && !GetMonData(&gParties[B_TRAINER_PLAYER][tMonId], MON_DATA_MERCURIAL_NATURE))
         {
             gPartyMenuUseExitCallback = FALSE;
             PlaySE(SE_SELECT);
@@ -5230,10 +5322,26 @@ void Task_Mint(u8 taskId)
             tState++;
         break;
     case 5:
-        SetMonData(&gParties[B_TRAINER_PLAYER][tMonId], MON_DATA_HIDDEN_NATURE, &tNewNature);
-        CalculateMonStats(&gParties[B_TRAINER_PLAYER][tMonId]);
-        RemoveBagItem(gSpecialVar_ItemId, 1);
-        gTasks[taskId].func = Task_ClosePartyMenu;
+        {
+            u32 removedMoves = ApplyMintedNature(&gParties[B_TRAINER_PLAYER][tMonId], tNewNature);
+            RemoveBagItem(gSpecialVar_ItemId, 1);
+            if (removedMoves != 0)
+            {
+                GetMonNickname(&gParties[B_TRAINER_PLAYER][tMonId], gStringVar1);
+                StringExpandPlaceholders(gStringVar4, gText_MonForgotMovesForNewNature);
+                DisplayPartyMenuMessage(gStringVar4, 1);
+                ScheduleBgCopyTilemapToVram(2);
+                tState++;
+            }
+            else
+            {
+                gTasks[taskId].func = Task_ClosePartyMenu;
+            }
+        }
+        break;
+    case 6:
+        if (!IsPartyMenuTextPrinterActive())
+            gTasks[taskId].func = Task_ClosePartyMenu;
         break;
     }
 }
@@ -5291,9 +5399,11 @@ struct UniversalMintMenuData
     struct ListMenuItem items[NUM_NATURES];
     u8 listTaskId;
     u8 partyMonId;
-    u8 promptText[40];
+    u8 totalItems;
+    bool8 isSplitMint;
+    u8 currentNatureLabel[32];
+    u8 promptText[80];
     u32 selectedNature;
-    u32 confirmState;
 };
 
 static EWRAM_DATA struct UniversalMintMenuData *sUniversalMintMenu = NULL;
@@ -5437,12 +5547,13 @@ static void UniversalMint_LoadNatureDescription(s32 natureId)
     u8 buffer[300];
 
     FillWindowPixelBuffer(RELEARNERWIN_DESC_BATTLE, PIXEL_FILL(1));
+    AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_SMALL_NARROW, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}EFFECT"), 4, 1, TEXT_SKIP_DRAW, NULL);
 
     if (natureId == LIST_CANCEL)
         return;
 
-    WrapNatureDescription(buffer, gNaturesInfo[natureId].description, FONT_NORMAL, 128, 6);
-    AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_NORMAL, buffer, 4, 1, TEXT_SKIP_DRAW, NULL);
+    WrapNatureDescription(buffer, gNaturesInfo[natureId].description, FONT_SMALL_NARROW, 118, 6);
+    AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_SMALL_NARROW, buffer, 4, 13, TEXT_SKIP_DRAW, NULL);
     CopyWindowToVram(RELEARNERWIN_DESC_BATTLE, COPYWIN_GFX);
 }
 
@@ -5469,77 +5580,133 @@ static void CB2_UniversalMintMain(void)
     UpdatePaletteFade();
 }
 
-static void Task_UniversalMint_HandleInput(u8 taskId);
+static void Task_UniversalMint_ConfirmOnPartyScreen(u8 taskId);
+static void Task_SplitMint_CancelConfirm(u8 taskId);
+static void CB2_ReturnToPartyMenuFromUniversalMint(void);
 
-static void Task_UniversalMint_ConfirmSelection(u8 taskId)
+static void PrintMintPickerPrompt(const u8 *text)
 {
-    static const u8 sText_askText[] = _("It may affect {STR_VAR_1}'s\nstats. Are you sure?");
-    static const u8 sText_doneText[] = _("{STR_VAR_1}'s stats may have changed due\nto the effects of the {STR_VAR_2}!{PAUSE_UNTIL_PRESS}");
-    u32 chosenNature = sUniversalMintMenu->selectedNature;
-    u32 monId = sUniversalMintMenu->partyMonId;
+    FillWindowPixelBuffer(RELEARNERWIN_MSG, PIXEL_FILL(1));
+    AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_SMALL_NARROW, text, 0, 1, TEXT_SKIP_DRAW, NULL);
+    CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
+}
 
-    switch (sUniversalMintMenu->confirmState)
+static void ExitMintPickerWithoutChangingNature(u8 taskId, bool32 consumeItem)
+{
+    if (consumeItem)
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+
+    DestroyListMenuTask(sUniversalMintMenu->listTaskId, NULL, NULL);
+    FreeAllWindowBuffers();
+    Free(sUniversalMintMenu);
+    sUniversalMintMenu = NULL;
+    DestroyTask(taskId);
+    SetMainCallback2(CB2_ReturnToPartyMenuFromUniversalMint);
+}
+
+// Lands back on the party screen's normal "choose a mon" state - used when
+// the player backs out of the nature list without picking anything.
+static void CB2_ReturnToPartyMenuFromUniversalMint(void)
+{
+    gPaletteFade.bufferTransferDisabled = TRUE;
+    InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_USE_ON_WHICH_MON, Task_HandleChooseMonInput, gPartyMenu.exitCallback);
+}
+
+// Lands on the party screen with a nature already chosen, ready to ask for
+// confirmation the same way Ability Capsule/regular Mints do.
+static void CB2_ReturnToPartyMenuFromUniversalMint_Confirm(void)
+{
+    gPaletteFade.bufferTransferDisabled = TRUE;
+    InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_NONE, Task_UniversalMint_ConfirmOnPartyScreen, gPartyMenu.exitCallback);
+}
+
+// --- Custom Archetype item: Universal Mint (confirmation step) ---
+// Mirrors Task_AbilityCapsule/Task_Mint's confirm-and-apply flow, but runs
+// on the party screen after returning from the standalone nature list
+// screen, rather than asking inside that screen.
+static void Task_UniversalMint_ConfirmOnPartyScreen(u8 taskId)
+{
+    static const u8 sText_askText[] = _("One or more moves may be removed.\nProceed?");
+    static const u8 sText_doneText[] = _("{STR_VAR_1}'s stats may have changed due\nto the effects of the {STR_VAR_2}!{PAUSE_UNTIL_PRESS}");
+    s16 *data = gTasks[taskId].data;
+    u32 monId = sUniversalMintMenu->partyMonId;
+    u32 chosenNature = sUniversalMintMenu->selectedNature;
+
+    switch (data[0])
     {
     case 0:
-        // Display confirmation message
         GetMonNickname(&gParties[B_TRAINER_PLAYER][monId], gStringVar1);
         CopyItemName(gSpecialVar_ItemId, gStringVar2);
         StringExpandPlaceholders(gStringVar4, sText_askText);
         PlaySE(SE_SELECT);
-        FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
-        AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, gStringVar4, 4, 1, TEXT_SKIP_DRAW, NULL);
-        CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
-        sUniversalMintMenu->confirmState++;
+        DisplayPartyMenuMessage(gStringVar4, 1);
+        ScheduleBgCopyTilemapToVram(2);
+        data[0]++;
         break;
     case 1:
-        // Wait for text to finish and show YES/NO menu
-        PartyMenuDisplayYesNoMenu();
-        sUniversalMintMenu->confirmState++;
+        if (!IsPartyMenuTextPrinterActive())
+        {
+            PartyMenuDisplayYesNoMenu();
+            data[0]++;
+        }
         break;
     case 2:
-        // Process YES/NO input
         switch (Menu_ProcessInputNoWrapClearOnChoose())
         {
         case 0:
-            // YES - proceed to apply
-            sUniversalMintMenu->confirmState++;
+            data[0]++;
             break;
         case 1:
         case MENU_B_PRESSED:
-            // NO - return to nature list
             PlaySE(SE_SELECT);
+            ScheduleBgCopyTilemapToVram(2);
+            // Don't exit party menu, return to choosing a mon (same item still in hand).
             ClearStdWindowAndFrameToTransparent(6, 0);
             ClearWindowTilemap(6);
-            FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
-            AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, sUniversalMintMenu->promptText, 0, 1, 0, NULL);
-            CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
-            sUniversalMintMenu->confirmState = 0;
-            gTasks[taskId].func = Task_UniversalMint_HandleInput;
-            break;
+            Free(sUniversalMintMenu);
+            sUniversalMintMenu = NULL;
+            DisplayPartyMenuStdMessage(PARTY_MSG_USE_ON_WHICH_MON);
+            gTasks[taskId].func = Task_HandleChooseMonInput;
+            return;
         }
         break;
     case 3:
-        // Apply the nature
         PlaySE(SE_USE_ITEM);
         StringExpandPlaceholders(gStringVar4, sText_doneText);
-        FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
-        AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, gStringVar4, 4, 1, TEXT_SKIP_DRAW, NULL);
-        CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
-        SetMonData(&gParties[B_TRAINER_PLAYER][monId], MON_DATA_HIDDEN_NATURE, &chosenNature);
-        CalculateMonStats(&gParties[B_TRAINER_PLAYER][monId]);
-        RemoveBagItem(gSpecialVar_ItemId, 1);
-        sUniversalMintMenu->confirmState++;
+        DisplayPartyMenuMessage(gStringVar4, 1);
+        ScheduleBgCopyTilemapToVram(2);
+        data[0]++;
         break;
     case 4:
-        // Wait for result message to finish
+        if (!IsPartyMenuTextPrinterActive())
+            data[0]++;
+        break;
+    case 5:
+        {
+            u32 removedMoves = ApplyMintedNature(&gParties[B_TRAINER_PLAYER][monId], chosenNature);
+            RemoveBagItem(gSpecialVar_ItemId, 1);
+            if (removedMoves != 0)
+            {
+                GetMonNickname(&gParties[B_TRAINER_PLAYER][monId], gStringVar1);
+                StringExpandPlaceholders(gStringVar4, gText_MonForgotMovesForNewNature);
+                DisplayPartyMenuMessage(gStringVar4, 1);
+                ScheduleBgCopyTilemapToVram(2);
+                data[0]++;
+            }
+            else
+            {
+                Free(sUniversalMintMenu);
+                sUniversalMintMenu = NULL;
+                gTasks[taskId].func = Task_ClosePartyMenu;
+            }
+        }
+        break;
+    case 6:
         if (!IsPartyMenuTextPrinterActive())
         {
-            // Clean up and return to party menu
-            FreeAllWindowBuffers();
             Free(sUniversalMintMenu);
             sUniversalMintMenu = NULL;
-            DestroyTask(taskId);
-            SetMainCallback2(CB2_ReturnToPartyMenuFromSummaryScreen);
+            gTasks[taskId].func = Task_ClosePartyMenu;
         }
         break;
     }
@@ -5554,22 +5721,47 @@ static void Task_UniversalMint_HandleInput(u8 taskId)
     case LIST_NOTHING_CHOSEN:
         break;
     case LIST_CANCEL:
-        // User pressed B - exit without selecting
+        PlaySE(SE_SELECT);
+        if (sUniversalMintMenu->isSplitMint)
+        {
+            PrintMintPickerPrompt(COMPOUND_STRING("The Split Mint will be consumed and\nNature will not be changed. Continue?"));
+            MoveRelearnerCreateYesNoMenuDefaultNo();
+            gTasks[taskId].func = Task_SplitMint_CancelConfirm;
+        }
+        else
+        {
+            ExitMintPickerWithoutChangingNature(taskId, FALSE);
+        }
+        break;
+    default:
+        // User selected a nature - hand off to the party screen to confirm
+        // it (mirrors Ability Capsule/regular Mints). sUniversalMintMenu is
+        // kept alive - Task_UniversalMint_ConfirmOnPartyScreen frees it once
+        // the confirmation is resolved either way.
+        sUniversalMintMenu->selectedNature = itemId;
         PlaySE(SE_SELECT);
         DestroyListMenuTask(sUniversalMintMenu->listTaskId, NULL, NULL);
         FreeAllWindowBuffers();
-        Free(sUniversalMintMenu);
-        sUniversalMintMenu = NULL;
         DestroyTask(taskId);
-        SetMainCallback2(CB2_ReturnToPartyMenuFromSummaryScreen);
+        SetMainCallback2(CB2_ReturnToPartyMenuFromUniversalMint_Confirm);
         break;
-    default:
-        // User selected a nature - close list and show confirmation
-        sUniversalMintMenu->selectedNature = itemId;
-        sUniversalMintMenu->confirmState = 0;
+    }
+}
+
+static void Task_SplitMint_CancelConfirm(u8 taskId)
+{
+    switch (Menu_ProcessInputNoWrapClearOnChoose())
+    {
+    case 0: // Yes: consume the Mint and keep the current Nature.
         PlaySE(SE_SELECT);
-        DestroyListMenuTask(sUniversalMintMenu->listTaskId, NULL, NULL);
-        gTasks[taskId].func = Task_UniversalMint_ConfirmSelection;
+        ExitMintPickerWithoutChangingNature(taskId, TRUE);
+        break;
+    case 1: // No
+    case MENU_B_PRESSED:
+        PlaySE(SE_SELECT);
+        EraseYesNoWindow();
+        PrintMintPickerPrompt(sUniversalMintMenu->promptText);
+        gTasks[taskId].func = Task_UniversalMint_HandleInput;
         break;
     }
 }
@@ -5610,8 +5802,8 @@ static void Task_UniversalMint_Init(u8 taskId)
 
         menuTemplate.items = sUniversalMintMenu->items;
         menuTemplate.moveCursorFunc = UniversalMint_CursorCallback;
-        menuTemplate.totalItems = NUM_NATURES;
-        menuTemplate.maxShowed = 6;
+        menuTemplate.totalItems = sUniversalMintMenu->totalItems;
+        menuTemplate.maxShowed = min(6, sUniversalMintMenu->totalItems);
         menuTemplate.windowId = RELEARNERWIN_MOVE_LIST;
         menuTemplate.header_X = 0;
         menuTemplate.item_X = 8;
@@ -5629,8 +5821,7 @@ static void Task_UniversalMint_Init(u8 taskId)
 
         sUniversalMintMenu->listTaskId = ListMenuInit(&menuTemplate, 0, 0);
 
-        FillWindowPixelBuffer(RELEARNERWIN_MSG, 0x11);
-        AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_NORMAL, sUniversalMintMenu->promptText, 0, 1, 0, NULL);
+        PrintMintPickerPrompt(sUniversalMintMenu->promptText);
 
         ScheduleBgCopyTilemapToVram(0);
         ScheduleBgCopyTilemapToVram(1);
@@ -5652,6 +5843,8 @@ void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task)
 {
     sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
     sUniversalMintMenu->partyMonId = gPartyMenu.slotId;
+    sUniversalMintMenu->totalItems = NUM_NATURES;
+    sUniversalMintMenu->isSplitMint = FALSE;
 
     BuildSortedNatureList(sUniversalMintMenu->items);
 
@@ -5662,6 +5855,45 @@ void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task)
     // not inside that task itself, which would destroy the very task that's
     // still executing it. This matches move_relearner.c's real pattern for
     // the same kind of transition (see CB2_InitLearnMoveReturnFromSelectMove).
+    ResetTasks();
+    gMain.state = 0;
+    CreateTask(Task_UniversalMint_Init, 0);
+    SetMainCallback2(CB2_UniversalMintMain);
+}
+
+void ItemUseCB_SplitMint(u8 taskId, TaskFunc task)
+{
+    u32 currentNature = GetMonData(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], MON_DATA_HIDDEN_NATURE);
+    u32 firstNature;
+    u32 secondNature;
+
+    do
+    {
+        firstNature = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
+    } while (firstNature == currentNature);
+
+    do
+    {
+        secondNature = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
+    } while (secondNature == currentNature || secondNature == firstNature);
+
+    sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
+    sUniversalMintMenu->partyMonId = gPartyMenu.slotId;
+    sUniversalMintMenu->totalItems = 3;
+    sUniversalMintMenu->isSplitMint = TRUE;
+    sUniversalMintMenu->items[0].name = gNaturesInfo[firstNature].name;
+    sUniversalMintMenu->items[0].id = firstNature;
+    sUniversalMintMenu->items[1].name = gNaturesInfo[secondNature].name;
+    sUniversalMintMenu->items[1].id = secondNature;
+    StringCopy(sUniversalMintMenu->currentNatureLabel, gNaturesInfo[currentNature].name);
+    StringAppend(sUniversalMintMenu->currentNatureLabel, COMPOUND_STRING(" (Current)"));
+    sUniversalMintMenu->items[2].name = sUniversalMintMenu->currentNatureLabel;
+    sUniversalMintMenu->items[2].id = currentNature;
+
+    GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
+    StringCopy(gStringVar2, gNaturesInfo[currentNature].name);
+    StringExpandPlaceholders(sUniversalMintMenu->promptText, COMPOUND_STRING("Choose one of two Natures to\nreplace {STR_VAR_1}'s {STR_VAR_2}."));
+
     ResetTasks();
     gMain.state = 0;
     CreateTask(Task_UniversalMint_Init, 0);
@@ -6018,6 +6250,12 @@ void ItemUseCB_TMHM(u8 taskId, TaskFunc task)
         return;
     default:
         break;
+    }
+
+    if (DoesBoxMonNatureRefuseMove(&mon->box, move))
+    {
+        DisplayMonRefusedMoveAndClose(taskId, move);
+        return;
     }
 
     if (GiveMoveToMon(mon, move) != MON_HAS_MAX_MOVES)
@@ -6417,6 +6655,9 @@ static void Task_TryLearnNewMoves(u8 taskId)
             case MON_HAS_MAX_MOVES:
                 DisplayMonNeedsToReplaceMove(taskId);
                 break;
+            case MON_REFUSES_MOVE:
+                DisplayMonRefusedMove(taskId);
+                break;
             case MON_ALREADY_KNOWS_MOVE:
                 gTasks[taskId].func = Task_TryLearningNextMove;
                 break;
@@ -6445,6 +6686,9 @@ static void Task_TryLearningNextMove(u8 taskId)
             break;
         case MON_HAS_MAX_MOVES:
             DisplayMonNeedsToReplaceMove(taskId);
+            break;
+        case MON_REFUSES_MOVE:
+            DisplayMonRefusedMove(taskId);
             break;
         case MON_ALREADY_KNOWS_MOVE:
             gTasks[taskId].func = Task_TryLearningNextMove;
@@ -6516,6 +6760,53 @@ static void DisplayMonLearnedMove(u8 taskId, u16 move)
     ScheduleBgCopyTilemapToVram(2);
     gPartyMenu.data1 = move;
     gTasks[taskId].func = Task_DoLearnedMoveFanfareAfterText;
+}
+
+static void DisplayMonRefusedMove(u8 taskId)
+{
+    GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
+    StringCopy(gStringVar2, GetMoveName(gMoveToLearn));
+    StringExpandPlaceholders(gStringVar4, gText_PkmnNotKeenOnLearningMove);
+    DisplayPartyMenuMessage(gStringVar4, TRUE);
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = Task_DisplayMonDidNotLearnRefusedMove;
+}
+
+static void Task_DisplayMonDidNotLearnRefusedMove(u8 taskId)
+{
+    if (!IsPartyMenuTextPrinterActive())
+    {
+        GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
+        StringCopy(gStringVar2, GetMoveName(gMoveToLearn));
+        StringExpandPlaceholders(gStringVar4, gText_MoveNotLearned);
+        DisplayPartyMenuMessage(gStringVar4, TRUE);
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = Task_TryLearningNextMoveAfterText;
+    }
+}
+
+static void DisplayMonRefusedMoveAndClose(u8 taskId, enum Move move)
+{
+    GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
+    StringCopy(gStringVar2, GetMoveName(move));
+    StringExpandPlaceholders(gStringVar4, gText_PkmnNotKeenOnLearningMove);
+    DisplayPartyMenuMessage(gStringVar4, TRUE);
+    ScheduleBgCopyTilemapToVram(2);
+    gPartyMenu.data1 = move;
+    gTasks[taskId].func = Task_DisplayMonDidNotLearnRefusedMoveAndClose;
+}
+
+static void Task_DisplayMonDidNotLearnRefusedMoveAndClose(u8 taskId)
+{
+    if (!IsPartyMenuTextPrinterActive())
+    {
+        GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
+        StringCopy(gStringVar2, GetMoveName(gPartyMenu.data1));
+        StringExpandPlaceholders(gStringVar4, gText_MoveNotLearned);
+        DisplayPartyMenuMessage(gStringVar4, TRUE);
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+    }
 }
 
 static void BufferMonStatsToTaskData(struct Pokemon *mon, s16 *data)
@@ -6751,7 +7042,11 @@ void FormChangeTeachMove(u8 taskId, enum Move move, u32 slot)
     GetMonNickname(mon, gStringVar1);
     StringCopy(gStringVar2, GetMoveName(move));
 
-    if (GiveMoveToMon(mon, move) != MON_HAS_MAX_MOVES)
+    if (DoesBoxMonNatureRefuseMove(&mon->box, move))
+    {
+        DisplayMonRefusedMoveAndClose(taskId, move);
+    }
+    else if (GiveMoveToMon(mon, move) != MON_HAS_MAX_MOVES)
     {
         gTasks[taskId].func = Task_LearnedMove;
     }

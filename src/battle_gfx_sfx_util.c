@@ -172,7 +172,7 @@ u16 ChooseMoveAndTargetInBattlePalace(enum BattlerId battler)
     // Otherwise use move from "Support" group
     for (; i < maxGroupNum; i++)
     {
-        if (gNaturesInfo[GetNatureFromPersonality(gBattleMons[battler].personality)].battlePalacePercents[i] > percent)
+        if (gNaturesInfo[GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE)].battlePalacePercents[i] > percent)
             break;
     }
     selectedGroup = i - minGroupNum;
@@ -368,7 +368,7 @@ static u16 GetBattlePalaceTarget(enum BattlerId battler)
         if (gBattleMons[opposing1].hp == gBattleMons[opposing2].hp)
             return (BATTLE_OPPOSITE(battler & BIT_SIDE) + (Random() & 2)) << 8;
 
-        switch (gNaturesInfo[GetNatureFromPersonality(gBattleMons[battler].personality)].battlePalaceSmokescreen)
+        switch (gNaturesInfo[GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE)].battlePalaceSmokescreen)
         {
         case PALACE_TARGET_STRONGER:
             if (gBattleMons[opposing1].hp > gBattleMons[opposing2].hp)

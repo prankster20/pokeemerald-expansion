@@ -2065,6 +2065,23 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_PurpleMint,
     },
 
+    [ITEM_SPLIT_MINT] =
+    {
+        .name = ITEM_NAME("Split Mint"),
+        .price = (I_PRICE >= GEN_9) ? 10000 : 10,
+        .description = COMPOUND_STRING(
+            "Can be smelled. It\n"
+            "offers a choice of\n"
+            "two random natures."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_SplitMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
 // Candy
 
     [ITEM_RARE_CANDY] =

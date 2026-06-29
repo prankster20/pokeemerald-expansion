@@ -10,6 +10,7 @@
 #include "battle_interface.h"
 #include "battle_main.h"
 #include "battle_message.h"
+#include "battle_stat_change.h"
 #include "battle_pyramid.h"
 #include "battle_scripts.h"
 #include "battle_setup.h"
@@ -3009,6 +3010,7 @@ static void BattleStartClearSetData(void)
     for (i = 0; i < MAX_BATTLERS_COUNT; i++)
     {
         gBattleStruct->battlerState[i].isFirstTurn = 2;
+        gBattleStruct->battlerState[i].tongueTiedConsumed = FALSE; // pranks / jimh
         gLastMoves[i] = MOVE_NONE;
         gLastLandedMoves[i] = MOVE_NONE;
         gLastHitByType[i] = 0;
@@ -3212,9 +3214,15 @@ void SwitchInClearSetData(enum BattlerId battler, struct Volatiles *volatilesCop
     gBattleStruct->lastTakenMoveFrom[battler][2] = 0;
     gBattleStruct->lastTakenMoveFrom[battler][3] = 0;
     gBattleStruct->battlerState[battler].stompingTantrumTimer = 0;
+    gBattleStruct->battlerState[battler].tongueTiedConsumed = FALSE; // pranks / jimh
+    gBattleStruct->battlerState[battler].superstitiousMove = MOVE_NONE;
+    gBattleStruct->battlerState[battler].superstitiousCount = 0;
+    gBattleStruct->battlerState[battler].superstitiousMessage = 0;
+    gBattleStruct->battlerState[battler].superstitiousUsedMoveThisTurn = FALSE;
     gBattleStruct->palaceFlags &= ~(1u << battler);
     gBattleStruct->battlerState[battler].canPickupItem = FALSE;
     gBattleStruct->battlerState[battler].wasAboveHalfHp = gBattleMons[battler].hp > gBattleMons[battler].maxHP / 2;
+    gBattleStruct->battlerState[battler].wasAboveThirdHp = gBattleMons[battler].hp > gBattleMons[battler].maxHP / 3; // pranks / jimh
     gBattleStruct->hazardsCounter = 0;
     gSpecialStatuses[battler].queuedSwitch = NO_QUEUED_SWITCH;
 
@@ -3305,6 +3313,10 @@ void FaintClearSetData(enum BattlerId battler)
     gSpecialStatuses[battler].queuedSwitch = NO_QUEUED_SWITCH;
 
     gBattleStruct->battlerState[battler].isFirstTurn = 2;
+    gBattleStruct->battlerState[battler].superstitiousMove = MOVE_NONE;
+    gBattleStruct->battlerState[battler].superstitiousCount = 0;
+    gBattleStruct->battlerState[battler].superstitiousMessage = 0;
+    gBattleStruct->battlerState[battler].superstitiousUsedMoveThisTurn = FALSE;
 
     gLastMoves[battler] = MOVE_NONE;
     gLastLandedMoves[battler] = MOVE_NONE;
@@ -3770,6 +3782,7 @@ static void TryDoEventsBeforeFirstTurn(void)
                         gBattleMons[battler].statStages[stat] = MIN_STAT_STAGE;
                 }
             }
+            ClampBattlerStatStagesForNature(battler);
 
             gBattlerAttacker = battler;
             gQueuedStatBoosts[battler].stats = 0;
@@ -4183,7 +4196,8 @@ static void HandleTurnActionSelectionState(void)
                         {
                             moveInfo.moves[i] = gBattleMons[battler].moves[i];
                             moveInfo.currentPp[i] = gBattleMons[battler].pp[i];
-                            moveInfo.maxPp[i] = CalculatePPWithBonus(
+                            moveInfo.maxPp[i] = CalculatePPWithBonusForMon(
+                                                            GetBattlerMon(battler),
                                                             gBattleMons[battler].moves[i],
                                                             gBattleMons[battler].ppBonuses,
                                                             i);
@@ -4660,6 +4674,14 @@ u32 GetBattlerTotalSpeedStat(enum BattlerId battler, enum Ability ability, enum 
     speed /= gStatStageRatios[gBattleMons[battler].statStages[STAT_SPEED]][1];
 
     u32 weather = GetWeather();
+
+    // --- Custom Archetype natures: Tempestuous & Territorial ---
+    // Boosts all non-HP stats by 5% in any Weather / on any Terrain, respectively.
+    if (HasNature(battler, NATURE_TEMPESTUOUS) && (weather & B_WEATHER_ANY))
+        speed = speed * 105 / 100;
+    else if (HasNature(battler, NATURE_TERRITORIAL) && (gFieldStatuses & STATUS_FIELD_TERRAIN_ANY))
+        speed = speed * 105 / 100;
+
     // weather abilities
     if (ability == ABILITY_SWIFT_SWIM       && holdEffect != HOLD_EFFECT_UTILITY_UMBRELLA && weather  & B_WEATHER_RAIN)
         speed *= 2;
@@ -4689,7 +4711,7 @@ u32 GetBattlerTotalSpeedStat(enum BattlerId battler, enum Ability ability, enum 
         && ShouldGetStatBadgeBoost(B_FLAG_BADGE_BOOST_SPEED, battler)
         && IsOnPlayerSide(battler))
     {
-        speed = uq4_12_multiply_by_int_half_down(GetBadgeBoostModifier(), speed);
+        speed = uq4_12_multiply_by_int_half_down(GetBadgeBoostModifier(battler), speed);
     }
 
     // item effects
@@ -4707,7 +4729,10 @@ u32 GetBattlerTotalSpeedStat(enum BattlerId battler, enum Ability ability, enum 
         speed *= 2;
 
     // paralysis drop
-    if (gBattleMons[battler].status1 & STATUS1_PARALYSIS && ability != ABILITY_QUICK_FEET)
+    // --- Custom Archetype nature: Stoic ---
+    if (gBattleMons[battler].status1 & STATUS1_PARALYSIS
+     && ability != ABILITY_QUICK_FEET
+     && !HasNature(battler, NATURE_STOIC))
         speed /= GetConfig(B_PARALYSIS_SPEED) >= GEN_7 ? 2 : 4;
 
     if (gSideStatuses[GetBattlerSide(battler)] & SIDE_STATUS_SWAMP)
@@ -4735,6 +4760,9 @@ s32 GetBattleMovePriority(enum BattlerId battler, enum Ability ability, enum Mov
 
     if (GetActiveGimmick(battler) == GIMMICK_Z_MOVE && !IsBattleMoveStatus(move))
         move = GetUsableZMove(battler, move);
+
+    if (HasNature(battler, NATURE_PERFECTIONIST))
+        return -8;
 
     priority = GetMovePriority(move);
 
@@ -5040,6 +5068,7 @@ static void TurnValuesCleanUp(bool8 var0)
 
             gBattleStruct->battlerState[i].canPickupItem = FALSE;
             gBattleStruct->battlerState[i].wasAboveHalfHp = FALSE;
+            gBattleStruct->battlerState[i].wasAboveThirdHp = FALSE; // pranks / jimh
         }
 
         if (gBattleMons[i].volatiles.substituteHP == 0)
@@ -5533,6 +5562,12 @@ static void HandleEndTurn_FinishBattle(void)
 
         for (u32 i = 0; i < PARTY_SIZE; i++)
         {
+            if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK
+                                   | BATTLE_TYPE_RECORDED_LINK
+                                   | BATTLE_TYPE_SAFARI
+                                   | BATTLE_TYPE_CATCH_TUTORIAL)))
+                RerollMercurialNature(&gParties[B_TRAINER_PLAYER][i]);
+
             bool32 changedForm = TryRevertPartyMonFormChange(i);
 
             // Recalculate the stats of every party member before the end

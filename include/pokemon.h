@@ -37,6 +37,7 @@ enum MonData {
     MON_DATA_HP,
     MON_DATA_IS_SHINY,
     MON_DATA_HIDDEN_NATURE,
+    MON_DATA_MERCURIAL_NATURE,
     MON_DATA_HP_LOST,
     MON_DATA_DAYS_SINCE_FORM_CHANGE,
     MON_DATA_ENCRYPT_SEPARATOR,
@@ -274,7 +275,7 @@ struct BoxPokemon
     u16 checksum;
     u16 hpLost:14; // 16383 HP.
     u16 shinyModifier:1;
-    u16 unused_1E:1;
+    u16 mercurialNature:1;
 
     union
     {
@@ -777,6 +778,9 @@ void GiveMonDefaultMove(struct Pokemon *mon, u32 slot);
 void GiveBoxMonDefaultMove(struct BoxPokemon *boxMon, u32 slot);
 enum Move MonTryLearningNewMoveAtLevel(struct Pokemon *mon, bool32 firstMove, u32 level);
 enum Move MonTryLearningNewMove(struct Pokemon *mon, bool8 firstMove);
+bool32 DoesBoxMonNatureRefuseMove(struct BoxPokemon *boxMon, enum Move move);
+u32 ApplyMintedNature(struct Pokemon *mon, u32 nature);
+bool32 RerollMercurialNature(struct Pokemon *mon);
 void DeleteFirstMoveAndGiveMoveToMon(struct Pokemon *mon, enum Move move);
 void DeleteFirstMoveAndGiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move);
 u8 CountAliveMonsInBattle(u8 caseId, enum BattlerId battler);
@@ -841,6 +845,8 @@ const struct Evolution *GetSpeciesEvolutions(enum Species species);
 const u16 *GetSpeciesFormTable(enum Species species);
 const struct FormChange *GetSpeciesFormChanges(enum Species species);
 u8 CalculatePPWithBonus(enum Move move, u8 ppBonuses, u8 moveIndex);
+u8 CalculatePPWithBonusForMon(struct Pokemon *mon, enum Move move, u8 ppBonuses, u8 moveIndex);
+void AdjustPPForSeriousNatureChange(struct Pokemon *mon, u32 oldNature, u32 newNature);
 void RemoveMonPPBonus(struct Pokemon *mon, u8 moveIndex);
 void RemoveBoxMonPPBonus(struct BoxPokemon *mon, u8 moveIndex);
 void RemoveBattleMonPPBonus(struct BattlePokemon *mon, u8 moveIndex);
@@ -857,6 +863,9 @@ enum Species GetGMaxTargetSpecies(enum Species species);
 bool32 DoesMonMeetAdditionalConditions(struct Pokemon *mon, const struct EvolutionParam *params, struct Pokemon *tradePartner, u32 partyId, bool32 *canStopEvo, enum EvoState evoState);
 enum Species GetEvolutionTargetSpecies(struct Pokemon *mon, enum EvolutionMode mode, u16 evolutionItem, struct Pokemon *tradePartner, bool32 *canStopEvo, enum EvoState evoState);
 bool8 IsMonPastEvolutionLevel(struct Pokemon *mon);
+bool32 IsYouthfulNatureActive(struct Pokemon *mon);
+bool32 PlayerPartyHasNature(u32 nature);
+extern bool8 gCreatingWildMon;
 enum Species NationalPokedexNumToSpecies(enum NationalDexOrder nationalNum);
 u32 NationalToRegionalOrder(enum NationalDexOrder nationalNum);
 enum KantoDexOrder NationalToKantoOrder(enum NationalDexOrder nationalNum);
@@ -873,7 +882,10 @@ u8 GetPlayerFlankId(void);
 u16 GetLinkTrainerFlankId(u8 linkPlayerId);
 s32 GetBattlerMultiplayerId(u16 id);
 u8 GetTrainerEncounterMusicId(u16 trainerOpponentId);
-u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex);
+u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality);
+u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex);
+u32 GetMaterialisticBoostPercent(void);
+u32 GetLoyalBoostPercent(u32 level, u32 metLevel);
 void AdjustFriendship(struct Pokemon *mon, u8 event);
 s32 CalculateFriendshipBonuses(struct Pokemon *mon, s32 modifier, enum HoldEffect itemHoldEffect);
 void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies);

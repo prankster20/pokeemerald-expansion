@@ -199,6 +199,7 @@ extern const u8 gText_FemaleSymbol[];
 
 extern const u8 gText_SelectorArrow3[];
 extern const u8 gText_YesNo[];
+extern const u8 gText_NoYes[];
 
 // main menu/birch speech text
 extern const u8 gText_Birch_Welcome[];
@@ -301,6 +302,7 @@ extern const u8 gText_WhichMoveToForget[];
 extern const u8 gText_12PoofForgotMove[];
 extern const u8 gText_StopLearningMove2[];
 extern const u8 gText_MoveNotLearned[];
+extern const u8 gText_PkmnNotKeenOnLearningMove[];
 extern const u8 gText_PkmnElevatedToLvVar2[];
 extern const u8 gText_PkmnGainedExp[];
 extern const u8 gText_PkmnGainedExpAndElevatedToLvVar3[];
@@ -568,6 +570,7 @@ extern const u8 gText_MoveRelearnerAndPoof[];
 extern const u8 gText_MoveRelearnerPkmnForgotMoveAndLearnedNew[];
 extern const u8 gText_TeachWhichMoveToPkmn[];
 extern const u8 gText_UniversalMintPrompt[];
+extern const u8 gText_MonForgotMovesForNewNature[];
 extern const u8 gText_MoveRelearnerGiveUp[];
 extern const u8 gText_MoveRelearnerStop[];
 extern const u8 gText_MoveRelearnerTeachMoveConfirm[];

@@ -294,39 +294,96 @@ static u32 ChooseWildMonIndex_Fishing(u8 rod)
     case GOOD_ROD:
         if (rand < ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_SLOT_2)
             wildMonIndex = 2;
-        if (rand >= ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_SLOT_2 && rand < ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_SLOT_3)
+        else
             wildMonIndex = 3;
-        if (rand >= ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_SLOT_3 && rand < ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_SLOT_4)
-            wildMonIndex = 4;
 
         if (swap)
-            wildMonIndex = 6 - wildMonIndex;
+            wildMonIndex = 5 - wildMonIndex;
         break;
     case SUPER_ROD:
         if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_5)
             wildMonIndex = 5;
-        if (rand >= ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_5 && rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_6)
+        else
             wildMonIndex = 6;
-        if (rand >= ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_6 && rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_7)
-            wildMonIndex = 7;
-        if (rand >= ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_7 && rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_8)
-            wildMonIndex = 8;
-        if (rand >= ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_8 && rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_9)
-            wildMonIndex = 9;
 
         if (swap)
-            wildMonIndex = 14 - wildMonIndex;
+            wildMonIndex = 11 - wildMonIndex;
         break;
     }
     return wildMonIndex;
 }
 
+static u32 GetWildTableSize(enum WildPokemonArea area)
+{
+    switch (area)
+    {
+    case WILD_AREA_LAND:
+        return LAND_WILD_COUNT;
+    case WILD_AREA_WATER:
+        return WATER_WILD_COUNT;
+    case WILD_AREA_ROCKS:
+        return ROCK_WILD_COUNT;
+    case WILD_AREA_FISHING:
+        return FISH_WILD_COUNT;
+    case WILD_AREA_HIDDEN:
+        return HIDDEN_WILD_COUNT;
+    }
+
+    return 0;
+}
+
+static u32 GetAveragePlayerPartyLevel(void)
+{
+    u32 totalLevel = 0;
+    u32 monCount = 0;
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) == SPECIES_NONE
+         || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG))
+            continue;
+
+        totalLevel += GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_LEVEL);
+        monCount++;
+    }
+
+    return monCount == 0 ? MIN_LEVEL : totalLevel / monCount;
+}
+
+static s32 GetWildLevelShift(const struct WildPokemon *wildPokemon, u32 wildMonIndex, enum WildPokemonArea area)
+{
+    u32 tableMaxLevel = MIN_LEVEL;
+    u32 firstSlot = 0;
+    u32 tableSize = GetWildTableSize(area);
+    u32 targetMaxLevel = max(GetAveragePlayerPartyLevel(), 3) - 2;
+
+    // Each rod now exposes only two of the ten legacy fishing slots. Scale
+    // against that rod's active pair so unused Good/Super Rod slots cannot
+    // pull another rod's level range downward.
+    if (area == WILD_AREA_FISHING)
+    {
+        tableSize = 2;
+        if (wildMonIndex <= 1)
+            firstSlot = 0;
+        else if (wildMonIndex <= 3)
+            firstSlot = 2;
+        else
+            firstSlot = 5;
+    }
+
+    for (u32 i = firstSlot; i < firstSlot + tableSize; i++)
+        tableMaxLevel = max(tableMaxLevel, max(wildPokemon[i].minLevel, wildPokemon[i].maxLevel));
+
+    return (s32)targetMaxLevel - (s32)tableMaxLevel;
+}
+
 u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, enum WildPokemonArea area)
 {
-    u8 min;
-    u8 max;
+    s32 min;
+    s32 max;
     u8 range;
     u8 rand;
+    s32 levelShift = GetWildLevelShift(wildPokemon, wildMonIndex, area);
 
     if (LURE_STEP_COUNT == 0)
     {
@@ -341,6 +398,8 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
             min = wildPokemon[wildMonIndex].maxLevel;
             max = wildPokemon[wildMonIndex].minLevel;
         }
+        min = min(max(min + levelShift, MIN_LEVEL), MAX_LEVEL);
+        max = min(max(max + levelShift, MIN_LEVEL), MAX_LEVEL);
         range = max - min + 1;
         rand = Random() % range;
 
@@ -364,9 +423,9 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
         // Looks for the max level of all slots that share the same species as the selected slot.
         max = GetMaxLevelOfSpeciesInWildTable(wildPokemon, wildPokemon[wildMonIndex].species, area);
         if (max > 0)
-            return max + 1;
+            return min(max(max + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
         else // Failsafe
-            return wildPokemon[wildMonIndex].maxLevel + 1;
+            return min(max(wildPokemon[wildMonIndex].maxLevel + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
     }
 }
 
@@ -466,7 +525,9 @@ void CreateWildMon(enum Species species, u8 level)
 {
     ZeroEnemyPartyMons();
     u32 personality = GetMonPersonality(species, GetSynchronizedGender(WILDMON_ORIGIN, species), PickWildMonNature(species), RANDOM_UNOWN_LETTER);
+    gCreatingWildMon = TRUE;
     CreateMonWithIVs(&gParties[B_TRAINER_OPPONENT_A][0], species, level, personality, OTID_STRUCT_PLAYER_ID, USE_RANDOM_IVS);
+    gCreatingWildMon = FALSE;
     GiveMonInitialMoveset(&gParties[B_TRAINER_OPPONENT_A][0]);
 }
 
@@ -1048,6 +1109,13 @@ bool8 UpdateRepelCounter(void)
 bool8 IsWildLevelAllowedByRepel(u8 wildLevel)
 {
     u8 i;
+    bool32 worldlyLeader = GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SPECIES) != SPECIES_NONE
+                        && !GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_IS_EGG)
+                        && GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HIDDEN_NATURE) == NATURE_WORLDLY;
+
+    if (worldlyLeader
+     && wildLevel < GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_LEVEL))
+        return FALSE;
 
     if (!REPEL_STEP_COUNT)
         return TRUE;

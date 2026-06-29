@@ -238,6 +238,14 @@ BattleScript_StatDidntChangeMessagePause::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_HardyStatLimit::
+	call BattleScript_AbilityPopUpScripting
+	goto BattleScript_DecreaseStatChangeMessageMinStat
+
+BattleScript_HumbleStatLimit::
+	call BattleScript_AbilityPopUpScripting
+	goto BattleScript_StatDidntChangeMessagePause
+
 BattleScript_EffectShedTail::
 	attackcanceler
 	waitstate
@@ -3132,6 +3140,12 @@ BattleScript_LearnedNewMove::
 BattleScript_LearnMoveReturn::
 	return
 
+BattleScript_NatureRefusedLearnMove::
+	printstring STRINGID_TRYTOLEARNMOVE1
+	printstring STRINGID_PKMNNOTKEENONLEARNINGMOVE
+	printstring STRINGID_DIDNOTLEARNMOVE
+	goto BattleScript_TryLearnMoveLoop
+
 BattleScript_WeatherAbilityActivates::
 	pause B_WAIT_TIME_SHORT
 	call BattleScript_AbilityPopUp
@@ -4475,7 +4489,7 @@ BattleScript_AbilityPopUp::
 	sethword sABILITY_OVERWRITE, 0
 	return
 
-BattleScript_AbilityPopUpScripting:
+BattleScript_AbilityPopUpScripting::
 	copybyte gBattlerAbility, sBATTLER
 	goto BattleScript_AbilityPopUp
 
@@ -4878,6 +4892,30 @@ BattleScript_AbilityNoSpecificStatLoss::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_NatureNoSpecificStatLoss::
+	pause B_WAIT_TIME_SHORT
+	call BattleScript_AbilityPopUpScripting
+	printstring STRINGID_PKMNSXPREVENTSYLOSS
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_HedonisticHeal::
+	printstring STRINGID_PKMNREGAINEDHEALTH
+	waitmessage B_WAIT_TIME_LONG
+	healthbarupdate BS_ATTACKER, PASSIVE_HP_UPDATE
+	datahpupdate BS_ATTACKER, PASSIVE_HP_UPDATE
+	return
+
+BattleScript_SuperstitiousBuilding::
+	printstring STRINGID_SUPERSTITIONBUILDING
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_SuperstitiousScared::
+	printstring STRINGID_SUPERSTITIOUSTOOSCARED
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_ItemNoStatLoss::
 	pause B_WAIT_TIME_SHORT
 	printstring STRINGID_CLEARAMULETWONTLOWERSTATS
@@ -5088,6 +5126,25 @@ BattleScript_AbilityStatusEffect::
 	call BattleScript_AbilityPopUp
 	setnonvolatilestatus TRIGGER_ON_ABILITY
 	return
+
+BattleScript_NatureStatusEffect::
+	waitstate
+	call BattleScript_AbilityPopUpScripting
+	setnonvolatilestatus TRIGGER_ON_ABILITY
+	return
+
+BattleScript_FlirtyInfatuates::
+	call BattleScript_AbilityPopUpScripting
+	volatileanimation BS_TARGET, VOLATILE_INFATUATION
+	printstring STRINGID_PKMNFELLINLOVE
+	waitmessage B_WAIT_TIME_LONG
+	call BattleScript_TryDestinyKnotAttacker
+	return
+
+BattleScript_NaturePreventsStatus::
+	pause B_WAIT_TIME_SHORT
+	call BattleScript_AbilityPopUpScripting
+	goto BattleScript_MoveEnd
 
 BattleScript_BattleBondActivatesOnMoveEndAttacker::
 	pause 5
@@ -5341,6 +5398,114 @@ BattleScript_ItemHealHP_Ret::
 	waitmessage B_WAIT_TIME_LONG
 	healthbarupdate BS_ATTACKER, PASSIVE_HP_UPDATE
 	datahpupdate BS_ATTACKER, PASSIVE_HP_UPDATE
+	return
+
+@ pranks / jimh - generic nature-triggered heal, now with a nature popup too
+@ (set gBattleScripting.battler/showNaturePopup/naturePopupId before calling).
+@ Used by the Custom Archetype nature Resilient; reusable for future nature heals.
+BattleScript_GenericNatureHealRet::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	healthbarupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	datahpupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	printstring STRINGID_PKMNREGAINEDHEALTH
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+@ pranks / jimh - Nature popup + custom message, one script per message since
+@ printstring takes a literal STRINGID rather than a variable. Set
+@ gBattleScripting.battler/showNaturePopup/naturePopupId before calling any
+@ of these, same as the plain nature-popup-only path.
+BattleScript_ArrogantConfidentRet::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	printstring STRINGID_ARROGANTFEELINGCONFIDENT
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_BenevolentBoostsHealingRet::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	printstring STRINGID_BENEVOLENTBOOSTSHEALING
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_TempestuousChasesStormsRet::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	printstring STRINGID_TEMPESTUOUSCHASESSTORMS
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_TerritorialGuardsTerritoryRet::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	printstring STRINGID_TERRITORIALGUARDSTERRITORY
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_VainHaughtyRet::
+	call BattleScript_AbilityPopUpScripting
+	printstring STRINGID_VAINFEELINGHAUGHTY
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_VainBrokenAfterStatDrop::
+	printfromtable gStatDownStringIds
+	waitmessage B_WAIT_TIME_LONG
+	call BattleScript_AbilityPopUpScripting
+	printstring STRINGID_VANITYBROKEN
+	waitmessage B_WAIT_TIME_LONG
+	trydefiantrattled
+	tryadrenalineorb
+	return
+
+@ Custom Archetype nature: Cantankerous. Same single-popup-
+@ then-loop-through-everyone structure as the existing BattleScript_BadDreamsLoop,
+@ minus the ally-skip (Cantankerous hits itself and allies too) and the
+@ status/ability gating (it's unconditional, just skips fainted slots).
+BattleScript_CantankerousActivates::
+	setbyte gBattlerTarget, 0
+BattleScript_CantankerousLoop:
+	jumpifhasnohp BS_TARGET, BattleScript_CantankerousIncrement
+	jumpifbytenotequal sFIXED_ABILITY_POPUP, sZero, BattleScript_CantankerousDmgAfterPopUp
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	setbyte sFIXED_ABILITY_POPUP, TRUE
+BattleScript_CantankerousDmgAfterPopUp:
+	manipulatedamage DMG_1_16_TARGET_HP
+	healthbarupdate BS_TARGET, PASSIVE_HP_UPDATE
+	datahpupdate BS_TARGET, PASSIVE_HP_UPDATE
+	jumpifhasnohp BS_TARGET, BattleScript_CantankerousHidePopUp
+BattleScript_CantankerousIncrement:
+	addbyte gBattlerTarget, 1
+	jumpifbytenotequal gBattlerTarget, gBattlersCount, BattleScript_CantankerousLoop
+	jumpifbyteequal sFIXED_ABILITY_POPUP, sZero, BattleScript_CantankerousEnd
+	destroyabilitypopup
+	pause 15
+BattleScript_CantankerousEnd:
+	return
+
+BattleScript_CantankerousHidePopUp:
+	destroyabilitypopup
+	tryfaintmon BS_TARGET
+	goto BattleScript_CantankerousIncrement
+
+@ Custom Archetype nature: Soft-Hearted. Timed like Moxie
+@ (BattleScript_AbilityStatChange) - popup, then the effect, both within the
+@ same ABILITYEFFECT_MOVE_END_FOES_FAINTED check Moxie/Beast Boost use.
+BattleScript_SoftHeartedSelfDamage::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	healthbarupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	datahpupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
 	return
 
 BattleScript_SelectingNotAllowedMoveChoiceItem::

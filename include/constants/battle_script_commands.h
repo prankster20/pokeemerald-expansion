@@ -347,6 +347,7 @@ enum BattleScriptOpcode
 
 // Cmd_manipulatedamage
 #define DMG_1_8_TARGET_HP       0 // Used by bad dreams
+#define DMG_1_16_TARGET_HP      1 // pranks / jimh - Custom Archetype nature: Cantankerous
 
 // Cmd_jumpifcantswitch
 #define SWITCH_IGNORE_ESCAPE_PREVENTION   (1 << 7)

@@ -34,6 +34,8 @@ static u32 GetNumPositiveStats(struct StatChange *st);
 static u32 GetNumNegativeStats(struct StatChange *st);
 static void SetAdditionalEffectsOnStatChange(struct BattleCalcValues *cv, struct StatChange *st);
 static void MarkStatsAsDone(struct StatChange *st, u32 stat);
+static u32 GetMinimumStatStage(enum BattlerId battler);
+static u32 GetMaximumStatStage(enum BattlerId battler);
 
 u32 const sAccurateStatOrder[NUM_BATTLE_STATS] =
 {
@@ -46,6 +48,71 @@ u32 const sAccurateStatOrder[NUM_BATTLE_STATS] =
     STAT_ACC,
     STAT_EVASION,
 };
+
+static u32 GetMinimumStatStage(enum BattlerId battler)
+{
+    if (HasNature(battler, NATURE_HARDY))
+        return DEFAULT_STAT_STAGE - 1;
+
+    return MIN_STAT_STAGE;
+}
+
+static u32 GetMaximumStatStage(enum BattlerId battler)
+{
+    if (HasNature(battler, NATURE_HUMBLE))
+        return DEFAULT_STAT_STAGE + 1;
+
+    return MAX_STAT_STAGE;
+}
+
+void ClampBattlerStatStagesForNature(enum BattlerId battler)
+{
+    u32 minStage = GetMinimumStatStage(battler);
+    u32 maxStage = GetMaximumStatStage(battler);
+
+    for (enum Stat stat = STAT_ATK; stat < NUM_BATTLE_STATS; stat++)
+    {
+        if (gBattleMons[battler].statStages[stat] < minStage)
+            gBattleMons[battler].statStages[stat] = minStage;
+        else if (gBattleMons[battler].statStages[stat] > maxStage)
+            gBattleMons[battler].statStages[stat] = maxStage;
+    }
+}
+
+const u8 *PrepareNatureStatLimitFailure(enum BattlerId battler)
+{
+    for (u32 i = 0; i < gSpecialStatuses[battler].statStageAmount; i++)
+    {
+        enum Stat stat = gSpecialStatuses[battler].statStageQueue[i].stat;
+        s32 stage = gSpecialStatuses[battler].statStageQueue[i].stage;
+
+        if (stage < 0
+         && HasNature(battler, NATURE_HARDY)
+         && gBattleMons[battler].statStages[stat] == GetMinimumStatStage(battler))
+        {
+            PREPARE_STAT_BUFFER(gBattleTextBuff1, stat);
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STAT_WONT_CHANGE;
+            gBattleScripting.battler = battler;
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_HARDY;
+            return BattleScript_HardyStatLimit;
+        }
+
+        if (stage > 0
+         && HasNature(battler, NATURE_HUMBLE)
+         && gBattleMons[battler].statStages[stat] == GetMaximumStatStage(battler))
+        {
+            PREPARE_STAT_BUFFER(gBattleTextBuff1, stat);
+            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STAT_WONT_CHANGE;
+            gBattleScripting.battler = battler;
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_HUMBLE;
+            return BattleScript_HumbleStatLimit;
+        }
+    }
+
+    return NULL;
+}
 
 static void SetStrengthSapHealing(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Stat stat)
 {
@@ -96,14 +163,23 @@ static bool32 CheckSpecificMoveCondition(struct BattleCalcValues *cv, struct Sta
         }
         break;
     case EFFECT_STRENGTH_SAP:
-        if (CompareStat(cv->battlerDef, STAT_ATK, MIN_STAT_STAGE, CMP_EQUAL, ABILITY_NONE))
+        if (CompareStat(cv->battlerDef, STAT_ATK, GetMinimumStatStage(cv->battlerDef), CMP_EQUAL, ABILITY_NONE))
         {
             if (!st->onlyChecking)
             {
                 PREPARE_STAT_BUFFER(gBattleTextBuff1, STAT_ATK);
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STAT_WONT_CHANGE;
-                st->script = BattleScript_DecreaseStatChangeMessage;
                 gBattleScripting.battler = cv->battlerDef;
+                if (HasNature(cv->battlerDef, NATURE_HARDY))
+                {
+                    gBattleScripting.showNaturePopup = TRUE;
+                    gBattleScripting.naturePopupId = NATURE_HARDY;
+                    st->script = BattleScript_HardyStatLimit;
+                }
+                else
+                {
+                    st->script = BattleScript_DecreaseStatChangeMessage;
+                }
             }
             return TRUE;
         }
@@ -211,8 +287,13 @@ bool32 CanAnyStatChange(struct BattleCalcValues *cv, struct StatChange *st)
             if (statChangeBlockedOnBattler) // Still need to collect stats for proper failure
                 continue;
 
-            // Workaround for contrary
-            if (cv->moveEffect == EFFECT_BELLY_DRUM && !CompareStat(cv->battlerDef, st->stat, MAX_STAT_STAGE, CMP_EQUAL, ABILITY_NONE))
+            // Workaround for Belly Drum, including its Contrary direction.
+            if (cv->moveEffect == EFFECT_BELLY_DRUM
+             && !CompareStat(cv->battlerDef,
+                             st->stat,
+                             st->stage < 0 ? GetMinimumStatStage(cv->battlerDef) : GetMaximumStatStage(cv->battlerDef),
+                             CMP_EQUAL,
+                             ABILITY_NONE))
             {
                 canAnyStatChange = TRUE;
                 continue;
@@ -220,12 +301,12 @@ bool32 CanAnyStatChange(struct BattleCalcValues *cv, struct StatChange *st)
 
             if (st->stage < 0)
             {
-                if (CompareStat(cv->battlerDef, st->stat, MIN_STAT_STAGE, CMP_EQUAL, ABILITY_NONE))
+                if (CompareStat(cv->battlerDef, st->stat, GetMinimumStatStage(cv->battlerDef), CMP_EQUAL, ABILITY_NONE))
                     continue;
             }
             else
             {
-                if (CompareStat(cv->battlerDef, st->stat, MAX_STAT_STAGE, CMP_EQUAL, ABILITY_NONE))
+                if (CompareStat(cv->battlerDef, st->stat, GetMaximumStatStage(cv->battlerDef), CMP_EQUAL, ABILITY_NONE))
                     continue;
             }
 
@@ -327,13 +408,12 @@ static enum StatChangeResult CanDecreaseStat(struct BattleCalcValues *cv, struct
 static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct StatChange *st)
 {
     u32 currStage = gBattleMons[cv->battlerDef].statStages[st->stat];
+    u32 minStage = GetMinimumStatStage(cv->battlerDef);
 
     PREPARE_STAT_BUFFER(gBattleTextBuff1, st->stat);
 
-    if (currStage == (MIN_STAT_STAGE + 1))
-        st->stage = -1;
-    else if (currStage == 2 && st->stage < -2)
-        st->stage = -2;
+    if ((s32)currStage + st->stage < (s32)minStage)
+        st->stage = (s32)minStage - (s32)currStage;
 
     if (st->stage == -2)
     {
@@ -348,7 +428,7 @@ static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct St
         PREPARE_STRING_BUFFER(gBattleTextBuff2, STRINGID_EMPTYSTRING3);
     }
 
-    if (currStage == MIN_STAT_STAGE)
+    if (currStage == minStage)
     {
         if (st->onlyChecking)
             return STAT_CHANGE_DIDNT_WORK;
@@ -359,7 +439,16 @@ static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct St
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STAT_WONT_CHANGE;
 
         gBattleScripting.battler = cv->battlerDef;
-        st->script = BattleScript_DecreaseStatChangeMessageMinStat;
+        if (HasNature(cv->battlerDef, NATURE_HARDY))
+        {
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_HARDY;
+            st->script = BattleScript_HardyStatLimit;
+        }
+        else
+        {
+            st->script = BattleScript_DecreaseStatChangeMessageMinStat;
+        }
         return STAT_CHANGE_WORKED; // Handle failure
     }
     else if (!st->onlyChecking)
@@ -379,6 +468,21 @@ static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct St
         StatChanged(cv, st, FALSE);
         st->script = BattleScript_DecreaseStatChangeMessage;
         TryPlayStatChangeAnimation(cv, st);
+
+        // --- Custom Archetype nature: Vain ---
+        // The first successful stat drop permanently removes its 8% battle
+        // stat boost and replaces this drop's message script with a wrapper
+        // that also shows the nature popup and vanity-break message.
+        if (HasNature(cv->battlerDef, NATURE_VAIN)
+         && !GetBattlerPartyState(cv->battlerDef)->vainBroken)
+        {
+            GetBattlerPartyState(cv->battlerDef)->vainBroken = TRUE;
+            ApplyVainStatLoss(cv->battlerDef);
+            gBattleScripting.battler = cv->battlerDef;
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_VAIN;
+            st->script = BattleScript_VainBrokenAfterStatDrop;
+        }
     }
 
     return STAT_CHANGE_WORKED;
@@ -387,14 +491,13 @@ static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct St
 static enum StatChangeResult IncreaseStat(struct BattleCalcValues *cv, struct StatChange *st)
 {
     u32 currStage = gBattleMons[cv->battlerDef].statStages[st->stat];
-    bool32 isMaxStage = st->stage >= 12;
+    u32 maxStage = GetMaximumStatStage(cv->battlerDef);
+    bool32 isMaxStage = maxStage == MAX_STAT_STAGE && st->stage >= 12;
 
     PREPARE_STAT_BUFFER(gBattleTextBuff1, st->stat);
 
-    if (currStage == MAX_STAT_STAGE - 1)
-        st->stage = 1;
-    else if (currStage == MAX_STAT_STAGE - 2 && st->stage > 2)
-        st->stage = 2;
+    if ((s32)currStage + st->stage > (s32)maxStage)
+        st->stage = (s32)maxStage - (s32)currStage;
 
     if (st->stage == 2)
     {
@@ -409,22 +512,31 @@ static enum StatChangeResult IncreaseStat(struct BattleCalcValues *cv, struct St
         PREPARE_STRING_BUFFER(gBattleTextBuff2, STRINGID_EMPTYSTRING3);
     }
 
-    if (gBattleMons[cv->battlerDef].statStages[st->stat] == MAX_STAT_STAGE)
+    if (currStage == maxStage)
     {
         if (st->onlyChecking)
             return STAT_CHANGE_DIDNT_WORK;
 
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STAT_WONT_CHANGE;
-        st->script = BattleScript_StatDidntChangeMessagePause;
         gBattleScripting.battler = cv->battlerDef;
+        if (HasNature(cv->battlerDef, NATURE_HUMBLE))
+        {
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_HUMBLE;
+            st->script = BattleScript_HumbleStatLimit;
+        }
+        else
+        {
+            st->script = BattleScript_StatDidntChangeMessagePause;
+        }
         return STAT_CHANGE_WORKED; // Handle failure
     }
     else if (!st->onlyChecking)
     {
         u32 stageIncrease = st->stage;
 
-        if ((st->stage + gBattleMons[cv->battlerDef].statStages[st->stat]) > MAX_STAT_STAGE)
-            stageIncrease  = MAX_STAT_STAGE - gBattleMons[cv->battlerDef].statStages[st->stat];
+        if ((st->stage + gBattleMons[cv->battlerDef].statStages[st->stat]) > maxStage)
+            stageIncrease = maxStage - gBattleMons[cv->battlerDef].statStages[st->stat];
 
         if (stageIncrease > 0)
         {
@@ -466,19 +578,22 @@ static enum StatChangeResult IncreaseStat(struct BattleCalcValues *cv, struct St
 
 static void StatChanged(struct BattleCalcValues *cv, struct StatChange *st, bool32 isMaxStage)
 {
+    u32 minStage = GetMinimumStatStage(cv->battlerDef);
+    u32 maxStage = GetMaximumStatStage(cv->battlerDef);
+
     gBattleStruct->moveResultFlags[cv->battlerDef] |= MOVE_RESULT_STAT_CHANGED;
     gBattleScripting.battler = cv->battlerDef;
     gBattleMons[cv->battlerDef].statStages[st->stat] += st->stage;
 
     if (st->stage > 0)
     {
-        if (gBattleMons[cv->battlerDef].statStages[st->stat] > MAX_STAT_STAGE)
-            gBattleMons[cv->battlerDef].statStages[st->stat] = MAX_STAT_STAGE;
+        if (gBattleMons[cv->battlerDef].statStages[st->stat] > maxStage)
+            gBattleMons[cv->battlerDef].statStages[st->stat] = maxStage;
     }
     else
     {
-        if (gBattleMons[cv->battlerDef].statStages[st->stat] < MIN_STAT_STAGE)
-            gBattleMons[cv->battlerDef].statStages[st->stat] = MIN_STAT_STAGE;
+        if (gBattleMons[cv->battlerDef].statStages[st->stat] < minStage)
+            gBattleMons[cv->battlerDef].statStages[st->stat] = minStage;
     }
 
     if (cv->moveEffect == EFFECT_STOCKPILE && st->stage > 0)
@@ -707,7 +822,22 @@ static bool32 IsAbilityBlocked(struct BattleCalcValues *cv, struct StatChange *s
     if (st->certain)
         return FALSE;
 
-    if (CanAbilityPreventStatLoss(cv->abilities[cv->battlerDef]))
+    // --- Custom Archetype nature: Energetic ---
+    // Mirrors Hyper Cutter / Big Pecks / Keen Eye for Speed.
+    if (st->stat == STAT_SPEED && HasNature(cv->battlerDef, NATURE_ENERGETIC))
+    {
+        if (!st->onlyChecking)
+        {
+            MarkStatsAsDone(st, st->stat);
+            PREPARE_STAT_BUFFER(gBattleTextBuff1, st->stat);
+            st->script = BattleScript_NatureNoSpecificStatLoss;
+            gBattleScripting.battler = cv->battlerDef;
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_ENERGETIC;
+        }
+        return TRUE;
+    }
+    else if (CanAbilityPreventStatLoss(cv->abilities[cv->battlerDef]))
     {
         if (!st->onlyChecking)
         {
@@ -1051,7 +1181,7 @@ bool32 CanStatChange(struct BattleCalcValues *cv, struct StatChange *st)
         if (cv->battlerAtk != cv->battlerDef && st->stat == STAT_SPEED && st->stage < 0 && cv->abilities[cv->battlerDef] == ABILITY_SPEED_BOOST)
             return FALSE;
 
-        if (CompareStat(cv->battlerDef, st->stat, MIN_STAT_STAGE, CMP_EQUAL, ABILITY_NONE))
+        if (CompareStat(cv->battlerDef, st->stat, GetMinimumStatStage(cv->battlerDef), CMP_EQUAL, ABILITY_NONE))
             return FALSE;
 
         if (st->stage < 0 && CanDecreaseStat(cv, st) == STAT_CHANGE_DIDNT_WORK)
@@ -1059,7 +1189,7 @@ bool32 CanStatChange(struct BattleCalcValues *cv, struct StatChange *st)
     }
     else
     {
-        if (CompareStat(cv->battlerDef, st->stat, MAX_STAT_STAGE, CMP_EQUAL, ABILITY_NONE))
+        if (CompareStat(cv->battlerDef, st->stat, GetMaximumStatStage(cv->battlerDef), CMP_EQUAL, ABILITY_NONE))
             return FALSE;
     }
 

@@ -69,6 +69,8 @@ enum FirstEventBlock
     FIRST_EVENT_BLOCK_THRASH, // Thrash isn't handled here in vanilla but for now it is that best place for it.
     FIRST_EVENT_BLOCK_GRASSY_TERRAIN_HEAL,
     FIRST_EVENT_BLOCK_ABILITIES,
+    FIRST_EVENT_BLOCK_HEDONISTIC_HEAL,
+    FIRST_EVENT_BLOCK_SUPERSTITIOUS,
     FIRST_EVENT_BLOCK_HEAL_ITEMS,
 };
 

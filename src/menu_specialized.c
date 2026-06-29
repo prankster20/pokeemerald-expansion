@@ -866,6 +866,11 @@ void MoveRelearnerCreateYesNoMenu(void)
     CreateYesNoMenu(&sMoveRelearnerYesNoMenuTemplate, 1, 0xE, 0);
 }
 
+void MoveRelearnerCreateYesNoMenuDefaultNo(void)
+{
+    CreateNoYesMenu(&sMoveRelearnerYesNoMenuTemplate, 1, 0xE, 0);
+}
+
 //----------------
 // Condition menu
 //----------------

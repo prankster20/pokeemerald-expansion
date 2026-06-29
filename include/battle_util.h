@@ -224,6 +224,7 @@ u32 IsAbilityPreventingEscape(enum BattlerId battler);
 bool32 IsBattlerProtected(struct BattleCalcValues *cv);
 enum ProtectType GetProtectType(enum ProtectMethod method);
 bool32 CanBattlerEscape(enum BattlerId battler); // no ability check
+bool32 WasBattlerActuallyTrapped(enum BattlerId battler); // pranks / jimh
 void BattleScriptExecute(const u8 *BS_ptr);
 void BattleScriptPushCursorAndCallback(const u8 *BS_ptr);
 void ClearVariousBattlerFlags(enum BattlerId battler);
@@ -275,7 +276,7 @@ u32 GetIllusionMonPartyId(struct Pokemon *party, struct Pokemon *mon, struct Pok
 void SetIllusionMon(struct Pokemon *mon, enum BattlerId battler);
 enum ImmunityHealStatusOutcome TryImmunityAbilityHealStatus(enum BattlerId battler);
 bool32 ShouldGetStatBadgeBoost(u16 flagId, enum BattlerId battler);
-uq4_12_t GetBadgeBoostModifier(enum BattlerId battler); 
+uq4_12_t GetBadgeBoostModifier(enum BattlerId battler);
 enum DamageCategory GetBattleMoveCategory(enum Move move);
 void SetDynamicMoveCategory(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Move move);
 bool32 CanFling(enum BattlerId battlerAtk, enum Ability abilityAtk);
@@ -305,6 +306,7 @@ enum MoveTarget GetBattlerMoveTargetType(enum BattlerId battler, enum Move move)
 bool32 CanTargetBattler(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Move move);
 u32 GetNextTarget(u32 moveTarget, bool32 excludeCurrent);
 void CopyMonLevelAndBaseStatsToBattleMon(enum BattlerId battler, struct Pokemon *mon);
+void ApplyVainStatLoss(enum BattlerId battler);
 void CopyMonAbilityAndTypesToBattleMon(enum BattlerId battler, struct Pokemon *mon);
 void RecalcBattlerStats(enum BattlerId battler, struct Pokemon *mon, bool32 isDynamaxing);
 bool32 IsGen6ExpShareEnabled(void);
@@ -346,6 +348,7 @@ void RemoveConfusionStatus(enum BattlerId battler);
 u32 GetBattlerGender(enum BattlerId battler);
 bool32 AreBattlersOfOppositeGender(enum BattlerId battler1, enum BattlerId battler2);
 bool32 AreBattlersOfSameGender(enum BattlerId battler1, enum BattlerId battler2);
+u32 GetInfatuationImmuneNature(enum BattlerId battler);
 u32 CalcSecondaryEffectChance(enum BattlerId battler, enum Ability battlerAbility, const struct AdditionalEffect *additionalEffect);
 bool32 MoveEffectIsGuaranteed(enum BattlerId battler, enum Ability battlerAbility, const struct AdditionalEffect *additionalEffect);
 void GetBattlerTypes(enum BattlerId battler, bool32 ignoreTera, enum Type types[static 3]);
@@ -367,9 +370,14 @@ void ClearPursuitValuesIfSet(enum BattlerId battler);
 void ClearPursuitValues(void);
 bool32 HasWeatherEffect(void);
 bool32 HadMoreThanHalfHpNowDoesnt(enum BattlerId battler);
+bool32 HadMoreThanThirdHpNowDoesnt(enum BattlerId battler); // pranks / jimh
+u32 GetGullibleVolatileDuration(enum BattlerId battler, u32 turns);
 void ChooseStatBoostAnimation(enum BattlerId battler);
 bool32 TrySwitchInEjectPack(enum EjectPackTiming timing);
 bool32 EmergencyExitCanBeTriggered(enum BattlerId battler, enum Ability ability);
+// pranks / jimh - Custom Archetype natures: Cowardly & Phobic
+void SetNaturePopupForWimpOut(enum BattlerId battler);
+void SetPendingNaturePopup(enum BattlerId battler, u32 nature); // pranks / jimh
 bool32 TryTriggerSymbiosis(enum BattlerId battler, u32 ally);
 bool32 TrySymbiosis(enum BattlerId battler, enum Item itemId, bool32 moveEnd);
 void BestowItem(enum BattlerId battlerAtk, enum BattlerId battlerDef);

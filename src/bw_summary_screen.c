@@ -191,6 +191,8 @@ static EWRAM_DATA struct PokemonSummaryScreenData
         u32 OTID; // 0x48  
         u8 teraType;
         u8 mintNature;
+        bool8 mercurialNature;
+        u8 defensiveNatureBoost;
         u8 ivHp;
         u8 ivAtk;
         u8 ivDef;
@@ -382,6 +384,7 @@ static void CB2_PssChangePokemonNickname(void);
 
 static const u8 sMemoNatureTextColor[]                      = _("{COLOR DYNAMIC_COLOR2}{SHADOW DYNAMIC_COLOR3}");
 static u8 sMemoEffectBuffer[300];
+static u8 sDynamicNatureDescriptionBuffer[300]; // Holds dynamic Nature descriptions and current boost percentages.
 static const u8 sMemoMiscTextColor[]                        = _("{COLOR WHITE}{SHADOW DARK_GRAY}");
 static const u8 sStatsHPLayout[]                            = _("{DYNAMIC 0}/{DYNAMIC 1}");
 static const u8 sStatsHPIVEVLayout[]                        = _("{DYNAMIC 0}");
@@ -2209,6 +2212,7 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
         {
             sum->nature = GetNature(mon);
             sum->mintNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+            sum->mercurialNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE);
             sum->currentHP = GetMonData(mon, MON_DATA_HP);
             sum->maxHP = GetMonData(mon, MON_DATA_MAX_HP);
             sum->atk = GetMonData(mon, MON_DATA_ATK);
@@ -2221,6 +2225,7 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
         {
             sum->nature = GetNature(mon);
             sum->mintNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+            sum->mercurialNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE);
             sum->currentHP = GetMonData(mon, MON_DATA_HP);
             sum->maxHP = GetMonData(mon, MON_DATA_MAX_HP);
             sum->atk = GetMonData(mon, MON_DATA_ATK);
@@ -2229,6 +2234,20 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
             sum->spdef = GetMonData(mon, MON_DATA_SPDEF);
             sum->speed = GetMonData(mon, MON_DATA_SPEED);
         }
+        sum->defensiveNatureBoost = 0;
+        if (sum->mintNature == NATURE_COMMUNAL && !sMonSummaryScreen->isBoxMon)
+        {
+            sum->defensiveNatureBoost = GetCommunalBoostPercent(
+                sMonSummaryScreen->monList.mons,
+                sMonSummaryScreen->maxMonIndex + 1,
+                sMonSummaryScreen->curMonIndex);
+        }
+        else if (sum->mintNature == NATURE_MATERIALISTIC)
+        {
+            sum->defensiveNatureBoost = GetMaterialisticBoostPercent();
+        }
+        sum->def = sum->def * (100 + sum->defensiveNatureBoost) / 100;
+        sum->spdef = sum->spdef * (100 + sum->defensiveNatureBoost) / 100;
         break;
     case 3:
         GetMonData(mon, MON_DATA_OT_NAME, sum->OTName);
@@ -2304,6 +2323,8 @@ static void SetSelectMoveTilemaps(void)
 #define TILEMAP_PAGE_DOT_3_TILE_2_RECENTERED   0x0032
 
 #define TILE_BLACK_SQUARE           0x00B5
+#define TILE_ACTIVE_SQUARE_TOP      0x0001
+#define TILE_ACTIVE_SQUARE_BOTTOM   BG_TILE_V_FLIP(TILE_ACTIVE_SQUARE_TOP)
 #define TILE_INACTIVE_SQUARE_TOP    0x0002
 #define TILE_INACTIVE_SQUARE_BOTTOM BG_TILE_V_FLIP(TILE_INACTIVE_SQUARE_TOP)
 
@@ -2326,15 +2347,22 @@ static void HideContestPageDots(void)
     u32 page;
     for (page = 0; page < PSS_PAGE_COUNT; page++)
     {
-        // Recenter dots 1-3 into the space dot 4 used to occupy, preserving
-        // whichever tile (active or inactive) each page already has at each
-        // dot's position rather than assuming what it is.
-        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_3_TILE_1_RECENTERED] = sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_3_TILE_1];
-        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_3_TILE_2_RECENTERED] = sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_3_TILE_2];
-        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_2_TILE_1_RECENTERED] = sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_2_TILE_1];
-        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_2_TILE_2_RECENTERED] = sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_2_TILE_2];
-        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_1_TILE_1_RECENTERED] = sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_1_TILE_1];
-        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_1_TILE_2_RECENTERED] = sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_1_TILE_2];
+        // Build the three-dot row explicitly instead of copying the original
+        // slots. This routine can run more than once while the summary screen
+        // is first opening, after the original slots have already been
+        // blanked.
+        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_1_TILE_1_RECENTERED] =
+            page == PSS_PAGE_INFO ? TILE_ACTIVE_SQUARE_TOP : TILE_INACTIVE_SQUARE_TOP;
+        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_1_TILE_2_RECENTERED] =
+            page == PSS_PAGE_INFO ? TILE_ACTIVE_SQUARE_BOTTOM : TILE_INACTIVE_SQUARE_BOTTOM;
+        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_2_TILE_1_RECENTERED] =
+            page == PSS_PAGE_SKILLS ? TILE_ACTIVE_SQUARE_TOP : TILE_INACTIVE_SQUARE_TOP;
+        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_2_TILE_2_RECENTERED] =
+            page == PSS_PAGE_SKILLS ? TILE_ACTIVE_SQUARE_BOTTOM : TILE_INACTIVE_SQUARE_BOTTOM;
+        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_3_TILE_1_RECENTERED] =
+            page == PSS_PAGE_BATTLE_MOVES ? TILE_ACTIVE_SQUARE_TOP : TILE_INACTIVE_SQUARE_TOP;
+        sMonSummaryScreen->bg2TilemapBuffers[page][TILEMAP_PAGE_DOT_3_TILE_2_RECENTERED] =
+            page == PSS_PAGE_BATTLE_MOVES ? TILE_ACTIVE_SQUARE_BOTTOM : TILE_INACTIVE_SQUARE_BOTTOM;
 
         // Blank all three original dot positions now that their content has
         // moved to the recentered slots, plus dot 4's slot as before.
@@ -2382,8 +2410,8 @@ static void RestoreSummaryPageDisplay(void)
     }
     else
     {
-        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_1_RECENTERED] = TILE_BLACK_SQUARE;
-        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_2_RECENTERED] = TILE_BLACK_SQUARE;
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_1_RECENTERED] = TILE_ACTIVE_SQUARE_TOP;
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_2_RECENTERED] = TILE_ACTIVE_SQUARE_BOTTOM;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_1_RECENTERED] = TILE_INACTIVE_SQUARE_TOP;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_2_RECENTERED] = TILE_INACTIVE_SQUARE_BOTTOM;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_3_TILE_1_RECENTERED] = TILE_INACTIVE_SQUARE_TOP;
@@ -3647,6 +3675,11 @@ static void PrintTextOnWindow_BW_Font(u8 windowId, const u8 *string, u8 x, u8 y,
     PrintTextOnWindowWithFont(windowId, string, x, y, lineSpacing, colorId, FONT_BW_SUMMARY_SCREEN);
 }
 
+static void PrintMoveDescriptionText(u8 windowId, const u8 *string)
+{
+    PrintTextOnWindowWithFont(windowId, string, 2, 0, 1, 0, FONT_SMALL_NARROW);
+}
+
 static void PrintTextOnWindowToFitPx(u8 windowId, const u8 *string, u8 x, u8 y, u8 lineSpacing, u8 colorId, u32 width)
 {
     u32 fontId = GetFontIdToFit(string, FONT_SHORT, 0, width);
@@ -4218,9 +4251,70 @@ static void BufferMonTrainerMemo(void)
     // font sizes - see PrintMonTrainerMemo.
     {
         const u8 *description = gNaturesInfo[sum->mintNature].description;
+
+        // --- Custom Archetype nature: Quirky ---
+        // Boost is the personality value's units digit, plus 1 - show the current value.
+        if (description != NULL && sum->mintNature == NATURE_QUIRKY)
+        {
+            u8 numberString[4];
+            s32 boostPercent = 1 + (sum->pid % 10);
+
+            StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently "));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+            ConvertIntToDecimalStringN(numberString, boostPercent, STR_CONV_MODE_LEFT_ALIGN, 2);
+            StringAppend(sDynamicNatureDescriptionBuffer, numberString);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+        // --- Custom Archetype nature: Loyal ---
+        // Show the boost earned from levels gained since the Pokémon was met.
+        else if (description != NULL && sum->mintNature == NATURE_LOYAL)
+        {
+            u8 numberString[4];
+            u32 boostPercent = GetLoyalBoostPercent(sum->level, sum->metLevel);
+
+            StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently "));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+            ConvertIntToDecimalStringN(numberString, boostPercent, STR_CONV_MODE_LEFT_ALIGN, 2);
+            StringAppend(sDynamicNatureDescriptionBuffer, numberString);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+        // --- Custom Archetype natures: Communal & Materialistic ---
+        else if (description != NULL
+              && (sum->mintNature == NATURE_COMMUNAL
+               || sum->mintNature == NATURE_MATERIALISTIC))
+        {
+            u8 numberString[4];
+
+            StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently "));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+            ConvertIntToDecimalStringN(numberString, sum->defensiveNatureBoost, STR_CONV_MODE_LEFT_ALIGN, 2);
+            StringAppend(sDynamicNatureDescriptionBuffer, numberString);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+
+        if (description != NULL && sum->mercurialNature)
+        {
+            if (description != sDynamicNatureDescriptionBuffer)
+                StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Changes after every battle.{COLOR WHITE}{SHADOW DARK_GRAY}"));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+
         sMemoEffectBuffer[0] = EOS;
         if (description != NULL)
-            AppendWrappedNatureDescription(sMemoEffectBuffer, description, FONT_SMALL_NARROW, 200);
+            AppendWrappedNatureDescription(sMemoEffectBuffer, description, FONT_SMALL_NARROW, 190);
     }
 }
 
@@ -4243,7 +4337,10 @@ static void BufferNatureString(void)
 {
     struct PokemonSummaryScreenData *sumStruct = sMonSummaryScreen;
     DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, gNaturesInfo[sumStruct->summary.mintNature].name);
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, gText_EmptyString5);
+    if (sumStruct->summary.mercurialNature)
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, COMPOUND_STRING("{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5} (Mercurial)"));
+    else
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, gText_EmptyString5);
 }
 
 static void GetMetLevelString(u8 *output)
@@ -4454,6 +4551,36 @@ static void UNUSED PrintRibbonCount(void)
     PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_RIBBON_COUNT), text, x, 1, 0, 0);
 }
 
+// --- Custom Archetype nature: Proud ---
+// Finds this specific mon's actual highest/lowest non-HP stat (Proud boosts
+// whichever those are, unlike the classic natures' fixed stat pair). Ties
+// break Atk > Def > SpAtk > SpDef > Speed (NOT the Stat enum's actual
+// numeric order, which goes HP/Atk/Def/Speed/SpAtk/SpDef).
+static void GetProudHighLowStats(enum Stat *highStat, enum Stat *lowStat)
+{
+    struct PokeSummary *summary = &sMonSummaryScreen->summary;
+    u32 stats[NUM_STATS];
+    static const enum Stat sProudTieBreakOrder[] = {STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED};
+
+    stats[STAT_HP] = 0;
+    stats[STAT_ATK] = summary->atk;
+    stats[STAT_DEF] = summary->def;
+    stats[STAT_SPEED] = summary->speed;
+    stats[STAT_SPATK] = summary->spatk;
+    stats[STAT_SPDEF] = summary->spdef;
+
+    *highStat = sProudTieBreakOrder[0];
+    *lowStat = sProudTieBreakOrder[0];
+    for (u32 idx = 1; idx < ARRAY_COUNT(sProudTieBreakOrder); idx++)
+    {
+        enum Stat i = sProudTieBreakOrder[idx];
+        if (stats[i] > stats[*highStat])
+            *highStat = i;
+        if (stats[i] < stats[*lowStat])
+            *lowStat = i;
+    }
+}
+
 static void BufferStat(u8 *dst, s8 statIndex, u32 stat, u32 strId, u32 align)
 {
     static const u8 sTextNatureDown[] = _("{COLOR}{08}");
@@ -4462,8 +4589,36 @@ static void BufferStat(u8 *dst, s8 statIndex, u32 stat, u32 strId, u32 align)
     static const u8 sTextUpArrow[] = _(" {UP_ARROW}");
     static const u8 sTextDownArrow[] = _(" {DOWN_ARROW}");
     u8 *txtPtr;
+    bool32 isProud = (statIndex != 0 && sMonSummaryScreen->summary.mintNature == NATURE_PROUD);
+    bool32 isYouthful = (statIndex != 0
+                      && sMonSummaryScreen->summary.mintNature == NATURE_YOUTHFUL
+                      && IsYouthfulNatureActive(&sMonSummaryScreen->currentMon));
+    bool32 isYouthfulBoostedStat = isYouthful && (statIndex == STAT_ATK || statIndex == STAT_SPATK || statIndex == STAT_SPEED);
+    bool32 isDynamicDefenseBoostedStat = (sMonSummaryScreen->summary.defensiveNatureBoost != 0
+                                      && (sMonSummaryScreen->summary.mintNature == NATURE_COMMUNAL
+                                       || sMonSummaryScreen->summary.mintNature == NATURE_MATERIALISTIC)
+                                      && (statIndex == STAT_DEF || statIndex == STAT_SPDEF));
+    enum Stat proudHighStat = STAT_ATK, proudLowStat = STAT_ATK;
 
-    if (statIndex == 0 
+    if (isProud)
+        GetProudHighLowStats(&proudHighStat, &proudLowStat);
+
+    if (isProud && BW_SUMMARY_NATURE_COLORS)
+    {
+        if (proudHighStat == proudLowStat)
+            txtPtr = StringCopy(dst, sTextNatureNeutral);
+        else if (statIndex == proudHighStat)
+            txtPtr = StringCopy(dst, sTextNatureUp);
+        else if (statIndex == proudLowStat)
+            txtPtr = StringCopy(dst, sTextNatureDown);
+        else
+            txtPtr = StringCopy(dst, sTextNatureNeutral);
+    }
+    else if (isYouthfulBoostedStat && BW_SUMMARY_NATURE_COLORS)
+        txtPtr = StringCopy(dst, sTextNatureUp);
+    else if (isDynamicDefenseBoostedStat && BW_SUMMARY_NATURE_COLORS)
+        txtPtr = StringCopy(dst, sTextNatureUp);
+    else if (statIndex == 0
         || !BW_SUMMARY_NATURE_COLORS 
         || gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
         txtPtr = StringCopy(dst, sTextNatureNeutral);
@@ -4476,7 +4631,22 @@ static void BufferStat(u8 *dst, s8 statIndex, u32 stat, u32 strId, u32 align)
 
     ConvertIntToDecimalStringN(txtPtr, stat, STR_CONV_MODE_RIGHT_ALIGN, align);
 
-    if (statIndex != 0 
+    if (isProud && BW_SUMMARY_NATURE_ARROWS && proudHighStat != proudLowStat)
+    {
+        if (statIndex == proudHighStat)
+            StringAppend(txtPtr, sTextUpArrow);
+        else if (statIndex == proudLowStat)
+            StringAppend(txtPtr, sTextDownArrow);
+    }
+    else if (isYouthfulBoostedStat && BW_SUMMARY_NATURE_ARROWS)
+    {
+        StringAppend(txtPtr, sTextUpArrow);
+    }
+    else if (isDynamicDefenseBoostedStat && BW_SUMMARY_NATURE_ARROWS)
+    {
+        StringAppend(txtPtr, sTextUpArrow);
+    }
+    else if (statIndex != 0
         && BW_SUMMARY_NATURE_ARROWS 
         && gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp != gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
     {
@@ -4716,6 +4886,9 @@ static void PrintMoveNameAndPP(u8 moveIndex)
     {
         PrintTextOnWindowToFitPx_WithFont(moveNameWindowId, GetMoveName(move), 3, moveIndex * 28 + 2, 0, 12, FONT_SMALL, WindowWidthPx(moveNameWindowId) - 3);
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
+        // --- Custom Archetype nature: Serious ---
+        if (summary->mintNature == NATURE_SERIOUS)
+            pp += 1;
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);
         ConvertIntToDecimalStringN(gStringVar2, pp, STR_CONV_MODE_RIGHT_ALIGN, 2);
         DynamicPlaceholderTextUtil_Reset();
@@ -4836,8 +5009,8 @@ static void PrintContestMoveDescription(u8 moveSlot)
     if (move != MOVE_NONE)
     {
         windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
-        FormatTextByWidth(desc, 119, FONT_BW_SUMMARY_SCREEN, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_BW_SUMMARY_SCREEN, FONTATTR_LETTER_SPACING));
-        PrintTextOnWindow_BW_Font(windowId, desc, 2, 0, 0, 0);
+        FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
+        PrintMoveDescriptionText(windowId, desc);
     }
 }
 
@@ -4858,18 +5031,18 @@ static void PrintMoveDetails(u16 move)
             if (BW_SUMMARY_AUTO_FORMAT_MOVE_DESCRIPTIONS)
             {
                 if (gMovesInfo[move].effect != EFFECT_PLACEHOLDER)
-                    FormatTextByWidth(desc, 119, FONT_BW_SUMMARY_SCREEN, gMovesInfo[move].description, GetFontAttribute(FONT_BW_SUMMARY_SCREEN, FONTATTR_LETTER_SPACING));
+                    FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gMovesInfo[move].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
                 else
-                    FormatTextByWidth(desc, 119, FONT_BW_SUMMARY_SCREEN, gNotDoneYetDescription, GetFontAttribute(FONT_BW_SUMMARY_SCREEN, FONTATTR_LETTER_SPACING));
+                    FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gNotDoneYetDescription, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
 
-                PrintTextOnWindow_BW_Font(windowId, desc, 2, 0, 0, 0);
+                PrintMoveDescriptionText(windowId, desc);
             }
             else
             {
                 if (gMovesInfo[move].effect != EFFECT_PLACEHOLDER)
-                    PrintTextOnWindow_BW_Font(windowId, gMovesInfo[move].description, 2, 0, 0, 0);
+                    PrintMoveDescriptionText(windowId, gMovesInfo[move].description);
                 else
-                    PrintTextOnWindow_BW_Font(windowId, gNotDoneYetDescription, 2, 0, 0, 0);
+                    PrintMoveDescriptionText(windowId, gNotDoneYetDescription);
             }
 
         }
@@ -4878,12 +5051,12 @@ static void PrintMoveDetails(u16 move)
             HandleAppealJamTilemap(move);
             if (BW_SUMMARY_AUTO_FORMAT_MOVE_DESCRIPTIONS)
             {
-                FormatTextByWidth(desc, 119, FONT_BW_SUMMARY_SCREEN, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_BW_SUMMARY_SCREEN, FONTATTR_LETTER_SPACING));
-                PrintTextOnWindow_BW_Font(windowId, desc, 2, 0, 0, 0);
+                FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
+                PrintMoveDescriptionText(windowId, desc);
             }
             else
             {
-                PrintTextOnWindow_BW_Font(windowId, gContestEffects[gMovesInfo[move].contestEffect].description, 2, 0, 0, 0);
+                PrintMoveDescriptionText(windowId, gContestEffects[gMovesInfo[move].contestEffect].description);
             }
         }
         PutWindowTilemap(windowId);

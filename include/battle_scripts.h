@@ -175,6 +175,11 @@ extern const u8 BattleScript_AbilityProtectedTarget[];
 extern const u8 BattleScript_FlashFireBoost[];
 extern const u8 BattleScript_AbilityNoStatLoss[];
 extern const u8 BattleScript_AbilityNoSpecificStatLoss[];
+extern const u8 BattleScript_NatureNoSpecificStatLoss[];
+extern const u8 BattleScript_HedonisticHeal[];
+extern const u8 BattleScript_NatureRefusedLearnMove[];
+extern const u8 BattleScript_SuperstitiousBuilding[];
+extern const u8 BattleScript_SuperstitiousScared[];
 extern const u8 BattleScript_ItemNoStatLoss[];
 extern const u8 BattleScript_OwnTempoPrevents[];
 extern const u8 BattleScript_OwnTempoPreventsRet[];
@@ -184,6 +189,9 @@ extern const u8 BattleScript_ColorChangeActivates[];
 extern const u8 BattleScript_RoughSkinActivates[];
 extern const u8 BattleScript_CuteCharmActivates[];
 extern const u8 BattleScript_AbilityStatusEffect[];
+extern const u8 BattleScript_NatureStatusEffect[];
+extern const u8 BattleScript_FlirtyInfatuates[];
+extern const u8 BattleScript_NaturePreventsStatus[];
 extern const u8 BattleScript_SynchronizeActivates[];
 extern const u8 BattleScript_AbilityCuredStatus[];
 extern const u8 BattleScript_IgnoresWhileAsleep[];
@@ -202,6 +210,15 @@ extern const u8 BattleScript_ItemHealHP_RemoveItem[];
 extern const u8 BattleScript_ItemHealHP_RemoveBerry[];
 extern const u8 BattleScript_BerryPPHeal[];
 extern const u8 BattleScript_ItemHealHP_Ret[];
+extern const u8 BattleScript_GenericNatureHealRet[]; // pranks / jimh
+extern const u8 BattleScript_ArrogantConfidentRet[]; // pranks / jimh
+extern const u8 BattleScript_BenevolentBoostsHealingRet[]; // pranks / jimh
+extern const u8 BattleScript_TempestuousChasesStormsRet[]; // pranks / jimh
+extern const u8 BattleScript_TerritorialGuardsTerritoryRet[]; // pranks / jimh
+extern const u8 BattleScript_VainHaughtyRet[];
+extern const u8 BattleScript_VainBrokenAfterStatDrop[];
+extern const u8 BattleScript_CantankerousActivates[]; // pranks / jimh
+extern const u8 BattleScript_SoftHeartedSelfDamage[]; // pranks / jimh
 extern const u8 BattleScript_SelectingNotAllowedMoveChoiceItem[];
 extern const u8 BattleScript_SelectingNotAllowedMoveChoiceItemInPalace[];
 extern const u8 BattleScript_HangedOnMsg[];
@@ -474,6 +491,7 @@ extern const u8 BattleScript_EndTurnEvents[];
 extern const u8 BattleScript_QuestionForfeitBattle[];
 extern const u8 BattleScript_ForfeitBattleGaveMoney[];
 extern const u8 BattleScript_AbilityPopUp[];
+extern const u8 BattleScript_AbilityPopUpScripting[]; // pranks / jimh - was missing, used by Custom Archetype nature popups
 extern const u8 BattleScript_Attackstring[];
 extern const u8 BattleScript_SubmoveAttackstring[];
 extern const u8 BattleScript_MetronomeAttackstring[];
@@ -500,6 +518,8 @@ extern const u8 BattleScript_IncreaseStatChangeMessage[];
 extern const u8 BattleScript_DecreaseStatChangeMessage[];
 extern const u8 BattleScript_DecreaseStatChangeMessageMinStat[];
 extern const u8 BattleScript_StatDidntChangeMessagePause[];
+extern const u8 BattleScript_HardyStatLimit[];
+extern const u8 BattleScript_HumbleStatLimit[];
 
 // zmoves
 extern const u8 BattleScript_ZMoveActivateDamaging[];

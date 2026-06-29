@@ -557,7 +557,7 @@ void LaunchAnimationTaskForBackSprite(struct Sprite *sprite, enum BackAnim backA
     gTasks[taskId].tPtrLo = (u32)(sprite);
 
     battler = sprite->data[0];
-    nature = GetNature(GetBattlerMon(battler));
+    nature = GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE);
 
     // * 3 below because each back anim has 3 variants depending on nature
     animId = 3 * backAnimSet + gNaturesInfo[nature].backAnim;

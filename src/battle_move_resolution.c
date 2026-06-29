@@ -152,6 +152,13 @@ static enum CancelerResult CancelerAsleepOrFrozen(struct BattleCalcValues *cv)
                 {
                     result = CANCELER_RESULT_RUN_SCRIPT_AND_INCREMENT;
                 }
+                // --- Custom Archetype nature: Dreamy ---
+                // Can act even while asleep (sleep itself isn't cured -
+                // just doesn't stop it from using whatever move it picked).
+                else if (HasNature(cv->battlerAtk, NATURE_DREAMY))
+                {
+                    result = CANCELER_RESULT_RUN_SCRIPT_AND_INCREMENT;
+                }
                 else
                 {
                     gBattlescriptCurrInstr = BattleScript_MoveUsedIsAsleep;
@@ -459,22 +466,8 @@ static enum CancelerResult CancelerParalyzed(struct BattleCalcValues *cv)
 
 static enum CancelerResult CancelerInfatuation(struct BattleCalcValues *cv)
 {
-    if (gBattleMons[cv->battlerAtk].volatiles.infatuation)
-    {
-        gBattleScripting.battler = gBattleMons[cv->battlerAtk].volatiles.infatuation - 1;
-        if (!RandomPercentage(RNG_INFATUATION, 50))
-        {
-            BattleScriptCall(BattleScript_MoveUsedIsInLove);
-            return CANCELER_RESULT_RUN_SCRIPT_AND_INCREMENT;
-        }
-        else
-        {
-            BattleScriptPush(BattleScript_MoveUsedIsInLoveCantAttack);
-            CancelMultiTurnMoves(cv->battlerAtk);
-            gBattlescriptCurrInstr = BattleScript_MoveUsedIsInLove;
-            return CANCELER_RESULT_FAILURE;
-        }
-    }
+    // Infatuation now lowers offensive damage instead of preventing actions.
+    (void)cv;
     return CANCELER_RESULT_SUCCESS;
 }
 
@@ -982,6 +975,12 @@ static enum CancelerResult CancelerPPDeduction(struct BattleCalcValues *cv)
     s32 ppToDeduct = 1;
     enum MoveTarget moveTarget = GetBattlerMoveTargetType(cv->battlerAtk, cv->move);
     u32 movePosition = gCurrMovePos;
+
+    // --- Custom Archetype nature: Relentless ---
+    // Its moves cost one additional PP. A move at 1 PP is still usable and
+    // simply falls to 0 after use.
+    if (HasNature(cv->battlerAtk, NATURE_RELENTLESS))
+        ppToDeduct++;
 
     if (gBattleStruct->submoveAnnouncement == SUBMOVE_SUCCESS)
         movePosition = gChosenMovePos;
@@ -2470,6 +2469,22 @@ enum CancelerResult DoAttackCanceler(void)
 
     if (result == CANCELER_RESULT_FAILURE)
     {
+        // --- Custom Archetype nature: Lazy ---
+        // Only these specific causes count as a lost turn. Generic move
+        // failures, recharge, Truant, Disable, Taunt, etc. do not.
+        if (HasNature(gBattlerAttacker, NATURE_LAZY))
+        {
+            switch (gBattleStruct->eventState.atkCanceler - 1)
+            {
+            case CANCELER_ASLEEP_OR_FROZEN:
+            case CANCELER_FLINCH:
+            case CANCELER_CONFUSED:
+            case CANCELER_PARALYZED:
+                gBattleStruct->battlerState[gBattlerAttacker].lazyLostTurn = TRUE;
+                break;
+            }
+        }
+
         gBattleStruct->unableToUseMove = TRUE;
         gBattleStruct->pledgeState = PLEDGE_COMBO_NONE;
     }
@@ -2642,7 +2657,9 @@ static enum MoveEndResult MoveEndAbsorb(struct BattleCalcValues *cv)
          && !gBattleStruct->unableToUseMove
          && (gBattleStruct->doneDoublesSpreadHit || !IsDoubleSpreadMove())
          && !gSpecialStatuses[cv->battlerAtk].mindBlownRecoil
-         && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
+         && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD)
+         // --- Custom Archetype nature: Rugged ---
+         && !HasNature(cv->battlerAtk, NATURE_RUGGED))
         {
             s32 recoil = (GetNonDynamaxMaxHP(cv->battlerAtk) + 1) / 2; // Half of Max HP Rounded UP
             SetPassiveDamageAmount(cv->battlerAtk, recoil);
@@ -3023,12 +3040,46 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
                 gLastMoves[cv->battlerAtk] = gChosenMove;
                 gLastResultingMoves[cv->battlerAtk] = cv->move;
                 gLastUsedMoveType[cv->battlerAtk] = GetBattleMoveType(cv->move);
+
+                // --- Custom Archetype nature: Superstitious ---
+                // Track successful consecutive uses and defer its warning
+                // message until this battler's end-turn event block.
+                if (HasNature(cv->battlerAtk, NATURE_SUPERSTITIOUS))
+                {
+                    struct BattlerState *state = &gBattleStruct->battlerState[cv->battlerAtk];
+                    state->superstitiousUsedMoveThisTurn = TRUE;
+
+                    if (cv->move == MOVE_STRUGGLE)
+                    {
+                        state->superstitiousMove = MOVE_NONE;
+                        state->superstitiousCount = 0;
+                        state->superstitiousMessage = 0;
+                    }
+                    else
+                    {
+                        if (state->superstitiousMove == cv->move)
+                            state->superstitiousCount = min(state->superstitiousCount + 1, 2);
+                        else
+                        {
+                            state->superstitiousMove = cv->move;
+                            state->superstitiousCount = 1;
+                        }
+                        state->superstitiousMessage = state->superstitiousCount;
+                    }
+                }
             }
         }
         else
         {
             gLastResultingMoves[cv->battlerAtk] = MOVE_UNAVAILABLE;
             gLastUsedMoveType[cv->battlerAtk] = 0;
+            if (HasNature(cv->battlerAtk, NATURE_SUPERSTITIOUS))
+            {
+                gBattleStruct->battlerState[cv->battlerAtk].superstitiousMove = MOVE_NONE;
+                gBattleStruct->battlerState[cv->battlerAtk].superstitiousCount = 0;
+                gBattleStruct->battlerState[cv->battlerAtk].superstitiousMessage = 0;
+                gBattleStruct->battlerState[cv->battlerAtk].superstitiousUsedMoveThisTurn = FALSE;
+            }
         }
 
         if (IsBattlerAlive(cv->battlerDef))
@@ -3349,7 +3400,9 @@ static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
     case EFFECT_RECOIL_IF_MISS:
         if (IsBattlerAlive(cv->battlerAtk)
          && IsBattlerUnaffectedByMove(cv->battlerDef)
-         && !gBattleStruct->unableToUseMove)
+         && !gBattleStruct->unableToUseMove
+         // --- Custom Archetype nature: Rugged ---
+         && !HasNature(cv->battlerAtk, NATURE_RUGGED))
         {
             s32 recoil = 0;
             if (B_CRASH_IF_TARGET_IMMUNE == GEN_4 && gBattleStruct->moveResultFlags[cv->battlerDef] & MOVE_RESULT_DOESNT_AFFECT_FOE)
@@ -3388,7 +3441,9 @@ static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
         if (IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES) && IsBattlerAlive(cv->battlerAtk))
         {
             if (IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_ROCK_HEAD)
-             || IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
+             || IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD)
+             // --- Custom Archetype nature: Rugged ---
+             || HasNature(cv->battlerAtk, NATURE_RUGGED))
                 break;
 
             if (cv->moveEffect == EFFECT_CHLOROBLAST)
@@ -3458,6 +3513,8 @@ static enum MoveEndResult MoveEndMoveBlock(struct BattleCalcValues *cv)
          && IsAnyTargetTurnDamaged(cv->battlerAtk, EXCLUDING_SUBSTITUTES)
          && !DoesSubstituteBlockMove(cv->battlerAtk, cv->battlerDef, cv->move)
          && CanBattlerGetOrLoseItem(cv->battlerDef, cv->battlerAtk, gBattleMons[cv->battlerDef].item)
+         // --- Custom Archetype nature: Stubborn ---
+         && !HasNature(cv->battlerDef, NATURE_STUBBORN)
          && !NoAliveMonsForEitherParty())
         {
             enum BattleSide side = GetBattlerSide(cv->battlerDef);
@@ -3498,6 +3555,8 @@ static enum MoveEndResult MoveEndMoveBlock(struct BattleCalcValues *cv)
          || gBattleMons[cv->battlerAtk].item != ITEM_NONE
          || gBattleMons[cv->battlerDef].item == ITEM_NONE
          || !IsBattlerAlive(cv->battlerAtk)
+         // --- Custom Archetype nature: Stubborn ---
+         || HasNature(cv->battlerDef, NATURE_STUBBORN)
          || !CanStealItem(cv->battlerAtk, cv->battlerDef, gBattleMons[cv->battlerDef].item))
         {
             result = MOVEEND_RESULT_CONTINUE;
@@ -3873,6 +3932,7 @@ static enum MoveEndResult MoveEndEmergencyExit(struct BattleCalcValues *cv)
 
         gBattleScripting.battler = battler;
         gSpecialStatuses[battler].queuedSwitch = QUEUED_SWITCH_OPEN_PARTY_SCREEN;
+        SetNaturePopupForWimpOut(battler); // pranks / jimh
         BattleScriptCall(BattleScript_EmergencyExit);
         result = MOVEEND_RESULT_RUN_SCRIPT;
         break; // Only the fastest Emergency Exit / Wimp Out activates
@@ -3960,6 +4020,8 @@ static enum MoveEndResult MoveEndPickpocket(struct BattleCalcValues *cv)
               && !DoesSubstituteBlockMove(cv->battlerAtk, battlerDef, gCurrentMove)
               && IsBattlerAlive(battlerDef)
               && gBattleMons[battlerDef].item == ITEM_NONE
+              // --- Custom Archetype nature: Stubborn ---
+              && !HasNature(cv->battlerAtk, NATURE_STUBBORN)
               && CanStealItem(battlerDef, cv->battlerAtk, gBattleMons[cv->battlerAtk].item))
             {
                 gBattlerTarget = gBattlerAbility = battlerDef;
@@ -3979,6 +4041,154 @@ static enum MoveEndResult MoveEndPickpocket(struct BattleCalcValues *cv)
     return result;
 }
 
+// pranks / jimh - Custom Archetype nature: Resilient
+// When HP falls to 1/3, recovers 1/8 max HP.
+static bool32 TryResilientHeal(enum BattlerId battler)
+{
+    if (IsBattlerAlive(battler)
+     && HasNature(battler, NATURE_RESILIENT)
+     && HadMoreThanThirdHpNowDoesnt(battler))
+    {
+        u32 healAmount = GetNonDynamaxMaxHP(battler) / 8;
+
+        gBattleStruct->battlerState[battler].wasAboveThirdHp = FALSE;
+        if (healAmount == 0)
+            healAmount = 1;
+        SetHealAmount(battler, healAmount);
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE; // pranks / jimh
+        gBattleScripting.naturePopupId = NATURE_RESILIENT; // pranks / jimh
+        BattleScriptCall(BattleScript_GenericNatureHealRet);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static void ClearResoluteHarmfulVolatiles(enum BattlerId battler)
+{
+    struct Volatiles *v = &gBattleMons[battler].volatiles;
+
+    v->confusionTurns = 0;
+    v->infiniteConfusion = FALSE;
+    v->flinched = FALSE;
+    v->torment = FALSE;
+    v->tormentTimer = 0;
+    v->infatuation = 0;
+    v->powder = FALSE;
+    v->escapePrevention = FALSE;
+    v->battlerPreventingEscape = 0;
+    v->nightmare = FALSE;
+    v->cursed = FALSE;
+    v->foresight = FALSE;
+    v->electrified = FALSE;
+    v->saltCure = FALSE;
+    v->syrupBomb = FALSE;
+    v->stickySyrupedBy = 0;
+    v->syrupBombTimer = 0;
+    v->syrupBombIsShiny = FALSE;
+    v->glaiveRush = FALSE;
+    v->leechSeed = 0;
+    v->perishSong = FALSE;
+    v->perishSongTimer = 0;
+    v->yawn = 0;
+    v->gastroAcid = FALSE;
+    v->embargo = FALSE;
+    v->embargoTimer = 0;
+    v->smackDown = FALSE;
+    v->telekinesis = FALSE;
+    v->telekinesisTimer = 0;
+    v->miracleEye = FALSE;
+    v->healBlock = FALSE;
+    v->healBlockTimer = 0;
+    v->disabledMove = MOVE_NONE;
+    v->disableTimer = 0;
+    v->encoredMove = MOVE_NONE;
+    v->encoredMovePos = 0;
+    v->encoreTimer = 0;
+    v->tauntTimer = 0;
+    v->throatChopTimer = 0;
+    v->wrapped = FALSE;
+    v->wrappedBy = 0;
+    v->wrappedMove = MOVE_NONE;
+    v->wrapTurns = 0;
+    v->tarShot = FALSE;
+    v->octolock = FALSE;
+    v->octolockedBy = 0;
+
+    // Lock-On is stored on the user rather than on its target.
+    for (enum BattlerId i = 0; i < gBattlersCount; i++)
+    {
+        if (gBattleMons[i].volatiles.battlerWithSureHit == battler + 1)
+        {
+            gBattleMons[i].volatiles.lockOn = 0;
+            gBattleMons[i].volatiles.battlerWithSureHit = 0;
+        }
+    }
+}
+
+static bool32 TryResoluteCleanse(enum BattlerId battler)
+{
+    if (IsBattlerAlive(battler)
+     && HasNature(battler, NATURE_RESOLUTE)
+     && HadMoreThanThirdHpNowDoesnt(battler))
+    {
+        gBattleStruct->battlerState[battler].wasAboveThirdHp = FALSE;
+        ClearResoluteHarmfulVolatiles(battler);
+        gBattleScripting.battler = battler;
+        gBattleScripting.showNaturePopup = TRUE;
+        gBattleScripting.naturePopupId = NATURE_RESOLUTE;
+        BattleScriptCall(BattleScript_AbilityPopUpScripting);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 TryLazyHeal(enum BattlerId battler)
+{
+    if (!gBattleStruct->battlerState[battler].lazyLostTurn)
+        return FALSE;
+
+    gBattleStruct->battlerState[battler].lazyLostTurn = FALSE;
+    if (IsBattlerAlive(battler)
+     && HasNature(battler, NATURE_LAZY)
+     && gBattleMons[battler].hp < gBattleMons[battler].maxHP)
+    {
+        u32 healAmount = max(1, GetNonDynamaxMaxHP(battler) / 8);
+
+        SetHealAmount(battler, healAmount);
+        BattleScriptCall(BattleScript_HedonisticHeal);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// pranks / jimh - consumes a popup queued earlier via SetPendingNaturePopup
+// (e.g. Bad-Tempered/Bashful/Tongue-tied, set during damage calc - too early
+// in the pipeline to safely BattleScriptCall from there directly). Most
+// natures just want the plain popup; Tempestuous/Territorial have their own
+// scripts since they also print a custom message.
+static bool32 TryShowPendingNaturePopup(enum BattlerId battler)
+{
+    if (gBattleScripting.showNaturePopup && gBattleScripting.naturePopupBattler == battler)
+    {
+        gBattleScripting.battler = battler;
+        switch (gBattleScripting.naturePopupId)
+        {
+        case NATURE_TEMPESTUOUS:
+            BattleScriptCall(BattleScript_TempestuousChasesStormsRet);
+            break;
+        case NATURE_TERRITORIAL:
+            BattleScriptCall(BattleScript_TerritorialGuardsTerritoryRet);
+            break;
+        default:
+            BattleScriptCall(BattleScript_AbilityPopUpScripting);
+            break;
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static enum MoveEndResult MoveEndItemsEffectsAll(struct BattleCalcValues *cv)
 {
     while (gBattleStruct->eventState.moveEndBattler < gBattlersCount)
@@ -3986,7 +4196,11 @@ static enum MoveEndResult MoveEndItemsEffectsAll(struct BattleCalcValues *cv)
         enum BattlerId battler = gBattleStruct->eventState.moveEndBattler++;
 
         if (ItemBattleEffects(battler, 0, cv->holdEffects[battler], IsOnStatusChangeActivation)
-         || ItemBattleEffects(battler, 0, cv->holdEffects[battler], IsOnHpThresholdActivation))
+         || ItemBattleEffects(battler, 0, cv->holdEffects[battler], IsOnHpThresholdActivation)
+         || TryResilientHeal(battler)
+         || TryResoluteCleanse(battler)
+         || TryLazyHeal(battler)
+         || TryShowPendingNaturePopup(battler))
             return MOVEEND_RESULT_RUN_SCRIPT;
     }
 
@@ -4159,7 +4373,7 @@ static enum MoveEndResult MoveEndRampage(struct BattleCalcValues *cv)
         if (CanBeConfused(cv->battlerAtk, cv->battlerAtk))
         {
             gBattleScripting.battler = cv->battlerAtk;
-            gBattleMons[cv->battlerAtk].volatiles.confusionTurns = RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS); // 2-5 turns
+            gBattleMons[cv->battlerAtk].volatiles.confusionTurns = GetGullibleVolatileDuration(cv->battlerAtk, RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS)); // 2-5 turns
             BattleScriptCall(BattleScript_ConfusionAfterRampage);
             result = MOVEEND_RESULT_BREAK;
         }
@@ -4185,7 +4399,7 @@ static enum MoveEndResult MoveEndConfusionAfterSkyDrop(struct BattleCalcValues *
         if (CanBeConfused(cv->battlerDef, cv->battlerDef))
         {
             gBattleScripting.battler = cv->battlerDef;
-            gBattleMons[cv->battlerDef].volatiles.confusionTurns = RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS); // 2-5 turns
+            gBattleMons[cv->battlerDef].volatiles.confusionTurns = GetGullibleVolatileDuration(cv->battlerDef, RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS)); // 2-5 turns
             BattleScriptCall(BattleScript_ConfusionAfterRampage);
             result = MOVEEND_RESULT_BREAK;
         }
@@ -4693,7 +4907,8 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
         }
         else
         {
-            gBattlescriptCurrInstr = BattleScript_StatChangeFailed;
+            const u8 *natureLimitScript = PrepareNatureStatLimitFailure(cv->battlerAtk);
+            gBattlescriptCurrInstr = natureLimitScript != NULL ? natureLimitScript : BattleScript_StatChangeFailed;
             return MOVE_RESULT_FAILURE;
         }
         break;
@@ -4705,7 +4920,8 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
         }
         else
         {
-            gBattlescriptCurrInstr = BattleScript_StatChangeFailed;
+            const u8 *natureLimitScript = PrepareNatureStatLimitFailure(cv->battlerAtk);
+            gBattlescriptCurrInstr = natureLimitScript != NULL ? natureLimitScript : BattleScript_StatChangeFailed;
             return MOVE_RESULT_FAILURE;
         }
         break;
@@ -4717,7 +4933,8 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
         }
         else
         {
-            gBattlescriptCurrInstr = BattleScript_StatChangeFailed;
+            const u8 *natureLimitScript = PrepareNatureStatLimitFailure(cv->battlerAtk);
+            gBattlescriptCurrInstr = natureLimitScript != NULL ? natureLimitScript : BattleScript_StatChangeFailed;
             return MOVE_RESULT_FAILURE;
         }
         break;

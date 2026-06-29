@@ -86,7 +86,7 @@ enum __attribute__((packed)) Type
 #define NATURE_BAD_TEMPERED     31
 #define NATURE_BENEVOLENT       32
 #define NATURE_BITTER           33
-#define NATURE_BRAGGART         34
+#define NATURE_COMMUNAL        34
 #define NATURE_CALCULATING      35
 #define NATURE_CALLOUS          36
 #define NATURE_CALLOW           37
@@ -117,12 +117,12 @@ enum __attribute__((packed)) Type
 #define NATURE_LAZY             62
 #define NATURE_LOYAL            63
 #define NATURE_MEDDLESOME       64
-#define NATURE_MEEK             65
+#define NATURE_STOIC             65
 #define NATURE_MERCURIAL        66
 #define NATURE_NOBLE            67
 #define NATURE_OBEDIENT         68
 #define NATURE_OBSERVANT        69
-#define NATURE_ORGANIZED        70
+#define NATURE_MATERIALISTIC   70
 #define NATURE_PERFECTIONIST    71
 #define NATURE_PHOBIC           72
 #define NATURE_PRETENTIOUS      73
@@ -132,7 +132,7 @@ enum __attribute__((packed)) Type
 #define NATURE_RESILIENT        77
 #define NATURE_RESOLUTE         78
 #define NATURE_RESOURCEFUL      79
-#define NATURE_RESTLESS         80
+#define NATURE_SUPERSTITIOUS    80
 #define NATURE_RUSTIC           81
 #define NATURE_SCHOLARLY        82
 #define NATURE_SCROUNGER        83
@@ -144,7 +144,7 @@ enum __attribute__((packed)) Type
 #define NATURE_TEMPESTUOUS      89
 #define NATURE_TERRITORIAL      90
 #define NATURE_TONGUE_TIED      91
-#define NATURE_TOUGH            92
+#define NATURE_RUGGED            92
 #define NATURE_VAIN             93
 #define NATURE_VIGILANT         94
 #define NATURE_VORACIOUS        95
@@ -252,6 +252,7 @@ enum OtIdMethod
 #define PLAYER_HAS_ONE_MON             1
 #define PLAYER_HAS_ONE_USABLE_MON      2
 
+#define MON_REFUSES_MOVE        0xFFFD
 #define MON_ALREADY_KNOWS_MOVE  0xFFFE
 #define MON_HAS_MAX_MOVES       0xFFFF
 

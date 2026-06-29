@@ -1479,6 +1479,18 @@ static u32 GetBattlerMonData(enum BattlerId battler, struct Pokemon *party, u32 
         battleMon.speed = GetMonData(&party[monId], MON_DATA_SPEED);
         battleMon.spAttack = GetMonData(&party[monId], MON_DATA_SPATK);
         battleMon.spDefense = GetMonData(&party[monId], MON_DATA_SPDEF);
+        {
+            u32 nature = GetMonData(&party[monId], MON_DATA_HIDDEN_NATURE);
+            u32 boostPercent = 0;
+
+            if (nature == NATURE_COMMUNAL)
+                boostPercent = GetCommunalBoostPercent(party, PARTY_SIZE, monId);
+            else if (nature == NATURE_MATERIALISTIC && IsOnPlayerSide(battler))
+                boostPercent = GetMaterialisticBoostPercent();
+
+            battleMon.defense = battleMon.defense * (100 + boostPercent) / 100;
+            battleMon.spDefense = battleMon.spDefense * (100 + boostPercent) / 100;
+        }
         battleMon.abilityNum = GetMonData(&party[monId], MON_DATA_ABILITY_NUM);
         battleMon.otId = GetMonData(&party[monId], MON_DATA_OT_ID);
         battleMon.metLevel = GetMonData(&party[monId], MON_DATA_MET_LEVEL);

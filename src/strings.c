@@ -274,6 +274,7 @@ const u8 gText_PkmnCantLearnMove[] = _("{STR_VAR_1} and {STR_VAR_2}\nare not com
 const u8 gText_PkmnNeedsToReplaceMove[] = _("{STR_VAR_1} wants to learn the\nmove {STR_VAR_2}.\pHowever, {STR_VAR_1} already\nknows four moves.\pShould a move be deleted and\nreplaced with {STR_VAR_2}?");
 const u8 gText_StopLearningMove2[] = _("Stop trying to teach\n{STR_VAR_2}?");
 const u8 gText_MoveNotLearned[] = _("{STR_VAR_1} did not learn the\nmove {STR_VAR_2}.{PAUSE_UNTIL_PRESS}");
+const u8 gText_PkmnNotKeenOnLearningMove[] = _("{STR_VAR_1} is not too keen on\nlearning {STR_VAR_2}...{PAUSE_UNTIL_PRESS}");
 const u8 gText_WhichMoveToForget[] = _("Which move should be forgotten?{PAUSE_UNTIL_PRESS}");
 const u8 gText_12PoofForgotMove[] = _("1, {PAUSE 15}2, and{PAUSE 15}… {PAUSE 15}… {PAUSE 15}… {PAUSE 15}{PLAY_SE SE_BALL_BOUNCE_1}Poof!\p{STR_VAR_1} forgot how to\nuse {STR_VAR_2}.\pAnd…{PAUSE_UNTIL_PRESS}");
 const u8 gText_PkmnAlreadyKnows[] = _("{STR_VAR_1} already knows\n{STR_VAR_2}.{PAUSE_UNTIL_PRESS}");
@@ -407,14 +408,14 @@ const u8 gText_XNatureHatchedSomewhereAt[] = _("{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1
 // BW summary screen variants: "Met at..." comes first, nature line second
 // (no comma), since the BW memo box prints the effect text below the nature
 // line and the original ordering put "Natured," ahead of the location.
-const u8 gText_BWMetAtYZ_XNature[] = _("{LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}, {DYNAMIC 0}{DYNAMIC 4}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWHatchedAtYZ_XNature[] = _("Hatched, {DYNAMIC 0}{DYNAMIC 4}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWObtainedInTrade_XNature[] = _("Obtained in a trade.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWFatefulEncounter_XNature[] = _("obtained in a fateful encounter\nat {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWProbablyMetAt_XNature[] = _("Probably met at {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}, {DYNAMIC 0}{DYNAMIC 4}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWXNature[] = _("{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWMetSomewhereAt_XNature[] = _("Met somewhere at {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
-const u8 gText_BWHatchedSomewhereAt_XNature[] = _("Hatched somewhere at {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured");
+const u8 gText_BWMetAtYZ_XNature[] = _("{LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}, {DYNAMIC 0}{DYNAMIC 4}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWHatchedAtYZ_XNature[] = _("Hatched, {DYNAMIC 0}{DYNAMIC 4}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWObtainedInTrade_XNature[] = _("Obtained in a trade.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWFatefulEncounter_XNature[] = _("obtained in a fateful encounter\nat {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWProbablyMetAt_XNature[] = _("Probably met at {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}, {DYNAMIC 0}{DYNAMIC 4}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWXNature[] = _("{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWMetSomewhereAt_XNature[] = _("Met somewhere at {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
+const u8 gText_BWHatchedSomewhereAt_XNature[] = _("Hatched somewhere at {LV_2}{DYNAMIC 0}{DYNAMIC 3}{DYNAMIC 1}.\n{DYNAMIC 0}{DYNAMIC 2}{DYNAMIC 1} Natured{DYNAMIC 5}");
 const u8 gText_OddEggFoundByCouple[] = _("An odd POKéMON EGG found\nby the DAY CARE couple.");
 const u8 gText_PeculiarEggNicePlace[] = _("A peculiar POKéMON EGG\nobtained at the nice place.");
 const u8 gText_PeculiarEggTrade[] = _("A peculiar POKéMON EGG\nobtained in a trade.");
@@ -925,6 +926,7 @@ const u8 gText_FrontierFacilityIncluding[] = _(".\pThese include ");
 const u8 gText_FrontierFacilityAreInelegible[] = _(" are inelegible");
 
 const u8 gText_YesNo[] = _("YES\nNO");
+const u8 gText_NoYes[] = _("NO\nYES");
 const u8 gText_SelectorArrow3[] = _("▶");
 const u8 gText_Peekaboo[] = _("PEEKABOO!");
 const u8 gText_CommErrorCheckConnections[] = _("Communication error…\nPlease check all connections,\nthen turn the power OFF and ON.");
@@ -1128,6 +1130,7 @@ const u8 gText_TrainerHill3F[] = _("3F");
 const u8 gText_TrainerHill4F[] = _("4F");
 const u8 gText_TeachWhichMoveToPkmn[] = _("Teach which {STR_VAR_3} to\n{STR_VAR_1}?");
 const u8 gText_UniversalMintPrompt[] = _("Grant which Nature to\n{STR_VAR_1}?");
+const u8 gText_MonForgotMovesForNewNature[] = _("{STR_VAR_1} has forgotten one or more moves\non account of its new Nature.{PAUSE_UNTIL_PRESS}");
 const u8 gText_MoveRelearnerTeachMoveConfirm[] = _("Teach {STR_VAR_2}?");
 const u8 gText_MoveRelearnerTeachMoveConfirmUseTm[] = _("Teach {STR_VAR_2}?\nThis will consume one {STR_VAR_3}.");
 const u8 gText_MoveRelearnerPkmnLearnedMove[] = _("{STR_VAR_1} learned\n{STR_VAR_2}!");

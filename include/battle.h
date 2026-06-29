@@ -513,16 +513,35 @@ struct BattlerState
     u32 canPickupItem:1;
     u32 ateBoost:1;
     u32 wasAboveHalfHp:1; // For Berserk, Emergency Exit, Wimp Out and Anger Shell.
+    // --- Custom Archetype natures: Resilient & Resolute ---
+    // Re-arms whenever HP rises above one third, allowing a fresh trigger
+    // on the next downward crossing.
+    u32 wasAboveThirdHp:1;
+    // --- Custom Archetype nature: Delicate ---
+    // Set when the 1.5x entry-hazard damage multiplier actually applied, so
+    // PassiveDataHpUpdate knows to show Delicate's popup only for that case
+    // (not for every other source of passive damage).
+    u32 delicateHazardBoosted:1;
+    // --- Custom Archetype nature: Tongue-tied ---
+    // Set to TRUE once the first Sound move after switching in has been used
+    // (and had its damage reduced); reset to FALSE again on switch-in.
+    u32 tongueTiedConsumed:1;
     u32 commanderSpecies:11;
     u32 selectionScriptFinished:1;
     u32 lastMoveTarget:3; // The last target on which each mon used a move, for the sake of Instruct
     // End of Word
     u16 hpOnSwitchout;
+    // --- Custom Archetype nature: Superstitious ---
+    u16 superstitiousMove;
+    u8 superstitiousCount;
+    u8 superstitiousMessage;
+    bool8 superstitiousUsedMoveThisTurn;
     u16 switchIn:1;
     u16 notOnField:1;
     u16 redCardSwitched:1;
     u16 isFirstTurn:2; // Starts at 2 on switch in and counts down during end turn
-    u16 padding:11;
+    u16 lazyLostTurn:1;
+    u16 padding:10;
     // End of Word
 };
 
@@ -538,7 +557,11 @@ struct PartyState
     u32 changedSpecies:11; // For forms when multiple mons can change into the same Pokémon.
     u32 sentOut:1;
     u32 isKnockedOff:1;
-    u32 padding:8;
+    // --- Custom Archetype natures: Vain & Noble ---
+    u32 vainBroken:1;
+    u32 nobleMercyUsed:1;
+    u32 nobleMercyPopupPending:1;
+    u32 padding:5;
     u16 usedHeldItem;
 };
 
@@ -845,6 +868,13 @@ struct BattleScripting
     u8 illusionNickHack; // To properly display nick in STRINGID_ENEMYABOUTTOSWITCHPKMN.
     bool8 fixedPopup;   // Force ability popup to stick until manually called back
     u16 abilityPopupOverwrite;
+    // --- Custom Archetype natures: Cowardly & Phobic ---
+    // When Wimp Out/Emergency Exit triggers via nature rather than the real
+    // ability, the next showabilitypopup shows this nature's name instead of
+    // whatever the battler's actual ability happens to be.
+    bool8 showNaturePopup;
+    u8 naturePopupId;
+    u8 naturePopupBattler; // pranks / jimh - separate from gBattleScripting.battler, which gets overwritten by lots of other things between when this is queued and when it's consumed
     u8 switchCase;  // Special switching conditions, eg. red card
     u8 overrideBerryRequirements;
     u8 stickyWebStatDrop; // To prevent Defiant activating on a Court Change'd Sticky Web
@@ -1083,6 +1113,14 @@ static inline bool32 IsBattlerAlive(enum BattlerId battler)
         return FALSE;
     else
         return TRUE;
+}
+
+// pranks / jimh - QoL helper for Custom Archetype natures, mirrors the style
+// of ability-checking helpers (GetBattlerAbility(battler) == ABILITY_X) so
+// nature checks read the same way: HasNature(battler, NATURE_X).
+static inline bool32 HasNature(enum BattlerId battler, u32 nature)
+{
+    return GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE) == nature;
 }
 
 // Some effects, like most end of turn effects only activate on active battlers (on the field)

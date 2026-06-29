@@ -879,6 +879,11 @@ static u32 GetRelearnerLevelUpMoves(struct BoxPokemon *mon, u16 *moves)
     enum Species species = GetBoxMonData(mon, MON_DATA_SPECIES);
     u32 level = (P_ENABLE_ALL_LEVEL_UP_MOVES ? MAX_LEVEL : GetLevelFromBoxMonExp(mon));
     u32 numMoves = 0;
+
+    // --- Custom Archetype nature: Prodigious ---
+    // Learns moves 1 level early - so the relearner offers them 1 level early too.
+    if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
+        level += 1;
     do
     {
         const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
@@ -1014,6 +1019,11 @@ static bool32 HasRelearnerLevelUpMoves(struct BoxPokemon *boxMon)
 {
     enum Species species = GetBoxMonData(boxMon, MON_DATA_SPECIES);
     u32 level = (P_ENABLE_ALL_LEVEL_UP_MOVES == TRUE) ? MAX_LEVEL : GetLevelFromBoxMonExp(boxMon);
+
+    // --- Custom Archetype nature: Prodigious ---
+    // Learns moves 1 level early - so the relearner offers them 1 level early too.
+    if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
+        level += 1;
 
     do
     {

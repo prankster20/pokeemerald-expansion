@@ -47,6 +47,8 @@ u32 GetStatStage(u32 stat, const struct AdditionalEffect *additionalEffect);
 enum MoveResult DoStatChangeResolution(struct BattleCalcValues *cv);
 
 bool32 CanStatChange(struct BattleCalcValues *cv, struct StatChange *st);
+const u8 *PrepareNatureStatLimitFailure(enum BattlerId battler);
+void ClampBattlerStatStagesForNature(enum BattlerId battler);
 bool32 IsStatChangeStatusMove(enum Move move, bool32 (*isStatChange)(const struct AdditionalEffect *effect));
 bool32 IsAtkStatUpMove(const struct AdditionalEffect *effect);
 bool32 IsAtkSpAtkStatUpMove(const struct AdditionalEffect *effect);
