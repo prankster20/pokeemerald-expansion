@@ -201,6 +201,9 @@ enum Gender
 #define OPTIONS_BATTLE_STYLE_SHIFT 0
 #define OPTIONS_BATTLE_STYLE_SET 1
 
+#define OPTIONS_ANNOUNCE_NATURES_NO 0
+#define OPTIONS_ANNOUNCE_NATURES_YES 1
+
 enum __attribute__((packed)) Direction
 {
     DIR_NONE,

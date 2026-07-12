@@ -7,11 +7,13 @@
 #include "battle_switch_in.h"
 #include "battle_controllers.h"
 #include "config_changes.h"
+#include "pokemon.h"
 #include "constants/battle.h"
 #include "constants/moves.h"
 
 static bool32 FirstEventBlockEvents(struct BattleCalcValues *calcValues);
 static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability, enum HoldEffect holdEffect, enum Hazards hazardType);
+static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler);
 static bool32 TryNatureSwitchInEffects(enum BattlerId battler); // pranks / jimh
 static bool32 SecondEventBlockEvents(struct BattleCalcValues *calcValues);
 
@@ -65,6 +67,16 @@ bool32 DoSwitchInEvents(void)
         {
             battler = gBattlersBySpeed[gBattleStruct->switchInBattlerCounter++];
             if (AbilityBattleEffects(ABILITYEFFECT_UNNERVE, battler, calcValues.abilities[battler], 0, gBattleStruct->battlerState[battler].switchIn))
+                return TRUE;
+        }
+        gBattleStruct->switchInBattlerCounter = 0;
+        gBattleStruct->eventState.switchIn++;
+        break;
+    case SWITCH_IN_EVENTS_ANNOUNCE_NATURES:
+        while (gBattleStruct->switchInBattlerCounter < gBattlersCount)
+        {
+            battler = gBattlersByRawSpeed[gBattleStruct->switchInBattlerCounter++];
+            if (TryAnnounceOpposingNatureOnSwitchIn(battler))
                 return TRUE;
         }
         gBattleStruct->switchInBattlerCounter = 0;
@@ -305,6 +317,27 @@ static void SetDmgHazardsBattlescript(enum BattlerId battler, u8 multistringId)
     gBattleScripting.battler = battler;
     gBattleCommunication[MULTISTRING_CHOOSER] = multistringId;
     BattleScriptCall(BattleScript_DmgHazardsOnBattler);
+}
+
+static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler)
+{
+    u32 nature;
+
+    if (!gSaveBlock2Ptr->optionsAnnounceNatures)
+        return FALSE;
+    if (!gBattleStruct->battlerState[battler].switchIn)
+        return FALSE;
+    if (!IsBattlerAlive(battler))
+        return FALSE;
+    if (GetBattlerSide(battler) != B_SIDE_OPPONENT)
+        return FALSE;
+
+    nature = GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE);
+    gBattleScripting.battler = battler;
+    gBattleScripting.showNaturePopup = TRUE;
+    gBattleScripting.naturePopupId = nature;
+    BattleScriptCall(BattleScript_AbilityPopUpScripting);
+    return TRUE;
 }
 
 // --- Custom Archetype nature: Rugged ---
