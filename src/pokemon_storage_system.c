@@ -109,6 +109,7 @@ enum {
     MSG_PUT_IN_BAG,
     MSG_ITEM_IS_HELD,
     MSG_CHANGED_TO_ITEM,
+    MSG_TOO_FRUGAL_FOR_ITEM,
     MSG_CANT_STORE_MAIL,
 };
 
@@ -547,6 +548,7 @@ EWRAM_DATA static bool8 sInPartyMenu = 0;
 EWRAM_DATA static u8 sCurrentBoxOption = 0;
 EWRAM_DATA static u8 sDepositBoxId = 0;
 EWRAM_DATA static u8 sWhichToReshow = 0;
+EWRAM_DATA static bool8 sFrugalRefusedItemFromBag = FALSE;
 EWRAM_DATA static u8 sLastUsedBox = 0;
 EWRAM_DATA static u16 sMovingItemId = 0;
 EWRAM_DATA static struct Pokemon sSavedMovingMon = {0};
@@ -1078,6 +1080,7 @@ static const struct StorageMessage sMessages[] =
     [MSG_PUT_IN_BAG]           = {COMPOUND_STRING("Put this item in the BAG?"),  MSG_VAR_NONE},
     [MSG_ITEM_IS_HELD]         = {COMPOUND_STRING("{DYNAMIC 0} is now held."),   MSG_VAR_ITEM_NAME},
     [MSG_CHANGED_TO_ITEM]      = {COMPOUND_STRING("Changed to {DYNAMIC 0}."),    MSG_VAR_ITEM_NAME},
+    [MSG_TOO_FRUGAL_FOR_ITEM]  = {COMPOUND_STRING("It does not want to hold that."), MSG_VAR_NONE},
     [MSG_CANT_STORE_MAIL]      = {COMPOUND_STRING("MAIL can't be stored!"),      MSG_VAR_NONE},
 };
 
@@ -2205,7 +2208,13 @@ static void Task_ReshowPokeStorage(u8 taskId)
     case 1:
         if (!UpdatePaletteFade())
         {
-            if (sWhichToReshow == SCREEN_CHANGE_ITEM_FROM_BAG - 1 && gSpecialVar_ItemId != ITEM_NONE)
+            if (sWhichToReshow == SCREEN_CHANGE_ITEM_FROM_BAG - 1 && sFrugalRefusedItemFromBag)
+            {
+                sFrugalRefusedItemFromBag = FALSE;
+                PrintMessage(MSG_TOO_FRUGAL_FOR_ITEM);
+                sStorage->state++;
+            }
+            else if (sWhichToReshow == SCREEN_CHANGE_ITEM_FROM_BAG - 1 && gSpecialVar_ItemId != ITEM_NONE)
             {
                 PrintMessage(MSG_ITEM_IS_HELD);
                 sStorage->state++;
@@ -2380,8 +2389,18 @@ static void Task_PokeStorageMain(u8 taskId)
             SetPokeStorageTask(Task_TakeItemForMoving);
             break;
         case INPUT_GIVE_ITEM:
-            PlaySE(SE_SELECT);
-            SetPokeStorageTask(Task_GiveMovingItemToMon);
+            if (sStorage->movingItemId != ITEM_NONE
+             && ((sInPartyMenu && DoesBoxMonNatureRefuseHeldItem(&gParties[B_TRAINER_PLAYER][GetCursorPosition()].box, sStorage->movingItemId))
+              || (!sInPartyMenu && DoesBoxMonNatureRefuseHeldItem(&gPokemonStoragePtr->boxes[StorageGetCurrentBox()][GetCursorPosition()], sStorage->movingItemId))))
+            {
+                PlaySE(SE_FAILURE);
+                PrintMessage(MSG_TOO_FRUGAL_FOR_ITEM);
+            }
+            else
+            {
+                PlaySE(SE_SELECT);
+                SetPokeStorageTask(Task_GiveMovingItemToMon);
+            }
             break;
         case INPUT_SWITCH_ITEMS:
             PlaySE(SE_SELECT);
@@ -3806,11 +3825,23 @@ static void GiveChosenBagItem(void)
         if (sInPartyMenu)
         {
             struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][pos];
+            if (DoesBoxMonNatureRefuseHeldItem(&mon->box, itemId))
+            {
+                sFrugalRefusedItemFromBag = TRUE;
+                gSpecialVar_ItemId = ITEM_NONE;
+                return;
+            }
             SetMonData(&gParties[B_TRAINER_PLAYER][pos], MON_DATA_HELD_ITEM, &itemId);
             SetMonFormPSS_ItemHold(&mon->box);
         }
         else
         {
+            if (DoesBoxMonNatureRefuseHeldItem(&gPokemonStoragePtr->boxes[StorageGetCurrentBox()][pos], itemId))
+            {
+                sFrugalRefusedItemFromBag = TRUE;
+                gSpecialVar_ItemId = ITEM_NONE;
+                return;
+            }
             SetCurrentBoxMonData(pos, MON_DATA_HELD_ITEM, &itemId);
             SetMonFormPSS_ItemHold(&gPokemonStoragePtr->boxes[StorageGetCurrentBox()][pos]);
         }

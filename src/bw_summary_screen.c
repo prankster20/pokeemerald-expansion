@@ -271,6 +271,8 @@ static void Task_SetHandleReplaceMoveInput(u8);
 static void Task_HandleReplaceMoveInput(u8);
 static bool8 CanReplaceMove(void);
 static void ShowCantForgetHMsWindow(u8);
+static void ShowCantForgetNostalgicWindow(u8);
+static void ShowCantForgetEclecticWindow(u8);
 static void Task_HandleInputCantForgetHMsMoves(u8);
 static void HandleAppealJamTilemap(u16);
 static void DrawExperienceProgressBar(struct Pokemon *);
@@ -314,7 +316,8 @@ static void PrintRibbonCount(void);
 static void BufferHPStats(void);
 static void PrintHPStats(u8);
 static void BufferNonHPStats(void);
-static void PrintNonHPStats(void);
+static void PrintNonHPStats(u8);
+static void PrintStatBoostPercentages(void);
 static void PrintExpPointsNextLevel(void);
 static void PrintBattleMoves(void);
 static void Task_PrintBattleMoves(u8);
@@ -326,6 +329,8 @@ static void PrintMoveDetails(u16);
 static void PrintNewMoveDetailsOrCancelText(void);
 static void SwapMovesNamesPP(u8, u8);
 static void PrintHMMovesCantBeForgotten(void);
+static void PrintNostalgicMovesCantBeForgotten(void);
+static void PrintEclecticNeedsSameCategoryMove(void);
 static void ResetSpriteIds(void);
 static void SetSpriteInvisibility(u8, bool8);
 static void HidePageSpecificSprites(void);
@@ -386,8 +391,6 @@ static const u8 sMemoNatureTextColor[]                      = _("{COLOR DYNAMIC_
 static u8 sMemoEffectBuffer[300];
 static u8 sDynamicNatureDescriptionBuffer[300]; // Holds dynamic Nature descriptions and current boost percentages.
 static const u8 sMemoMiscTextColor[]                        = _("{COLOR WHITE}{SHADOW DARK_GRAY}");
-static const u8 sStatsHPLayout[]                            = _("{DYNAMIC 0}/{DYNAMIC 1}");
-static const u8 sStatsHPIVEVLayout[]                        = _("{DYNAMIC 0}");
 static const u8 sStatsNonHPLayout[]                         = _("{DYNAMIC 0}\n{DYNAMIC 1}\n{DYNAMIC 2}\n{DYNAMIC 3}\n{DYNAMIC 4}");
 static const u8 sMovesPPLayout[]                            = _("{PP}{CLEAR_TO 31}{DYNAMIC 0}/{DYNAMIC 1}");
 
@@ -395,11 +398,11 @@ static const u8 sMovesPPLayout[]                            = _("{PP}{CLEAR_TO 3
 static const u8 sText_Cancel[]                              = _("Cancel");
 static const u8 sText_Switch[]                              = _("Switch");
 static const u8 sText_PkmnInfo[]                            = _("Pokémon Info");
-static const u8 sText_PkmnSkills[]                          = _("Pokémon Skills");
+static const u8 sText_PkmnSkills[]                          = _("Pokémon Stats");
 static const u8 sText_BattleMoves[]                         = _("Battle Moves");
 static const u8 sText_ContestMoves[]                        = _("Contest Moves");
 static const u8 sText_Info[]                                = _("Info");
-static const u8 sText_ViewIVs[]                             = _("View IV");
+static const u8 sText_ViewIVs[]                             = _("IVs/EVs");
 static const u8 sText_ViewEVs[]                             = _("View EV");
 static const u8 sText_ViewStats[]                           = _("View Stats");
 static const u8 sText_ViewIVs_Graded[]                      = _("See Innate");
@@ -411,11 +414,11 @@ static const u8 sText_None[]                                = _("None");
 static const u8 sText_Cancel[]                              = _("CANCEL");
 static const u8 sText_Switch[]                              = _("SWITCH");
 static const u8 sText_PkmnInfo[]                            = _("POKéMON INFO");
-static const u8 sText_PkmnSkills[]                          = _("POKéMON SKILLS");
+static const u8 sText_PkmnSkills[]                          = _("POKéMON STATS");
 static const u8 sText_BattleMoves[]                         = _("BATTLE MOVES");
 static const u8 sText_ContestMoves[]                        = _("CONTEST MOVES");
 static const u8 sText_Info[]                                = _("INFO");
-static const u8 sText_ViewIVs[]                             = _("VIEW IV");
+static const u8 sText_ViewIVs[]                             = _("IVs/EVs");
 static const u8 sText_ViewEVs[]                             = _("VIEW EV");
 static const u8 sText_ViewStats[]                           = _("VIEW STATS");
 static const u8 sText_ViewIVs_Graded[]                      = _("SEE INNATE");
@@ -424,7 +427,6 @@ static const u8 sText_NextLv[]                              = _("NEXT LV.");
 static const u8 sText_RentalPkmn[]                          = _("RENTAL POKéMON");
 static const u8 sText_None[]                                = _("NONE");
 #endif
-
 // bg gfx
 const u32 sSummaryScreen_Gfx_BW[]                           = INCBIN_U32("graphics/summary_screen/bw/tiles.4bpp.smol");
 const u16 sSummaryScreen_Pal_BW[]                           = INCBIN_U16("graphics/summary_screen/bw/tiles.gbapal");
@@ -1747,7 +1749,7 @@ void ShowPokemonSummaryScreen_BW(u8 mode, void *mons, u8 monIndex, u8 maxMonInde
         break;
     case SUMMARY_MODE_SELECT_MOVE:
         sMonSummaryScreen->minPageIndex = PSS_PAGE_BATTLE_MOVES;
-        sMonSummaryScreen->maxPageIndex = pageCount - 1;
+        sMonSummaryScreen->maxPageIndex = BW_SUMMARY_SHOW_CONTEST_MOVES ? PSS_PAGE_CONTEST_MOVES : PSS_PAGE_BATTLE_MOVES;
         sMonSummaryScreen->lockMonFlag = TRUE;
         break;
     }
@@ -1918,7 +1920,7 @@ static bool8 LoadGraphics(void)
         else if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_BATTLE) // load the appropriate moves page when returning from move relearner
             SetBgTilemapBuffer(2, sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_BATTLE_MOVES]);
         else if (sMonSummaryScreen->mode == SUMMARY_MODE_RELEARNER_CONTEST)
-            SetBgTilemapBuffer(2, sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_CONTEST_MOVES]);
+            SetBgTilemapBuffer(2, sMonSummaryScreen->bg2TilemapBuffers[BW_SUMMARY_SHOW_CONTEST_MOVES ? PSS_PAGE_CONTEST_MOVES : PSS_PAGE_BATTLE_MOVES]);
 
         if (!BW_SUMMARY_SHOW_CONTEST_MOVES)
             HideContestPageDots();
@@ -2176,6 +2178,14 @@ static void CopyMonToSummaryStruct(struct Pokemon *mon)
     }
 }
 
+static struct BoxPokemon *GetCurrentSummaryBoxMon(void)
+{
+    if (!sMonSummaryScreen->isBoxMon)
+        return &sMonSummaryScreen->monList.mons[sMonSummaryScreen->curMonIndex].box;
+    else
+        return &sMonSummaryScreen->monList.boxMons[sMonSummaryScreen->curMonIndex];
+}
+
 static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
 {
     u32 i;
@@ -2241,13 +2251,38 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
                 sMonSummaryScreen->monList.mons,
                 sMonSummaryScreen->maxMonIndex + 1,
                 sMonSummaryScreen->curMonIndex);
+            sum->def = sum->def * (100 + sum->defensiveNatureBoost) / 100;
+            sum->spdef = sum->spdef * (100 + sum->defensiveNatureBoost) / 100;
         }
-        else if (sum->mintNature == NATURE_MATERIALISTIC)
+        else if (sum->mintNature == NATURE_POMPOUS)
         {
-            sum->defensiveNatureBoost = GetMaterialisticBoostPercent();
+            // Store weight percent offset in defensiveNatureBoost for "Currently X%"
+            // display. Weight is affected in GetBattlerWeight, not here.
+            sum->defensiveNatureBoost = (u8)(100 + GetPompousWeightPercent(mon));
         }
-        sum->def = sum->def * (100 + sum->defensiveNatureBoost) / 100;
-        sum->spdef = sum->spdef * (100 + sum->defensiveNatureBoost) / 100;
+        if (!sMonSummaryScreen->isBoxMon)
+        {
+            u32 supportiveBoost = GetSupportiveBoostPercent(
+                sMonSummaryScreen->monList.mons,
+                sMonSummaryScreen->maxMonIndex + 1,
+                sMonSummaryScreen->curMonIndex);
+
+            if (supportiveBoost != 0)
+            {
+                u16 *bestStat = &sum->atk;
+
+                if (sum->def > *bestStat)
+                    bestStat = &sum->def;
+                if (sum->spatk > *bestStat)
+                    bestStat = &sum->spatk;
+                if (sum->spdef > *bestStat)
+                    bestStat = &sum->spdef;
+                if (sum->speed > *bestStat)
+                    bestStat = &sum->speed;
+
+                *bestStat = *bestStat * (100 + supportiveBoost) / 100;
+            }
+        }
         break;
     case 3:
         GetMonData(mon, MON_DATA_OT_NAME, sum->OTName);
@@ -2399,8 +2434,8 @@ static void RestoreSummaryPageDisplay(void)
 {
     if (BW_SUMMARY_SHOW_CONTEST_MOVES)
     {
-        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_1] = TILE_BLACK_SQUARE;
-        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_2] = TILE_BLACK_SQUARE;
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_1] = TILE_ACTIVE_SQUARE_TOP;
+        sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_1_TILE_2] = TILE_ACTIVE_SQUARE_BOTTOM;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_1] = TILE_INACTIVE_SQUARE_TOP;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_2_TILE_2] = TILE_INACTIVE_SQUARE_BOTTOM;
         sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][TILEMAP_PAGE_DOT_3_TILE_1] = TILE_INACTIVE_SQUARE_TOP;
@@ -2459,7 +2494,7 @@ static void CloseSummaryScreen(u8 taskId)
 
 #define tSkillsState data[3]
 
-// Cycle summary page between stats, IVs and EVs
+// Cycle summary page between stats, IVs and EVs.
 static void ChangeSummaryState(s16 *data, u8 taskId)
 {
     switch (tSkillsState)
@@ -2468,7 +2503,7 @@ static void ChangeSummaryState(s16 *data, u8 taskId)
         tSkillsState = SKILL_STATE_IVS;
         break;
     case SKILL_STATE_IVS:
-        tSkillsState = SKILL_STATE_EVS;
+        tSkillsState = SKILL_STATE_STATS;
         break;
     case SKILL_STATE_EVS:
         if (BW_SUMMARY_IV_EV_DISPLAY == BW_IV_EV_GRADED)
@@ -2492,7 +2527,7 @@ static void DrawNextSkillsButtonPrompt(u8 mode)
             break;
         case SKILL_STATE_IVS:
             ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_IVS);
-            PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_EVS);
+            PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_STATS);
             break;
         case SKILL_STATE_EVS:
             if (BW_SUMMARY_IV_EV_DISPLAY == BW_IV_EV_GRADED)
@@ -2582,7 +2617,8 @@ static void Task_HandleInput(u8 taskId)
         }  
         else if (JOY_NEW(START_BUTTON)
                 && ShouldShowMoveRelearner()
-                && (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES || sMonSummaryScreen->currPageIndex == PSS_PAGE_CONTEST_MOVES))
+                && (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES
+                 || (BW_SUMMARY_SHOW_CONTEST_MOVES && sMonSummaryScreen->currPageIndex == PSS_PAGE_CONTEST_MOVES)))
         {
             sMonSummaryScreen->callback = CB2_InitLearnMove;
             gSpecialVar_0x8004 = sMonSummaryScreen->curMonIndex;
@@ -2697,7 +2733,8 @@ static void Task_ChangeSummaryMon(u8 taskId)
         else
         {
             if (P_SUMMARY_SCREEN_MOVE_RELEARNER
-                && (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES || sMonSummaryScreen->currPageIndex == PSS_PAGE_CONTEST_MOVES))
+                && (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES
+                 || (BW_SUMMARY_SHOW_CONTEST_MOVES && sMonSummaryScreen->currPageIndex == PSS_PAGE_CONTEST_MOVES)))
             {
                 if (ShouldShowMoveRelearner())
                     ShowMoveRelearner();
@@ -3008,8 +3045,16 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             }
             else if (HasMoreThanOneMove() == TRUE)
             {
-                PlaySE(SE_SELECT);
-                SwitchToMovePositionSwitchMode(taskId);
+                if (sMonSummaryScreen->summary.mintNature == NATURE_NOSTALGIC
+                 && sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
+                {
+                    PlaySE(SE_FAILURE);
+                }
+                else
+                {
+                    PlaySE(SE_SELECT);
+                    SwitchToMovePositionSwitchMode(taskId);
+                }
             }
             else
             {
@@ -3271,7 +3316,12 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
                 else
                 {
                     PlaySE(SE_FAILURE);
-                    ShowCantForgetHMsWindow(taskId);
+                    if (IsMoveHM(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]) == TRUE)
+                        ShowCantForgetHMsWindow(taskId);
+                    else if (IsBoxMonMoveSlotLockedByNature(GetCurrentSummaryBoxMon(), sMonSummaryScreen->firstMoveIndex))
+                        ShowCantForgetNostalgicWindow(taskId);
+                    else
+                        ShowCantForgetEclecticWindow(taskId);
                 }
             }
             else if (JOY_NEW(B_BUTTON))
@@ -3288,17 +3338,39 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
 
 static bool8 CanReplaceMove(void)
 {
+    struct BoxPokemon *boxMon = GetCurrentSummaryBoxMon();
+    enum Move oldMove;
+
     if (sMonSummaryScreen->firstMoveIndex == MAX_MON_MOVES
-        || sMonSummaryScreen->newMove == MOVE_NONE
-        || IsMoveHM(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]) != TRUE)
+        || (sMonSummaryScreen->newMove == MOVE_NONE
+         && !IsBoxMonMoveSlotLockedByNature(boxMon, sMonSummaryScreen->firstMoveIndex)))
         return TRUE;
-    else
+
+    oldMove = sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex];
+    if (IsMoveHM(oldMove) == TRUE)
         return FALSE;
+
+    if (!CanBoxMonReplaceMoveWithMoveForNature(boxMon, sMonSummaryScreen->firstMoveIndex, sMonSummaryScreen->newMove))
+        return FALSE;
+
+    return TRUE;
 }
 
 static void ShowCantForgetHMsWindow(u8 taskId)
 {
     PrintHMMovesCantBeForgotten();
+    gTasks[taskId].func = Task_HandleInputCantForgetHMsMoves;
+}
+
+static void ShowCantForgetNostalgicWindow(u8 taskId)
+{
+    PrintNostalgicMovesCantBeForgotten();
+    gTasks[taskId].func = Task_HandleInputCantForgetHMsMoves;
+}
+
+static void ShowCantForgetEclecticWindow(u8 taskId)
+{
+    PrintEclecticNeedsSameCategoryMove();
     gTasks[taskId].func = Task_HandleInputCantForgetHMsMoves;
 }
 
@@ -3719,7 +3791,8 @@ static void PrintNotEggInfo(void)
     ConvertIntToDecimalStringN(gStringVar2, summary->level, STR_CONV_MODE_LEFT_ALIGN, 3);
     StringAppend(gStringVar1, gStringVar2);
 
-    PrintTextOnWindow(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL, gStringVar1, 5, 13, 0, 0);
+    // PrintTextOnWindow(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL, gStringVar1, 5, 13, 0, 0);
+    PrintTextOnWindowWithFont(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL, gStringVar1, 5, 13, 0, 0, FONT_SMALL_NARROW);
     PutWindowTilemap(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL);
 }
 
@@ -4104,41 +4177,115 @@ static void PrintMonAbilityName(void)
 static void PrintMonAbilityDescription(void)
 {
     u16 ability = GetAbilityBySpecies(sMonSummaryScreen->summary.species, sMonSummaryScreen->summary.abilityNum);
-    PrintTextOnWindow_BW_Font(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_ABILITY), gAbilitiesInfo[ability].description, 4, 15, 0, 0);
+    const u8 *abilityDesc = gAbilitiesInfo[ability].description;
+    u8 windowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_ABILITY);
+
+    // Use the same word-wrap logic as nature descriptions so long ability
+    // descriptions flow onto up to 3 lines instead of overflowing or truncating.
+    // x=4 offset leaves 188px usable (window is 192px wide).
+    static u8 sAbilityDescBuffer[300];
+    sAbilityDescBuffer[0] = EOS;
+    AppendWrappedNatureDescription(sAbilityDescBuffer, abilityDesc, FONT_SMALL_NARROW, 188);
+    PrintTextOnWindowWithFont(windowId, sAbilityDescBuffer, 4, 15, 1, 0, FONT_SMALL_NARROW);
 }
 
 static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 fontId, u32 maxWidthPx)
 {
+    // pranks / jimh - Modified to skip over GBA text engine control sequences
+    // when measuring line widths. Control sequences contribute zero display
+    // width but were previously fed to GetStringWidth one byte at a time,
+    // causing it to mis-measure and break lines at the wrong place.
+    //
+    // GBA text escape bytes:
+    //   0xFC = 3-byte sequence: 0xFC <cmd> <param>  (COLOR, SHADOW, FONT, etc.)
+    //   0xFD = 2-byte sequence: 0xFD <index>         (string variable placeholder)
+    //   0xFE = 1-byte newline
+    //   0xFF = EOS (handled by outer while)
+    //   Other high bytes (glyphs like arrows, special symbols) are 1 byte and
+    //   have real glyph widths — we let GetStringWidth handle those normally.
+    //
+    // The strategy: accumulate bytes into lineBuffer as before, but maintain a
+    // parallel "printable-only" view (lineWidthBuffer) that strips control bytes
+    // out before passing to GetStringWidth. The full lineBuffer (with control
+    // bytes intact) is what ultimately gets appended to dest.
+
     const u8 *src = description;
     u32 lineCount = 0;
-    u8 lineBuffer[64];
+    u8 lineBuffer[128];         // full content including control bytes
+    u8 lineWidthBuffer[128];    // printable bytes only, for GetStringWidth
 
     if (description == NULL)
         return;
 
     while (*src != EOS && lineCount < 3)
     {
-        u32 lineLen = 0;
+        u32 lineLen = 0;      // index into lineBuffer
+        u32 widthLen = 0;     // index into lineWidthBuffer
         const u8 *lastSpace = NULL;
-        u32 lastSpaceLen = 0;
+        u32 lastSpaceLineLen = 0;
+        u32 lastSpaceWidthLen = 0;
         const u8 *scan = src;
+        bool32 overflow = FALSE;
 
         while (*scan != EOS)
         {
-            lineBuffer[lineLen] = *scan;
-            lineBuffer[lineLen + 1] = EOS;
-            if (GetStringWidth(fontId, lineBuffer, 0) > maxWidthPx)
+            u8 byte = *scan;
+
+            // --- detect and copy control sequences without measuring their width ---
+            if (byte == 0xFC && scan[1] != EOS && scan[2] != EOS)
+            {
+                // 3-byte control sequence (COLOR, SHADOW, FONT, ...)
+                if (lineLen + 3 >= sizeof(lineBuffer) - 1)
+                    break;
+                lineBuffer[lineLen++] = scan[0];
+                lineBuffer[lineLen++] = scan[1];
+                lineBuffer[lineLen++] = scan[2];
+                scan += 3;
+                continue;
+            }
+            else if (byte == 0xFD && scan[1] != EOS)
+            {
+                // 2-byte placeholder reference
+                if (lineLen + 2 >= sizeof(lineBuffer) - 1)
+                    break;
+                lineBuffer[lineLen++] = scan[0];
+                lineBuffer[lineLen++] = scan[1];
+                scan += 2;
+                continue;
+            }
+            else if (byte == 0xFE)
+            {
+                // Newline — treat as a forced line break
+                scan++;
                 break;
+            }
+
+            // --- regular printable byte: measure width ---
+            lineWidthBuffer[widthLen] = byte;
+            lineWidthBuffer[widthLen + 1] = EOS;
+
+            if (GetStringWidth(fontId, lineWidthBuffer, 0) > maxWidthPx)
+            {
+                overflow = TRUE;
+                break;
+            }
+
+            lineBuffer[lineLen++] = byte;
+            widthLen++;
+
             if (*scan == CHAR_SPACE)
             {
                 lastSpace = scan;
-                lastSpaceLen = lineLen;
+                lastSpaceLineLen = lineLen;
+                lastSpaceWidthLen = widthLen;
             }
-            lineLen++;
+
             scan++;
             if (lineLen >= sizeof(lineBuffer) - 1)
                 break;
         }
+
+        (void)overflow; // suppress unused warning
 
         if (*scan == EOS)
         {
@@ -4147,7 +4294,9 @@ static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 
         }
         else if (lastSpace != NULL)
         {
-            lineBuffer[lastSpaceLen] = EOS;
+            // Roll back to the last space: strip any trailing control bytes
+            // that were appended after the last printable space.
+            lineBuffer[lastSpaceLineLen] = EOS;
             src = lastSpace + 1;
         }
         else
@@ -4160,11 +4309,38 @@ static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 
 
         if (lineCount == 3 && *src != EOS)
         {
-            u32 len = StringLength(lineBuffer);
-            while (len > 0 && GetStringWidth(fontId, lineBuffer, 0) > maxWidthPx - GetStringWidth(fontId, COMPOUND_STRING("..."), 0))
+            // Trim to fit "..." suffix using the printable-width buffer.
+            // Rebuild lineWidthBuffer from lineBuffer for the trim loop.
+            widthLen = 0;
+            for (u32 _i = 0; lineBuffer[_i] != EOS; _i++)
             {
-                lineBuffer[len - 1] = EOS;
-                len--;
+                u8 b = lineBuffer[_i];
+                if (b == 0xFC) { _i += 2; continue; }
+                if (b == 0xFD) { _i += 1; continue; }
+                lineWidthBuffer[widthLen++] = b;
+            }
+            lineWidthBuffer[widthLen] = EOS;
+
+            s32 dotWidth = GetStringWidth(fontId, COMPOUND_STRING("..."), 0);
+            while (widthLen > 0 && GetStringWidth(fontId, lineWidthBuffer, 0) > maxWidthPx - dotWidth)
+            {
+                widthLen--;
+                lineWidthBuffer[widthLen] = EOS;
+                // Also strip from lineBuffer (skip control bytes going backwards)
+                u32 lb = StringLength(lineBuffer);
+                while (lb > 0)
+                {
+                    lb--;
+                    // If previous byte looks like it's part of a 3-byte escape,
+                    // skip back further. Simple heuristic: if this byte is < 0x20
+                    // (non-printable) it's a control param — keep stripping.
+                    if (lineBuffer[lb] < 0x20 && lb >= 2 && lineBuffer[lb - 2] == 0xFC)
+                    {
+                        lb -= 2; // strip the whole 0xFC cmd param triplet
+                    }
+                    lineBuffer[lb] = EOS;
+                    break;
+                }
             }
             StringAppend(lineBuffer, COMPOUND_STRING("..."));
         }
@@ -4254,7 +4430,7 @@ static void BufferMonTrainerMemo(void)
 
         // --- Custom Archetype nature: Quirky ---
         // Boost is the personality value's units digit, plus 1 - show the current value.
-        if (description != NULL && sum->mintNature == NATURE_QUIRKY)
+        if (FALSE && description != NULL && sum->mintNature == NATURE_QUIRKY)
         {
             u8 numberString[4];
             s32 boostPercent = 1 + (sum->pid % 10);
@@ -4286,13 +4462,10 @@ static void BufferMonTrainerMemo(void)
             StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
             description = sDynamicNatureDescriptionBuffer;
         }
-        // --- Custom Archetype natures: Communal & Materialistic ---
-        else if (description != NULL
-              && (sum->mintNature == NATURE_COMMUNAL
-               || sum->mintNature == NATURE_MATERIALISTIC))
+        // --- Custom Archetype nature: Communal ---
+        else if (description != NULL && sum->mintNature == NATURE_COMMUNAL)
         {
             u8 numberString[4];
-
             StringCopy(sDynamicNatureDescriptionBuffer, description);
             StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently "));
             StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
@@ -4303,18 +4476,85 @@ static void BufferMonTrainerMemo(void)
             StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
             description = sDynamicNatureDescriptionBuffer;
         }
+        // --- Custom Archetype nature: Pompous ---
+        // defensiveNatureBoost stores the full weight percent (e.g. 100, 40, 160).
+        else if (description != NULL && sum->mintNature == NATURE_POMPOUS)
+        {
+            u8 numberString[4];
+            StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently "));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+            ConvertIntToDecimalStringN(numberString, sum->defensiveNatureBoost, STR_CONV_MODE_LEFT_ALIGN, 3);
+            StringAppend(sDynamicNatureDescriptionBuffer, numberString);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+        // --- Custom Archetype nature: Devoted ---
+        // Show the bonded mon and current mutual boost without exposing the PID math.
+        else if (description != NULL && sum->mintNature == NATURE_DEVOTED)
+        {
+            struct Pokemon *devotedMon = NULL;
+            for (u32 _i = 0; _i < PARTY_SIZE; _i++)
+            {
+                if (GetMonData(&gParties[B_TRAINER_PLAYER][_i], MON_DATA_PERSONALITY) == sum->pid
+                 && GetMonData(&gParties[B_TRAINER_PLAYER][_i], MON_DATA_SPECIES_OR_EGG) != SPECIES_NONE)
+                {
+                    devotedMon = &gParties[B_TRAINER_PLAYER][_i];
+                    break;
+                }
+            }
+
+            if (devotedMon != NULL)
+            {
+                s32 bondSlot = -1;
+                u32 boost = GetDevotedBondData(devotedMon, &bondSlot);
+
+                if (bondSlot >= 0 && boost > 0)
+                {
+                    u8 boostStr[4];
+                    u8 nickname[POKEMON_NAME_LENGTH + 1];
+
+                    GetMonNickname(&gParties[B_TRAINER_PLAYER][bondSlot], nickname);
+                    StringCopy(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("Dotes on most-similar-personality mon ("));
+                    StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+                    StringAppend(sDynamicNatureDescriptionBuffer, nickname);
+                    StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+                    StringAppend(sDynamicNatureDescriptionBuffer,
+                                COMPOUND_STRING("). Ups their defenses & own offenses by "));
+                    ConvertIntToDecimalStringN(boostStr, boost, STR_CONV_MODE_LEFT_ALIGN, 2);
+                    StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+                    StringAppend(sDynamicNatureDescriptionBuffer, boostStr);
+                    StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+                    StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%."));
+                    description = sDynamicNatureDescriptionBuffer;
+                } else if (boost == 0) {
+                    StringCopy(sDynamicNatureDescriptionBuffer, description);
+                    StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+                    StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Aloof."));
+                    StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+                    description = sDynamicNatureDescriptionBuffer;
+                }
+            }
+        }
 
         if (description != NULL && sum->mercurialNature)
         {
             if (description != sDynamicNatureDescriptionBuffer)
                 StringCopy(sDynamicNatureDescriptionBuffer, description);
-            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Changes after every battle.{COLOR WHITE}{SHADOW DARK_GRAY}"));
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Changes after battles."));
             description = sDynamicNatureDescriptionBuffer;
         }
 
+        // JUST TO TEST IF MERCURIAL'S TEXT FITS, REMOVE LATER
+        // StringCopy(sDynamicNatureDescriptionBuffer, description);
+        // StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Changes after battles."));
+        // description = sDynamicNatureDescriptionBuffer;
+
         sMemoEffectBuffer[0] = EOS;
         if (description != NULL)
-            AppendWrappedNatureDescription(sMemoEffectBuffer, description, FONT_SMALL_NARROW, 190);
+            AppendWrappedNatureDescription(sMemoEffectBuffer, description, FONT_SMALL_NARROW, 195);
     }
 }
 
@@ -4338,7 +4578,7 @@ static void BufferNatureString(void)
     struct PokemonSummaryScreenData *sumStruct = sMonSummaryScreen;
     DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, gNaturesInfo[sumStruct->summary.mintNature].name);
     if (sumStruct->summary.mercurialNature)
-        DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, COMPOUND_STRING("{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5} (Mercurial)"));
+        DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, COMPOUND_STRING("{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5} (Capricious)"));
     else
         DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, gText_EmptyString5);
 }
@@ -4468,7 +4708,8 @@ static void PrintSkillsPageText(void)
     BufferHPStats();
     PrintHPStats(SKILL_STATE_STATS);
     BufferNonHPStats();
-    PrintNonHPStats();
+    PrintNonHPStats(SKILL_STATE_STATS);
+    PrintStatBoostPercentages();
     PrintExpPointsNextLevel();
 }
 
@@ -4494,12 +4735,15 @@ static void Task_PrintSkillsPage(u8 taskId)
         BufferNonHPStats();
         break;
     case 6:
-        PrintNonHPStats();
+        PrintNonHPStats(SKILL_STATE_STATS);
         break;
     case 7:
-        PrintExpPointsNextLevel();
+        PrintStatBoostPercentages();
         break;
     case 8:
+        PrintExpPointsNextLevel();
+        break;
+    case 9:
         DestroyTask(taskId);
         return;
     }
@@ -4527,7 +4771,7 @@ static void PrintHeldItemName(void)
         text = gStringVar1;
     }
 
-    fontId = GetFontIdToFit(text, FONT_SHORT, 0, WindowTemplateWidthPx(&sPageSkillsTemplate[PSS_DATA_WINDOW_INFO_OT_OTID_ITEM]) - 8);
+    fontId = GetFontIdToFit(text, FONT_NORMAL, 0, WindowTemplateWidthPx(&sPageSkillsTemplate[PSS_DATA_WINDOW_INFO_OT_OTID_ITEM]) - 8);
     PrintTextOnWindowWithFont(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_INFO_OT_OTID_ITEM), text, 12, 28, 0, 0, fontId);
 }
 
@@ -4581,7 +4825,187 @@ static void GetProudHighLowStats(enum Stat *highStat, enum Stat *lowStat)
     }
 }
 
-static void BufferStat(u8 *dst, s8 statIndex, u32 stat, u32 strId, u32 align)
+static struct Pokemon *GetSummaryPartyMon(void)
+{
+    if (sMonSummaryScreen->monList.mons == gParties[B_TRAINER_PLAYER]
+     && sMonSummaryScreen->curMonIndex < PARTY_SIZE)
+        return &gParties[B_TRAINER_PLAYER][sMonSummaryScreen->curMonIndex];
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES_OR_EGG) != SPECIES_NONE
+         && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_PERSONALITY) == sMonSummaryScreen->summary.pid)
+            return &gParties[B_TRAINER_PLAYER][i];
+    }
+    return NULL;
+}
+
+static s32 GetSummaryStatBoostPercent(enum Stat stat)
+{
+    struct PokeSummary *sum = &sMonSummaryScreen->summary;
+    struct Pokemon *partyMon = GetSummaryPartyMon();
+    u32 nature = sum->mintNature;
+    s32 boost = 0;
+
+    if (stat == STAT_HP)
+        return 0;
+
+    if (gNaturesInfo[nature].statUp != gNaturesInfo[nature].statDown)
+    {
+        if (stat == gNaturesInfo[nature].statUp)
+            boost += 15;
+        if (stat == gNaturesInfo[nature].statDown)
+            boost -= 15;
+    }
+
+    switch (nature)
+    {
+    case NATURE_HUMBLE:
+    case NATURE_VAIN:
+        boost += 5;
+        break;
+    case NATURE_FINICKY:
+        if (stat == STAT_SPEED)
+            boost += 20;
+        break;
+    case NATURE_NOBLE:
+        if (stat == STAT_DEF)
+            boost += 5;
+        break;
+    case NATURE_QUIRKY:
+        boost += 1 + ((sum->pid >> ((stat - 1) * 3)) % 5);
+        break;
+    case NATURE_STOIC:
+        if (stat == STAT_SPEED)
+            boost -= 5;
+        break;
+    case NATURE_DREAMY:
+        if (stat == STAT_SPEED)
+            boost -= 10;
+        break;
+    case NATURE_LOYAL:
+        if (stat == STAT_ATK || stat == STAT_SPATK)
+            boost += GetLoyalBoostPercent(sum->level, sum->metLevel);
+        break;
+    case NATURE_ECLECTIC:
+        if (stat == STAT_ATK)
+            boost += 5 * CountBoxMonMovesInCategory(GetCurrentSummaryBoxMon(), DAMAGE_CATEGORY_PHYSICAL);
+        else if (stat == STAT_SPATK)
+            boost += 5 * CountBoxMonMovesInCategory(GetCurrentSummaryBoxMon(), DAMAGE_CATEGORY_SPECIAL);
+        else if (stat == STAT_SPEED)
+            boost += 5 * CountBoxMonMovesInCategory(GetCurrentSummaryBoxMon(), DAMAGE_CATEGORY_STATUS);
+        break;
+    case NATURE_IMPRESSIONABLE:
+        if (partyMon != NULL)
+            boost += GetImpressionableStatBoostPercent(partyMon, stat);
+        break;
+    case NATURE_YOUTHFUL:
+        if (partyMon != NULL && IsYouthfulNatureActive(partyMon)
+         && (stat == STAT_ATK || stat == STAT_SPATK || stat == STAT_SPEED))
+            boost += 20;
+        break;
+    case NATURE_PROUD:
+        {
+            enum Stat highStat, lowStat;
+            GetProudHighLowStats(&highStat, &lowStat);
+            if (highStat != lowStat)
+            {
+                if (stat == highStat)
+                    boost += 10;
+                if (stat == lowStat)
+                    boost -= 10;
+            }
+        }
+        break;
+    case NATURE_COMMUNAL:
+        if (stat == STAT_DEF || stat == STAT_SPDEF)
+            boost += sum->defensiveNatureBoost;
+        break;
+    case NATURE_DEVOTED:
+        if (partyMon != NULL && (stat == STAT_ATK || stat == STAT_SPATK))
+            boost += GetDevotedBondData(partyMon, NULL);
+        break;
+    }
+
+    if (partyMon != NULL)
+    {
+        u32 partySlot = partyMon - gParties[B_TRAINER_PLAYER];
+        u32 supportiveBoost = GetSupportiveBoostPercent(gParties[B_TRAINER_PLAYER], PARTY_SIZE, partySlot);
+
+        if (supportiveBoost != 0)
+        {
+            enum Stat highStat, lowStat;
+            GetProudHighLowStats(&highStat, &lowStat);
+            if (stat == highStat)
+                boost += supportiveBoost;
+        }
+    }
+
+    // Devoted party members can also lend their bond boost to this mon's
+    // defenses. Multiple contributions are displayed additively.
+    if (partyMon != NULL && (stat == STAT_DEF || stat == STAT_SPDEF))
+    {
+        s32 partySlot = partyMon - gParties[B_TRAINER_PLAYER];
+        for (u32 i = 0; i < PARTY_SIZE; i++)
+        {
+            s32 bondSlot = -1;
+            struct Pokemon *devotedMon = &gParties[B_TRAINER_PLAYER][i];
+
+            if (GetMonData(devotedMon, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE
+             || GetMonData(devotedMon, MON_DATA_HIDDEN_NATURE) != NATURE_DEVOTED)
+                continue;
+            {
+                u32 devotedBoost = GetDevotedBondData(devotedMon, &bondSlot);
+                if (bondSlot == partySlot)
+                    boost += devotedBoost;
+            }
+        }
+    }
+
+    return boost;
+}
+
+static void BufferStatBoostText(u8 *dst, s32 boost)
+{
+    u8 number[4];
+    u8 *txtPtr;
+
+    if (boost > 0)
+    {
+        txtPtr = StringCopy(dst, COMPOUND_STRING("{COLOR}{05}{UP_ARROW}"));
+    }
+    else if (boost < 0)
+    {
+        txtPtr = StringCopy(dst, COMPOUND_STRING("{COLOR}{08}{DOWN_ARROW}"));
+        boost = -boost;
+    }
+    else
+    {
+        txtPtr = StringCopy(dst, COMPOUND_STRING("{COLOR}{01}"));
+    }
+
+    ConvertIntToDecimalStringN(number, boost, STR_CONV_MODE_LEFT_ALIGN, 2);
+    txtPtr = StringCopy(txtPtr, number);
+    StringCopy(txtPtr, COMPOUND_STRING("%"));
+}
+
+static void PrintStatBoostPercentages(void)
+{
+    static const enum Stat nonHpStats[] = {STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED};
+    u8 text[20];
+    u8 hpWindowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_HP);
+    u8 nonHpWindowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_NON_HP);
+
+    BufferStatBoostText(text, GetSummaryStatBoostPercent(STAT_HP));
+    PrintTextOnWindowWithFont(hpWindowId, text, 50, 1, 0, 0, FONT_SMALL_NARROWER);
+    for (u32 i = 0; i < ARRAY_COUNT(nonHpStats); i++)
+    {
+        BufferStatBoostText(text, GetSummaryStatBoostPercent(nonHpStats[i]));
+        PrintTextOnWindowWithFont(nonHpWindowId, text, 50, i * 12 + 5, 0, 0, FONT_SMALL_NARROWER);
+    }
+}
+
+static void BufferStat(u8 *dst, s8 statIndex, u32 stat, u32 align)
 {
     static const u8 sTextNatureDown[] = _("{COLOR}{08}");
     static const u8 sTextNatureUp[] = _("{COLOR}{05}");
@@ -4589,112 +5013,53 @@ static void BufferStat(u8 *dst, s8 statIndex, u32 stat, u32 strId, u32 align)
     static const u8 sTextUpArrow[] = _(" {UP_ARROW}");
     static const u8 sTextDownArrow[] = _(" {DOWN_ARROW}");
     u8 *txtPtr;
-    bool32 isProud = (statIndex != 0 && sMonSummaryScreen->summary.mintNature == NATURE_PROUD);
-    bool32 isYouthful = (statIndex != 0
-                      && sMonSummaryScreen->summary.mintNature == NATURE_YOUTHFUL
-                      && IsYouthfulNatureActive(&sMonSummaryScreen->currentMon));
-    bool32 isYouthfulBoostedStat = isYouthful && (statIndex == STAT_ATK || statIndex == STAT_SPATK || statIndex == STAT_SPEED);
-    bool32 isDynamicDefenseBoostedStat = (sMonSummaryScreen->summary.defensiveNatureBoost != 0
-                                      && (sMonSummaryScreen->summary.mintNature == NATURE_COMMUNAL
-                                       || sMonSummaryScreen->summary.mintNature == NATURE_MATERIALISTIC)
-                                      && (statIndex == STAT_DEF || statIndex == STAT_SPDEF));
-    enum Stat proudHighStat = STAT_ATK, proudLowStat = STAT_ATK;
 
-    if (isProud)
-        GetProudHighLowStats(&proudHighStat, &proudLowStat);
-
-    if (isProud && BW_SUMMARY_NATURE_COLORS)
+    if (statIndex == 0 || !BW_SUMMARY_NATURE_COLORS)
     {
-        if (proudHighStat == proudLowStat)
-            txtPtr = StringCopy(dst, sTextNatureNeutral);
-        else if (statIndex == proudHighStat)
+        txtPtr = StringCopy(dst, sTextNatureNeutral);
+    }
+    else
+    {
+        // Use GetSummaryStatBoostPercent as the single source of truth for
+        // whether a stat is boosted/lowered — it already handles all custom
+        // Archetype natures (Noble, Loyal, Dreamy, Stoic, Devoted, etc.) in
+        // addition to the classic statUp/statDown pairs.
+        s32 boost = GetSummaryStatBoostPercent((enum Stat)statIndex);
+        if (boost > 0)
             txtPtr = StringCopy(dst, sTextNatureUp);
-        else if (statIndex == proudLowStat)
+        else if (boost < 0)
             txtPtr = StringCopy(dst, sTextNatureDown);
         else
             txtPtr = StringCopy(dst, sTextNatureNeutral);
     }
-    else if (isYouthfulBoostedStat && BW_SUMMARY_NATURE_COLORS)
-        txtPtr = StringCopy(dst, sTextNatureUp);
-    else if (isDynamicDefenseBoostedStat && BW_SUMMARY_NATURE_COLORS)
-        txtPtr = StringCopy(dst, sTextNatureUp);
-    else if (statIndex == 0
-        || !BW_SUMMARY_NATURE_COLORS 
-        || gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
-        txtPtr = StringCopy(dst, sTextNatureNeutral);
-    else if (statIndex == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp)
-        txtPtr = StringCopy(dst, sTextNatureUp);
-    else if (statIndex == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
-        txtPtr = StringCopy(dst, sTextNatureDown);
-    else
-        txtPtr = StringCopy(dst, sTextNatureNeutral);
 
     ConvertIntToDecimalStringN(txtPtr, stat, STR_CONV_MODE_RIGHT_ALIGN, align);
 
-    if (isProud && BW_SUMMARY_NATURE_ARROWS && proudHighStat != proudLowStat)
+    if (statIndex != 0 && BW_SUMMARY_NATURE_ARROWS)
     {
-        if (statIndex == proudHighStat)
-            StringAppend(txtPtr, sTextUpArrow);
-        else if (statIndex == proudLowStat)
-            StringAppend(txtPtr, sTextDownArrow);
+        s32 boost = GetSummaryStatBoostPercent((enum Stat)statIndex);
+        if (boost > 0)
+            StringAppend(dst, sTextUpArrow);
+        else if (boost < 0)
+            StringAppend(dst, sTextDownArrow);
     }
-    else if (isYouthfulBoostedStat && BW_SUMMARY_NATURE_ARROWS)
-    {
-        StringAppend(txtPtr, sTextUpArrow);
-    }
-    else if (isDynamicDefenseBoostedStat && BW_SUMMARY_NATURE_ARROWS)
-    {
-        StringAppend(txtPtr, sTextUpArrow);
-    }
-    else if (statIndex != 0
-        && BW_SUMMARY_NATURE_ARROWS 
-        && gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp != gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
-    {
-        if (statIndex == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statUp)
-            StringAppend(txtPtr, sTextUpArrow);
-        else if (statIndex == gNaturesInfo[sMonSummaryScreen->summary.mintNature].statDown)
-            StringAppend(txtPtr, sTextDownArrow);
-    }
-
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(strId, dst);
 }
-
 
 static void BufferAndPrintStats_HandleState(u8 mode)
 {
     u16 hp, hp2, atk, def, spA, spD, spe;
-    u8 *currentHPString = Alloc(20);
-    u8 *maxHPString = Alloc(20);
+    u8 currentHPString[20];
+    u8 maxHPString[20];
 
-    switch (mode)
-    {
-    case SKILL_STATE_STATS:
-    default:
-        hp = sMonSummaryScreen->summary.currentHP;
-        hp2 = sMonSummaryScreen->summary.maxHP;
-        atk = sMonSummaryScreen->summary.atk;
-        def = sMonSummaryScreen->summary.def;
-        spA = sMonSummaryScreen->summary.spatk;
-        spD = sMonSummaryScreen->summary.spdef;
-        spe = sMonSummaryScreen->summary.speed;
-        break;
-    case SKILL_STATE_IVS:
-        hp = sMonSummaryScreen->summary.ivHp;
-        atk = sMonSummaryScreen->summary.ivAtk;
-        def = sMonSummaryScreen->summary.ivDef;
-        spA = sMonSummaryScreen->summary.ivSpatk;
-        spD = sMonSummaryScreen->summary.ivSpdef;
-        spe = sMonSummaryScreen->summary.ivSpeed;
-        break;
-    case SKILL_STATE_EVS:
-        hp = sMonSummaryScreen->summary.evHp;
-        atk = sMonSummaryScreen->summary.evAtk;
-        def = sMonSummaryScreen->summary.evDef;
-        spA = sMonSummaryScreen->summary.evSpatk;
-        spD = sMonSummaryScreen->summary.evSpdef;
-        spe = sMonSummaryScreen->summary.evSpeed;
-        break;
-    }
+    // Only needed for SKILL_STATE_STATS — IVs/EVs are now read directly from
+    // sMonSummaryScreen->summary in the else branch below.
+    hp = sMonSummaryScreen->summary.currentHP;
+    hp2 = sMonSummaryScreen->summary.maxHP;
+    atk = sMonSummaryScreen->summary.atk;
+    def = sMonSummaryScreen->summary.def;
+    spA = sMonSummaryScreen->summary.spatk;
+    spD = sMonSummaryScreen->summary.spdef;
+    spe = sMonSummaryScreen->summary.speed;
 
     FillWindowPixelBuffer(sMonSummaryScreen->windowIds[PSS_DATA_WINDOW_SKILLS_STATS_HP], 0);
     FillWindowPixelBuffer(sMonSummaryScreen->windowIds[PSS_DATA_WINDOW_SKILLS_STATS_NON_HP], 0);
@@ -4703,84 +5068,98 @@ static void BufferAndPrintStats_HandleState(u8 mode)
     {
         ConvertIntToDecimalStringN(currentHPString, hp, STR_CONV_MODE_RIGHT_ALIGN, 3);
         ConvertIntToDecimalStringN(maxHPString, hp2, STR_CONV_MODE_RIGHT_ALIGN, 3);
-        DynamicPlaceholderTextUtil_Reset();
-        DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, currentHPString);
-        DynamicPlaceholderTextUtil_SetPlaceholderPtr(1, maxHPString);
-        DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, sStatsHPLayout);
+        StringCopy(gStringVar4, currentHPString);
+        StringAppend(gStringVar4, COMPOUND_STRING("/"));
+        StringAppend(gStringVar4, maxHPString);
         PrintHPStats(mode);
 
-        DynamicPlaceholderTextUtil_Reset();
-        BufferStat(gStringVar1, STAT_ATK, atk, 0, 3);
-        BufferStat(gStringVar2, STAT_DEF, def, 1, 3);
-        BufferStat(gStringVar3, STAT_SPATK, spA, 2, 3);
-        BufferStat(gStringVar4, STAT_SPDEF, spD, 3, 3);
-        BufferStat(sStringVar5, STAT_SPEED, spe, 4, 3);
-        PrintNonHPStats();
+        BufferStat(gStringVar1, STAT_ATK, atk, 3);
+        BufferStat(gStringVar2, STAT_DEF, def, 3);
+        BufferStat(gStringVar3, STAT_SPATK, spA, 3);
+        BufferStat(gStringVar4, STAT_SPDEF, spD, 3);
+        BufferStat(sStringVar5, STAT_SPEED, spe, 3);
+        PrintNonHPStats(mode);
+        PrintStatBoostPercentages();
     }
     else
     {
-        BufferStat(maxHPString, 0, hp, 0, 7);
-        DynamicPlaceholderTextUtil_Reset();
-        DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, maxHPString);
-        DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, sStatsHPIVEVLayout);
+        // IV/EV combined display: "XX / YYY"
+        // IVs are padded to 2 digits, EVs to 3 digits, both in FONT_SMALL_NARROW.
+        struct PokeSummary *_sum = &sMonSummaryScreen->summary;
+        u8 _ivStr[8];
+        u8 _evStr[8];
+
+        // HP row: "09 / 043" style — leading-zero padded
+        ConvertIntToDecimalStringN(_ivStr, _sum->ivHp, STR_CONV_MODE_LEADING_ZEROS, 2);
+        ConvertIntToDecimalStringN(_evStr, _sum->evHp, STR_CONV_MODE_LEADING_ZEROS, 3);
+        StringCopy(gStringVar4, _ivStr);
+        StringAppend(gStringVar4, COMPOUND_STRING(" / "));
+        StringAppend(gStringVar4, _evStr);
         PrintHPStats(mode);
 
-        BufferStat(gStringVar1, 0, atk, 0, 3);
-        BufferStat(gStringVar2, 0, def, 1, 3);
-        BufferStat(gStringVar3, 0, spA, 2, 3);
-        BufferStat(gStringVar4, 0, spD, 3, 3);
-        BufferStat(sStringVar5, 0, spe, 4, 3);
-        PrintNonHPStats();
-    }
+        // Non-HP rows
+        ConvertIntToDecimalStringN(_ivStr, _sum->ivAtk, STR_CONV_MODE_LEADING_ZEROS, 2);
+        ConvertIntToDecimalStringN(_evStr, _sum->evAtk, STR_CONV_MODE_LEADING_ZEROS, 3);
+        StringCopy(gStringVar1, _ivStr); StringAppend(gStringVar1, COMPOUND_STRING(" / ")); StringAppend(gStringVar1, _evStr);
 
-    Free(currentHPString); 
-    Free(maxHPString); 
+        ConvertIntToDecimalStringN(_ivStr, _sum->ivDef, STR_CONV_MODE_LEADING_ZEROS, 2);
+        ConvertIntToDecimalStringN(_evStr, _sum->evDef, STR_CONV_MODE_LEADING_ZEROS, 3);
+        StringCopy(gStringVar2, _ivStr); StringAppend(gStringVar2, COMPOUND_STRING(" / ")); StringAppend(gStringVar2, _evStr);
+
+        ConvertIntToDecimalStringN(_ivStr, _sum->ivSpatk, STR_CONV_MODE_LEADING_ZEROS, 2);
+        ConvertIntToDecimalStringN(_evStr, _sum->evSpatk, STR_CONV_MODE_LEADING_ZEROS, 3);
+        StringCopy(gStringVar3, _ivStr); StringAppend(gStringVar3, COMPOUND_STRING(" / ")); StringAppend(gStringVar3, _evStr);
+
+        ConvertIntToDecimalStringN(_ivStr, _sum->ivSpdef, STR_CONV_MODE_LEADING_ZEROS, 2);
+        ConvertIntToDecimalStringN(_evStr, _sum->evSpdef, STR_CONV_MODE_LEADING_ZEROS, 3);
+        StringCopy(gStringVar4, _ivStr); StringAppend(gStringVar4, COMPOUND_STRING(" / ")); StringAppend(gStringVar4, _evStr);
+
+        ConvertIntToDecimalStringN(_ivStr, _sum->ivSpeed, STR_CONV_MODE_LEADING_ZEROS, 2);
+        ConvertIntToDecimalStringN(_evStr, _sum->evSpeed, STR_CONV_MODE_LEADING_ZEROS, 3);
+        StringCopy(sStringVar5, _ivStr); StringAppend(sStringVar5, COMPOUND_STRING(" / ")); StringAppend(sStringVar5, _evStr);
+
+        PrintNonHPStats(mode);
+    }
 }
 
 static void BufferHPStats(void)
 {
-    u8 *currentHPString = Alloc(8);
-    u8 *maxHPString = Alloc(8);
+    u8 currentHPString[8];
+    u8 maxHPString[8];
 
     ConvertIntToDecimalStringN(currentHPString, sMonSummaryScreen->summary.currentHP, STR_CONV_MODE_RIGHT_ALIGN, 3);
     ConvertIntToDecimalStringN(maxHPString, sMonSummaryScreen->summary.maxHP, STR_CONV_MODE_RIGHT_ALIGN, 3);
-
-    DynamicPlaceholderTextUtil_Reset();
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(0, currentHPString);
-    DynamicPlaceholderTextUtil_SetPlaceholderPtr(1, maxHPString);
-    DynamicPlaceholderTextUtil_ExpandPlaceholders(gStringVar4, sStatsHPLayout);
-
-    Free(currentHPString);
-    Free(maxHPString);
+    StringCopy(gStringVar4, currentHPString);
+    StringAppend(gStringVar4, COMPOUND_STRING("/"));
+    StringAppend(gStringVar4, maxHPString);
 }
 
 static void PrintHPStats(u8 mode)
 {
-    if (mode == SKILL_STATE_STATS)
-        PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_HP), gStringVar4, 19, 0, 0, 0);
-    else
-        PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_HP), gStringVar4, 6, 0, 0, 0);
+    u32 x = (mode == SKILL_STATE_STATS) ? 4 : 16;
+    PrintTextOnWindowWithFont(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_HP), gStringVar4, x, 0, 0, 0, FONT_NARROW);
 }
 
 
 static void BufferNonHPStats(void)
 {
-    DynamicPlaceholderTextUtil_Reset();
-    BufferStat(gStringVar1, STAT_ATK, sMonSummaryScreen->summary.atk, 0, 3);
-    BufferStat(gStringVar2, STAT_DEF, sMonSummaryScreen->summary.def, 1, 3);
-    BufferStat(gStringVar3, STAT_SPATK, sMonSummaryScreen->summary.spatk, 2, 3);
-    BufferStat(gStringVar4, STAT_SPDEF, sMonSummaryScreen->summary.spdef, 3, 3);
-    BufferStat(sStringVar5, STAT_SPEED, sMonSummaryScreen->summary.speed, 4, 3);
+    BufferStat(gStringVar1, STAT_ATK,   sMonSummaryScreen->summary.atk,   3);
+    BufferStat(gStringVar2, STAT_DEF,   sMonSummaryScreen->summary.def,   3);
+    BufferStat(gStringVar3, STAT_SPATK, sMonSummaryScreen->summary.spatk, 3);
+    BufferStat(gStringVar4, STAT_SPDEF, sMonSummaryScreen->summary.spdef, 3);
+    BufferStat(sStringVar5, STAT_SPEED, sMonSummaryScreen->summary.speed, 3);
 }
 
-static void PrintNonHPStats(void)
+static void PrintNonHPStats(u8 mode)
 {
     u8 windowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_NON_HP);
-    PrintTextOnWindow(windowId, gStringVar1, 30, 4, 0, 0);
-    PrintTextOnWindow(windowId, gStringVar2, 30, 16, 0, 0);
-    PrintTextOnWindow(windowId, gStringVar3, 30, 28, 0, 0);
-    PrintTextOnWindow(windowId, gStringVar4, 30, 40, 0, 0);
-    PrintTextOnWindow(windowId, sStringVar5, 30, 52, 0, 0);
+    u32 x = (mode == SKILL_STATE_STATS) ? 4 : 16;
+
+    PrintTextOnWindowWithFont(windowId, gStringVar1, x, 4,  0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar2, x, 16, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar3, x, 28, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar4, x, 40, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, sStringVar5, x, 52, 0, 0, FONT_NARROW);
 }
 
 static void PrintExpPointsNextLevel(void)
@@ -4886,8 +5265,9 @@ static void PrintMoveNameAndPP(u8 moveIndex)
     {
         PrintTextOnWindowToFitPx_WithFont(moveNameWindowId, GetMoveName(move), 3, moveIndex * 28 + 2, 0, 12, FONT_SMALL, WindowWidthPx(moveNameWindowId) - 3);
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
-        // --- Custom Archetype nature: Serious ---
-        if (summary->mintNature == NATURE_SERIOUS)
+        // --- Custom Archetype natures: Serious & Methodical ---
+        if (summary->mintNature == NATURE_SERIOUS
+         || (summary->mintNature == NATURE_METHODICAL && moveIndex == 3))
             pp += 1;
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);
         ConvertIntToDecimalStringN(gStringVar2, pp, STR_CONV_MODE_RIGHT_ALIGN, 2);
@@ -5125,6 +5505,20 @@ static void PrintHMMovesCantBeForgotten(void)
     u8 windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
     FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
     PrintTextOnWindow_BW_Font(windowId, gText_HMMovesCantBeForgotten2, 2, 0, 0, 0);
+}
+
+static void PrintNostalgicMovesCantBeForgotten(void)
+{
+    u8 windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
+    PrintTextOnWindow_BW_Font(windowId, gText_NostalgicMovesCantBeForgotten, 2, 0, 0, 0);
+}
+
+static void PrintEclecticNeedsSameCategoryMove(void)
+{
+    u8 windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
+    PrintTextOnWindow_BW_Font(windowId, gText_EclecticNeedsSameCategoryMove, 2, 0, 0, 0);
 }
 
 static void ShowCategoryIcon(u16 move)

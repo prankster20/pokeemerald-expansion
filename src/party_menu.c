@@ -496,6 +496,7 @@ static void CursorCb_HeadHome(u8);
 void TryItemHoldFormChange(struct Pokemon *mon, s8 slotId, enum BattleTrainer trainer);
 static void ShowMoveSelectWindow(u8 slot);
 static void Task_HandleWhichMoveInput(u8 taskId);
+static void Task_HandleBottleCapStatInput(u8 taskId);
 static void Task_HideFollowerNPCForTeleport(u8);
 static void FieldCallback_RockClimb(void);
 static void GetPartyAndSlotFromPartyMenuId(s8 menuId, struct Pokemon **party, s8 *partySlot);
@@ -2115,6 +2116,18 @@ static void DisplaySwitchedHeldItemMessage(enum Item item, enum Item item2, bool
     ScheduleBgCopyTilemapToVram(2);
 }
 
+static void DisplayFrugalRefusedHeldItemMessage(struct Pokemon *mon, enum Item item, bool8 keepOpen)
+{
+    GetMonNickname(mon, gStringVar1);
+    CopyItemName(item, gStringVar2);
+    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_FASTIDIOUS)
+        StringExpandPlaceholders(gStringVar4, gText_PkmnTooFastidiousForItem);
+    else
+        StringExpandPlaceholders(gStringVar4, gText_PkmnTooFrugalForItem);
+    DisplayPartyMenuMessage(gStringVar4, keepOpen);
+    ScheduleBgCopyTilemapToVram(2);
+}
+
 static void GiveItemToMon(struct Pokemon *mon, enum Item item)
 {
     u8 itemBytes[2];
@@ -3571,6 +3584,12 @@ static void Task_GiveHoldItem(u8 taskId)
     if (!gPaletteFade.active)
     {
         item = gSpecialVar_ItemId;
+        if (DoesBoxMonNatureRefuseHeldItem(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId].box, item))
+        {
+            DisplayFrugalRefusedHeldItemMessage(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item, FALSE);
+            gTasks[taskId].func = Task_ReturnToChooseMonAfterText;
+            return;
+        }
         DisplayGaveHeldItemMessage(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item, FALSE, 0);
         GiveItemToMon(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item);
         RemoveBagItem(item, 1);
@@ -3601,6 +3620,12 @@ static void Task_HandleSwitchItemsYesNoInput(u8 taskId)
     switch (Menu_ProcessInputNoWrapClearOnChoose())
     {
     case 0: // Yes, switch items
+        if (DoesBoxMonNatureRefuseHeldItem(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId].box, gSpecialVar_ItemId))
+        {
+            DisplayFrugalRefusedHeldItemMessage(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gSpecialVar_ItemId, TRUE);
+            gTasks[taskId].func = Task_ReturnToChooseMonAfterText;
+            break;
+        }
         RemoveBagItem(gSpecialVar_ItemId, 1);
 
         // No room to return held item to bag
@@ -5358,6 +5383,139 @@ void ItemUseCB_Mint(u8 taskId, TaskFunc task)
     gTasks[taskId].func = Task_Mint;
 }
 
+#define tCapMonId       data[0]
+#define tCapWindowId    data[1]
+#define tCapOldFunc     2
+
+static const u8 *const sBottleCapStatNames[NUM_STATS] =
+{
+    [STAT_HP]    = COMPOUND_STRING("HP"),
+    [STAT_ATK]   = COMPOUND_STRING("Attack"),
+    [STAT_DEF]   = COMPOUND_STRING("Defense"),
+    [STAT_SPEED] = COMPOUND_STRING("Speed"),
+    [STAT_SPATK] = COMPOUND_STRING("Sp. Atk"),
+    [STAT_SPDEF] = COMPOUND_STRING("Sp. Def"),
+};
+
+static const enum Stat sBottleCapMenuStats[NUM_STATS] =
+{
+    STAT_HP,
+    STAT_ATK,
+    STAT_DEF,
+    STAT_SPATK,
+    STAT_SPDEF,
+    STAT_SPEED,
+};
+
+static const u8 sText_BottleCapChangedIV[] =
+    _("{STR_VAR_1}'s {STR_VAR_2} IV was\nchanged to {STR_VAR_3}!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_ChooseBottleCapStat[] =
+    _("Choose which IV to change.");
+
+static void CloseBottleCapStatWindow(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+
+    ClearStdWindowAndFrameToTransparent(tCapWindowId, FALSE);
+    ClearWindowTilemap(tCapWindowId);
+    RemoveWindow(tCapWindowId);
+    ScheduleBgCopyTilemapToVram(2);
+}
+
+static void Task_HandleBottleCapStatInput(u8 taskId)
+{
+    static const enum MonData fields[NUM_STATS] =
+    {
+        [STAT_HP]    = MON_DATA_HP_IV,
+        [STAT_ATK]   = MON_DATA_ATK_IV,
+        [STAT_DEF]   = MON_DATA_DEF_IV,
+        [STAT_SPEED] = MON_DATA_SPEED_IV,
+        [STAT_SPATK] = MON_DATA_SPATK_IV,
+        [STAT_SPDEF] = MON_DATA_SPDEF_IV,
+    };
+    s16 *data = gTasks[taskId].data;
+    s8 input;
+
+    if (IsPartyMenuTextPrinterActive())
+        return;
+    input = Menu_ProcessInputNoWrap();
+
+    if (input == MENU_NOTHING_CHOSEN)
+        return;
+
+    if (input == MENU_B_PRESSED)
+    {
+        PlaySE(SE_SELECT);
+        CloseBottleCapStatWindow(taskId);
+        gPartyMenuUseExitCallback = FALSE;
+        DisplayPartyMenuStdMessage(PARTY_MSG_USE_ON_WHICH_MON);
+        gTasks[taskId].func = (TaskFunc)GetWordTaskArg(taskId, tCapOldFunc);
+        return;
+    }
+
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][tCapMonId];
+        enum Stat stat = sBottleCapMenuStats[input];
+        u32 targetIv = (gSpecialVar_ItemId == ITEM_RUSTED_BOTTLE_CAP) ? 0 : MAX_PER_STAT_IVS;
+
+        CloseBottleCapStatWindow(taskId);
+        if (GetMonData(mon, fields[stat]) == targetIv)
+        {
+            gPartyMenuUseExitCallback = FALSE;
+            PlaySE(SE_SELECT);
+            DisplayPartyMenuMessage(gText_WontHaveEffect, TRUE);
+            ScheduleBgCopyTilemapToVram(2);
+            gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+            return;
+        }
+
+        SetMonData(mon, fields[stat], &targetIv);
+        {
+            u32 hyperTrained = FALSE;
+            SetMonData(mon, MON_DATA_HYPER_TRAINED_HP + stat, &hyperTrained);
+        }
+        CalculateMonStats(mon);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+        gPartyMenuUseExitCallback = TRUE;
+        PlaySE(SE_USE_ITEM);
+        GetMonNickname(mon, gStringVar1);
+        StringCopy(gStringVar2, sBottleCapStatNames[stat]);
+        ConvertIntToDecimalStringN(gStringVar3, targetIv, STR_CONV_MODE_LEFT_ALIGN, 2);
+        StringExpandPlaceholders(gStringVar4, sText_BottleCapChangedIV);
+        DisplayPartyMenuMessage(gStringVar4, TRUE);
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+    }
+}
+
+void ItemUseCB_BottleCap(u8 taskId, TaskFunc task)
+{
+    s16 *data = gTasks[taskId].data;
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
+    u8 text[24];
+
+    tCapMonId = gPartyMenu.slotId;
+    SetWordTaskArg(taskId, tCapOldFunc, (uintptr_t)gTasks[taskId].func);
+    tCapWindowId = AddWindow(&sBottleCapStatWindowTemplate);
+    DrawStdFrameWithCustomTileAndPalette(tCapWindowId, FALSE, 0x4F, 13);
+    for (u32 i = 0; i < NUM_STATS; i++)
+    {
+        enum Stat stat = sBottleCapMenuStats[i];
+        u8 ivText[3];
+
+        StringCopy(text, sBottleCapStatNames[stat]);
+        StringAppend(text, COMPOUND_STRING(" ("));
+        ConvertIntToDecimalStringN(ivText, GetMonData(mon, MON_DATA_HP_IV + stat), STR_CONV_MODE_LEADING_ZEROS, 2);
+        StringAppend(text, ivText);
+        StringAppend(text, COMPOUND_STRING(")"));
+        AddTextPrinterParameterized(tCapWindowId, FONT_NORMAL, text, 8, i * 16 + 1, TEXT_SKIP_DRAW, NULL);
+    }
+    InitMenuInUpperLeftCornerNormal(tCapWindowId, NUM_STATS, 0);
+    DisplayPartyMenuMessage(sText_ChooseBottleCapStat, TRUE);
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = Task_HandleBottleCapStatInput;
+}
+
 // Holds the nature to exclude while RandomUniformExcept rolls a replacement.
 // Needed because the reject callback below takes no extra arguments and so
 // can't have the current nature passed in directly (same limitation noted by
@@ -5366,7 +5524,7 @@ static u32 sMintExcludedNature;
 
 static bool32 IsExcludedMintNature(u32 nature)
 {
-    return (nature == sMintExcludedNature);
+    return (nature == sMintExcludedNature || IsNatureExcludedFromRandomAcquisition(nature));
 }
 
 void ItemUseCB_RandomMint(u8 taskId, TaskFunc task)
@@ -5387,6 +5545,9 @@ void ItemUseCB_RandomMint(u8 taskId, TaskFunc task)
 #undef tOldNature
 #undef tNewNature
 #undef tOldFunc
+#undef tCapMonId
+#undef tCapWindowId
+#undef tCapOldFunc
 
 // --- Universal Mint: alphabetical nature picker ---
 // Visual style mirrors move_relearner.c's actual screen layout: left box
@@ -5401,16 +5562,21 @@ struct UniversalMintMenuData
     u8 partyMonId;
     u8 totalItems;
     bool8 isSplitMint;
+    bool8 selectedCurrentNature;
     u8 currentNatureLabel[32];
-    u8 promptText[80];
+    u8 promptText[128];
+    u32 currentNature;
+    u32 displayedCurrentNature;
     u32 selectedNature;
 };
 
 static EWRAM_DATA struct UniversalMintMenuData *sUniversalMintMenu = NULL;
 
-static void BuildSortedNatureList(struct ListMenuItem *items)
+#define MINT_CURRENT_NATURE_ID (NUM_NATURES + 2)
+
+static u32 BuildSortedNatureList(struct ListMenuItem *items)
 {
-    u32 i, j;
+    u32 i, j, count = 0;
 
     // Seed with natural nature order, then insertion-sort by display name.
     // Insertion sort is a deliberate choice over qsort (unused elsewhere in
@@ -5418,11 +5584,14 @@ static void BuildSortedNatureList(struct ListMenuItem *items)
     // (vanilla 0-24, Archetype 25+), making this fast in practice and simple.
     for (i = 0; i < NUM_NATURES; i++)
     {
-        items[i].name = gNaturesInfo[i].name;
-        items[i].id = i;
+        if (IsNatureExcludedFromRandomAcquisition(i))
+            continue;
+        items[count].name = gNaturesInfo[i].name;
+        items[count].id = i;
+        count++;
     }
 
-    for (i = 1; i < NUM_NATURES; i++)
+    for (i = 1; i < count; i++)
     {
         struct ListMenuItem key = items[i];
         j = i;
@@ -5433,6 +5602,8 @@ static void BuildSortedNatureList(struct ListMenuItem *items)
         }
         items[j] = key;
     }
+
+    return count;
 }
 
 // --- Universal Mint standalone screen ---
@@ -5552,8 +5723,11 @@ static void UniversalMint_LoadNatureDescription(s32 natureId)
     if (natureId == LIST_CANCEL)
         return;
 
+    if (natureId == MINT_CURRENT_NATURE_ID)
+        natureId = sUniversalMintMenu->displayedCurrentNature;
+
     WrapNatureDescription(buffer, gNaturesInfo[natureId].description, FONT_SMALL_NARROW, 118, 6);
-    AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_SMALL_NARROW, buffer, 4, 13, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized4(RELEARNERWIN_DESC_BATTLE, FONT_SMALL_NARROW, 4, 13, 0, 4, sFontColorTable[3], TEXT_SKIP_DRAW, buffer);
     CopyWindowToVram(RELEARNERWIN_DESC_BATTLE, COPYWIN_GFX);
 }
 
@@ -5587,7 +5761,7 @@ static void CB2_ReturnToPartyMenuFromUniversalMint(void);
 static void PrintMintPickerPrompt(const u8 *text)
 {
     FillWindowPixelBuffer(RELEARNERWIN_MSG, PIXEL_FILL(1));
-    AddTextPrinterParameterized(RELEARNERWIN_MSG, FONT_SMALL_NARROW, text, 0, 1, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized4(RELEARNERWIN_MSG, FONT_SMALL_NARROW, 0, 1, 0, 4, sFontColorTable[3], TEXT_SKIP_DRAW, text);
     CopyWindowToVram(RELEARNERWIN_MSG, COPYWIN_GFX);
 }
 
@@ -5620,13 +5794,30 @@ static void CB2_ReturnToPartyMenuFromUniversalMint_Confirm(void)
     InitPartyMenu(gPartyMenu.menuType, KEEP_PARTY_LAYOUT, gPartyMenu.action, TRUE, PARTY_MSG_NONE, Task_UniversalMint_ConfirmOnPartyScreen, gPartyMenu.exitCallback);
 }
 
+static bool32 WouldNatureRemoveKnownMove(struct Pokemon *mon, u32 nature)
+{
+    struct Pokemon previewMon = *mon;
+
+    SetMonData(&previewMon, MON_DATA_HIDDEN_NATURE, &nature);
+    for (u32 i = 0; i < MAX_MON_MOVES; i++)
+    {
+        enum Move move = GetMonData(&previewMon, MON_DATA_MOVE1 + i);
+
+        if (move != MOVE_NONE && DoesBoxMonNatureRefuseMove(&previewMon.box, move))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 // --- Custom Archetype item: Universal Mint (confirmation step) ---
 // Mirrors Task_AbilityCapsule/Task_Mint's confirm-and-apply flow, but runs
 // on the party screen after returning from the standalone nature list
 // screen, rather than asking inside that screen.
 static void Task_UniversalMint_ConfirmOnPartyScreen(u8 taskId)
 {
-    static const u8 sText_askText[] = _("One or more moves may be removed.\nProceed?");
+    static const u8 sText_askText[] = _("It might affect {STR_VAR_1}'s stats.\nAre you sure you want to use it?");
+    static const u8 sText_moveWarning[] = _("One or more moves may be removed.\nProceed?");
     static const u8 sText_doneText[] = _("{STR_VAR_1}'s stats may have changed due\nto the effects of the {STR_VAR_2}!{PAUSE_UNTIL_PRESS}");
     s16 *data = gTasks[taskId].data;
     u32 monId = sUniversalMintMenu->partyMonId;
@@ -5637,7 +5828,11 @@ static void Task_UniversalMint_ConfirmOnPartyScreen(u8 taskId)
     case 0:
         GetMonNickname(&gParties[B_TRAINER_PLAYER][monId], gStringVar1);
         CopyItemName(gSpecialVar_ItemId, gStringVar2);
-        StringExpandPlaceholders(gStringVar4, sText_askText);
+        if (!sUniversalMintMenu->selectedCurrentNature
+         && WouldNatureRemoveKnownMove(&gParties[B_TRAINER_PLAYER][monId], chosenNature))
+            StringExpandPlaceholders(gStringVar4, sText_moveWarning);
+        else
+            StringExpandPlaceholders(gStringVar4, sText_askText);
         PlaySE(SE_SELECT);
         DisplayPartyMenuMessage(gStringVar4, 1);
         ScheduleBgCopyTilemapToVram(2);
@@ -5683,7 +5878,10 @@ static void Task_UniversalMint_ConfirmOnPartyScreen(u8 taskId)
         break;
     case 5:
         {
-            u32 removedMoves = ApplyMintedNature(&gParties[B_TRAINER_PLAYER][monId], chosenNature);
+            u32 removedMoves = 0;
+
+            if (!sUniversalMintMenu->selectedCurrentNature)
+                removedMoves = ApplyMintedNature(&gParties[B_TRAINER_PLAYER][monId], chosenNature);
             RemoveBagItem(gSpecialVar_ItemId, 1);
             if (removedMoves != 0)
             {
@@ -5738,7 +5936,10 @@ static void Task_UniversalMint_HandleInput(u8 taskId)
         // it (mirrors Ability Capsule/regular Mints). sUniversalMintMenu is
         // kept alive - Task_UniversalMint_ConfirmOnPartyScreen frees it once
         // the confirmation is resolved either way.
-        sUniversalMintMenu->selectedNature = itemId;
+        sUniversalMintMenu->selectedCurrentNature = (itemId == MINT_CURRENT_NATURE_ID);
+        sUniversalMintMenu->selectedNature = sUniversalMintMenu->selectedCurrentNature
+                                           ? sUniversalMintMenu->currentNature
+                                           : itemId;
         PlaySE(SE_SELECT);
         DestroyListMenuTask(sUniversalMintMenu->listTaskId, NULL, NULL);
         FreeAllWindowBuffers();
@@ -5752,11 +5953,11 @@ static void Task_SplitMint_CancelConfirm(u8 taskId)
 {
     switch (Menu_ProcessInputNoWrapClearOnChoose())
     {
-    case 0: // Yes: consume the Mint and keep the current Nature.
+    case 1: // Yes: consume the Mint and keep the current Nature.
         PlaySE(SE_SELECT);
         ExitMintPickerWithoutChangingNature(taskId, TRUE);
         break;
-    case 1: // No
+    case 0: // No
     case MENU_B_PRESSED:
         PlaySE(SE_SELECT);
         EraseYesNoWindow();
@@ -5841,15 +6042,53 @@ static void Task_UniversalMint_Init(u8 taskId)
 
 void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task)
 {
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
+    u32 currentNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    u32 displayedCurrentNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE)
+                               ? NATURE_MERCURIAL
+                               : currentNature;
+
     sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
     sUniversalMintMenu->partyMonId = gPartyMenu.slotId;
-    sUniversalMintMenu->totalItems = NUM_NATURES;
     sUniversalMintMenu->isSplitMint = FALSE;
+    sUniversalMintMenu->selectedCurrentNature = FALSE;
+    sUniversalMintMenu->currentNature = currentNature;
+    sUniversalMintMenu->displayedCurrentNature = displayedCurrentNature;
 
-    BuildSortedNatureList(sUniversalMintMenu->items);
+    sUniversalMintMenu->totalItems = BuildSortedNatureList(sUniversalMintMenu->items);
+    StringCopy(sUniversalMintMenu->currentNatureLabel, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+    StringAppend(sUniversalMintMenu->currentNatureLabel, gNaturesInfo[displayedCurrentNature].name);
+    bool32 foundCurrentNature = FALSE;
+    for (u32 i = 0; i < sUniversalMintMenu->totalItems; i++)
+    {
+        if (sUniversalMintMenu->items[i].id == displayedCurrentNature)
+        {
+            sUniversalMintMenu->items[i].name = sUniversalMintMenu->currentNatureLabel;
+            sUniversalMintMenu->items[i].id = MINT_CURRENT_NATURE_ID;
+            foundCurrentNature = TRUE;
+            break;
+        }
+    }
+    if (!foundCurrentNature)
+    {
+        u32 insertAt = sUniversalMintMenu->totalItems;
 
-    GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
-    StringExpandPlaceholders(sUniversalMintMenu->promptText, gText_UniversalMintPrompt);
+        while (insertAt > 0
+            && StringCompare(sUniversalMintMenu->items[insertAt - 1].name, gNaturesInfo[displayedCurrentNature].name) > 0)
+        {
+            sUniversalMintMenu->items[insertAt] = sUniversalMintMenu->items[insertAt - 1];
+            insertAt--;
+        }
+        sUniversalMintMenu->items[insertAt].name = sUniversalMintMenu->currentNatureLabel;
+        sUniversalMintMenu->items[insertAt].id = MINT_CURRENT_NATURE_ID;
+        sUniversalMintMenu->totalItems++;
+    }
+
+    GetMonNickname(mon, gStringVar1);
+    StringCopy(gStringVar2, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+    StringAppend(gStringVar2, gNaturesInfo[displayedCurrentNature].name);
+    StringAppend(gStringVar2, COMPOUND_STRING("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}"));
+    StringExpandPlaceholders(sUniversalMintMenu->promptText, COMPOUND_STRING("Choose a Nature to replace\n{STR_VAR_1}'s {STR_VAR_2}."));
 
     // ResetTasks() must happen here, before creating the new screen's task -
     // not inside that task itself, which would destroy the very task that's
@@ -5863,42 +6102,58 @@ void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task)
 
 void ItemUseCB_SplitMint(u8 taskId, TaskFunc task)
 {
-    u32 currentNature = GetMonData(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], MON_DATA_HIDDEN_NATURE);
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
+    u32 currentNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    u32 displayedCurrentNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE)
+                               ? NATURE_MERCURIAL
+                               : currentNature;
     u32 firstNature;
     u32 secondNature;
 
     do
     {
         firstNature = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
-    } while (firstNature == currentNature);
+    } while (firstNature == currentNature
+          || firstNature == displayedCurrentNature
+          || IsNatureExcludedFromRandomAcquisition(firstNature));
 
     do
     {
         secondNature = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
-    } while (secondNature == currentNature || secondNature == firstNature);
+    } while (secondNature == currentNature
+          || secondNature == displayedCurrentNature
+          || secondNature == firstNature
+          || IsNatureExcludedFromRandomAcquisition(secondNature));
 
     sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
     sUniversalMintMenu->partyMonId = gPartyMenu.slotId;
     sUniversalMintMenu->totalItems = 3;
     sUniversalMintMenu->isSplitMint = TRUE;
+    sUniversalMintMenu->selectedCurrentNature = FALSE;
+    sUniversalMintMenu->currentNature = currentNature;
+    sUniversalMintMenu->displayedCurrentNature = displayedCurrentNature;
     sUniversalMintMenu->items[0].name = gNaturesInfo[firstNature].name;
     sUniversalMintMenu->items[0].id = firstNature;
     sUniversalMintMenu->items[1].name = gNaturesInfo[secondNature].name;
     sUniversalMintMenu->items[1].id = secondNature;
-    StringCopy(sUniversalMintMenu->currentNatureLabel, gNaturesInfo[currentNature].name);
-    StringAppend(sUniversalMintMenu->currentNatureLabel, COMPOUND_STRING(" (Current)"));
+    StringCopy(sUniversalMintMenu->currentNatureLabel, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+    StringAppend(sUniversalMintMenu->currentNatureLabel, gNaturesInfo[displayedCurrentNature].name);
     sUniversalMintMenu->items[2].name = sUniversalMintMenu->currentNatureLabel;
-    sUniversalMintMenu->items[2].id = currentNature;
+    sUniversalMintMenu->items[2].id = MINT_CURRENT_NATURE_ID;
 
-    GetMonNickname(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], gStringVar1);
-    StringCopy(gStringVar2, gNaturesInfo[currentNature].name);
-    StringExpandPlaceholders(sUniversalMintMenu->promptText, COMPOUND_STRING("Choose one of two Natures to\nreplace {STR_VAR_1}'s {STR_VAR_2}."));
+    GetMonNickname(mon, gStringVar1);
+    StringCopy(gStringVar2, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+    StringAppend(gStringVar2, gNaturesInfo[displayedCurrentNature].name);
+    StringAppend(gStringVar2, COMPOUND_STRING("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}"));
+    StringExpandPlaceholders(sUniversalMintMenu->promptText, COMPOUND_STRING("Choose a Nature to replace\n{STR_VAR_1}'s {STR_VAR_2}."));
 
     ResetTasks();
     gMain.state = 0;
     CreateTask(Task_UniversalMint_Init, 0);
     SetMainCallback2(CB2_UniversalMintMain);
 }
+
+#undef MINT_CURRENT_NATURE_ID
 
 static void Task_DisplayHPRestoredMessage(u8 taskId)
 {
@@ -7069,6 +7324,9 @@ void DeleteMove(struct Pokemon *mon, enum Move move)
             u32 existingMove = GetBoxMonData(boxMon, MON_DATA_MOVE1 + i);
             if (existingMove == move)
             {
+                if (IsBoxMonMoveSlotLockedByNature(boxMon, i))
+                    break;
+
                 SetMonMoveSlot(mon, MOVE_NONE, i);
                 RemoveMonPPBonus(mon, i);
                 for (j = i; j < MAX_MON_MOVES - 1; j++)
@@ -7856,6 +8114,12 @@ static void GiveItemToSelectedMon(u8 taskId)
     if (!gPaletteFade.active)
     {
         item = gPartyMenu.bagItem;
+        if (DoesBoxMonNatureRefuseHeldItem(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId].box, item))
+        {
+            DisplayFrugalRefusedHeldItemMessage(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item, FALSE);
+            gTasks[taskId].func = Task_UpdateHeldItemSpriteAndClosePartyMenu;
+            return;
+        }
         DisplayGaveHeldItemMessage(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item, FALSE, 1);
         GiveItemToMon(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item);
         RemoveBagItem(item, 1);
@@ -7937,6 +8201,12 @@ static void Task_HandleSwitchItemsFromBagYesNoInput(u8 taskId)
     {
     case 0: // Yes, switch items
         item = gPartyMenu.bagItem;
+        if (DoesBoxMonNatureRefuseHeldItem(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId].box, item))
+        {
+            DisplayFrugalRefusedHeldItemMessage(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], item, TRUE);
+            gTasks[taskId].func = Task_UpdateHeldItemSpriteAndClosePartyMenu;
+            break;
+        }
         RemoveBagItem(item, 1);
         if (AddBagItem(sPartyMenuItemId, 1) == FALSE)
         {
@@ -8943,6 +9213,10 @@ void MoveDeleterForgetMove(void)
 {
     enum Move move = MOVE_NONE;
     struct BoxPokemon *boxmon = GetSelectedBoxMonFromPcOrParty();
+
+    if (IsBoxMonMoveSlotLockedByNature(boxmon, gSpecialVar_0x8005))
+        return;
+
     SetBoxMonData(boxmon, MON_DATA_MOVE1 + gSpecialVar_0x8005, &move);
     SetBoxMonData(boxmon, MON_DATA_PP1 + gSpecialVar_0x8005, &gMovesInfo[MOVE_NONE].pp);
     u8 ppBonuses = GetBoxMonData(boxmon, MON_DATA_PP_BONUSES);

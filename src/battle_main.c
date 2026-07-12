@@ -15,6 +15,7 @@
 #include "battle_scripts.h"
 #include "battle_setup.h"
 #include "battle_tower.h"
+#include "battle_util.h"
 #include "battle_z_move.h"
 #include "battle_gimmick.h"
 #include "berry.h"
@@ -3223,6 +3224,9 @@ void SwitchInClearSetData(enum BattlerId battler, struct Volatiles *volatilesCop
     gBattleStruct->battlerState[battler].canPickupItem = FALSE;
     gBattleStruct->battlerState[battler].wasAboveHalfHp = gBattleMons[battler].hp > gBattleMons[battler].maxHP / 2;
     gBattleStruct->battlerState[battler].wasAboveThirdHp = gBattleMons[battler].hp > gBattleMons[battler].maxHP / 3; // pranks / jimh
+    gBattleStruct->battlerState[battler].bitterBoostCharge = FALSE;
+    gBattleStruct->battlerState[battler].bitterBoostSpentThisMove = FALSE;
+    gBattleStruct->battlerState[battler].moveHealingThisUpdate = FALSE;
     gBattleStruct->hazardsCounter = 0;
     gSpecialStatuses[battler].queuedSwitch = NO_QUEUED_SWITCH;
 
@@ -4675,12 +4679,17 @@ u32 GetBattlerTotalSpeedStat(enum BattlerId battler, enum Ability ability, enum 
 
     u32 weather = GetWeather();
 
-    // --- Custom Archetype natures: Tempestuous & Territorial ---
-    // Boosts all non-HP stats by 5% in any Weather / on any Terrain, respectively.
-    if (HasNature(battler, NATURE_TEMPESTUOUS) && (weather & B_WEATHER_ANY))
-        speed = speed * 105 / 100;
-    else if (HasNature(battler, NATURE_TERRITORIAL) && (gFieldStatuses & STATUS_FIELD_TERRAIN_ANY))
-        speed = speed * 105 / 100;
+    // --- Custom Archetype nature: Anxious ---
+    // -20% Speed at full HP (can't relax when nothing's wrong);
+    // +20% Speed at ≤half HP (panic response kicks in).
+    if (HasNature(battler, NATURE_ANXIOUS))
+    {
+        if (gBattleMons[battler].hp == gBattleMons[battler].maxHP)
+            speed = speed * 80 / 100;
+        else if (gBattleMons[battler].hp <= gBattleMons[battler].maxHP / 2)
+            speed = speed * 120 / 100;
+        // Between full and half HP: no modifier (transition zone)
+    }
 
     // weather abilities
     if (ability == ABILITY_SWIFT_SWIM       && holdEffect != HOLD_EFFECT_UTILITY_UMBRELLA && weather  & B_WEATHER_RAIN)
@@ -4754,6 +4763,60 @@ s32 GetChosenMovePriority(enum BattlerId battler, enum Ability ability)
     return GetBattleMovePriority(battler, ability, move);
 }
 
+static bool32 SideHasVigilantTarget(enum BattlerId battlerAtk)
+{
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (IsBattlerAlive(battler)
+         && !IsBattlerAlly(battlerAtk, battler)
+         && HasNature(battler, NATURE_VIGILANT))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 TargetSideHasVigilant(enum BattlerId battlerAtk, enum BattlerId target)
+{
+    if (target >= gBattlersCount || !IsBattlerAlive(target) || IsBattlerAlly(battlerAtk, target))
+        return FALSE;
+
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+    {
+        if (IsBattlerAlive(battler)
+         && IsBattlerAlly(target, battler)
+         && HasNature(battler, NATURE_VIGILANT))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 DoesVigilantReducePriority(enum BattlerId battler, enum Move move)
+{
+    enum MoveTarget target = GetBattlerMoveTargetType(battler, move);
+
+    switch (target)
+    {
+    case TARGET_USER:
+    case TARGET_ALLY:
+    case TARGET_USER_AND_ALLY:
+    case TARGET_USER_OR_ALLY:
+    case TARGET_FIELD:
+        return FALSE;
+    case TARGET_BOTH:
+    case TARGET_FOES_AND_ALLY:
+    case TARGET_OPPONENTS_FIELD:
+    case TARGET_ALL_BATTLERS:
+        return SideHasVigilantTarget(battler);
+    case TARGET_SELECTED:
+    case TARGET_SMART:
+    case TARGET_DEPENDS:
+    case TARGET_OPPONENT:
+    case TARGET_RANDOM:
+    default:
+        return TargetSideHasVigilant(battler, gBattleStruct->moveTarget[battler]);
+    }
+}
+
 s32 GetBattleMovePriority(enum BattlerId battler, enum Ability ability, enum Move move)
 {
     s32 priority = 0;
@@ -4795,6 +4858,11 @@ s32 GetBattleMovePriority(enum BattlerId battler, enum Ability ability, enum Mov
     {
         priority += 3;
     }
+
+    // --- Custom Archetype nature: Vigilant ---
+    // Only trims elevated priority; neutral priority remains neutral.
+    if (priority > 0 && DoesVigilantReducePriority(battler, move))
+        priority--;
 
     return priority;
 }
@@ -5560,13 +5628,22 @@ static void HandleEndTurn_FinishBattle(void)
         if (B_TRAINERS_KNOCK_OFF_ITEMS == TRUE || B_RESTORE_HELD_BATTLE_ITEMS >= GEN_9)
             TryRestoreHeldItems();
 
+        if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK
+                               | BATTLE_TYPE_RECORDED_LINK
+                               | BATTLE_TYPE_SAFARI
+                               | BATTLE_TYPE_CATCH_TUTORIAL)))
+            TryFastidiousCleanPartyStatusAfterBattle();
+
         for (u32 i = 0; i < PARTY_SIZE; i++)
         {
             if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK
                                    | BATTLE_TYPE_RECORDED_LINK
                                    | BATTLE_TYPE_SAFARI
                                    | BATTLE_TYPE_CATCH_TUTORIAL)))
+            {
+                TrySwapEccentricPokeBall(&gParties[B_TRAINER_PLAYER][i]);
                 RerollMercurialNature(&gParties[B_TRAINER_PLAYER][i]);
+            }
 
             bool32 changedForm = TryRevertPartyMonFormChange(i);
 
@@ -5844,6 +5921,8 @@ enum Type GetDynamicMoveType(struct Pokemon *mon, enum Move move, enum BattlerId
     case EFFECT_WEATHER_BALL:
         if (state == MON_IN_BATTLE)
         {
+            if (HasNature(battler, NATURE_APATHETIC))
+                return moveType;
             u32 weather =  GetAttackerWeather(holdEffect, ability, GetWeather());
             if (weather & B_WEATHER_SUN)
                 return TYPE_FIRE;

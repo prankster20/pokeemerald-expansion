@@ -202,6 +202,8 @@ bool32 HandleFaintedMonActions(void);
 bool32 HasNoMonsToSwitch(enum BattlerId battler, u8 partyIdBattlerOn1, u8 partyIdBattlerOn2);
 bool32 TryChangeBattleWeather(enum BattlerId battler, u32 battleWeatherId, enum Ability ability);
 bool32 TryChangeBattleTerrain(enum BattlerId battler, u32 statusFlag);
+bool32 TryAmbientExtendActiveFieldTimers(enum BattlerId battler);
+void TryAmbientExtendNewFieldTimer(u16 *timer);
 bool32 IsPowderMoveBlocked(struct DamageContext *ctx);
 bool32 CanTargetBlockPranksterMove(struct DamageContext *ctx, s32 movePriority);
 bool32 CanPsychicTerrainProtectTarget(struct DamageContext *ctx, s32 movePriority);
@@ -350,6 +352,7 @@ bool32 AreBattlersOfOppositeGender(enum BattlerId battler1, enum BattlerId battl
 bool32 AreBattlersOfSameGender(enum BattlerId battler1, enum BattlerId battler2);
 u32 GetInfatuationImmuneNature(enum BattlerId battler);
 u32 CalcSecondaryEffectChance(enum BattlerId battler, enum Ability battlerAbility, const struct AdditionalEffect *additionalEffect);
+u32 ApplyCynicalSecondaryEffectChance(enum BattlerId battlerAtk, enum BattlerId effectBattler, const struct AdditionalEffect *additionalEffect, u32 percentChance);
 bool32 MoveEffectIsGuaranteed(enum BattlerId battler, enum Ability battlerAbility, const struct AdditionalEffect *additionalEffect);
 void GetBattlerTypes(enum BattlerId battler, bool32 ignoreTera, enum Type types[static 3]);
 enum Type GetBattlerType(enum BattlerId battler, u32 typeIndex, bool32 ignoreTera);
@@ -372,6 +375,7 @@ bool32 HasWeatherEffect(void);
 bool32 HadMoreThanHalfHpNowDoesnt(enum BattlerId battler);
 bool32 HadMoreThanThirdHpNowDoesnt(enum BattlerId battler); // pranks / jimh
 u32 GetGullibleVolatileDuration(enum BattlerId battler, u32 turns);
+u32 GetPersuasiveInflictedDuration(enum BattlerId battlerAtk, u32 turns); // pranks / jimh
 void ChooseStatBoostAnimation(enum BattlerId battler);
 bool32 TrySwitchInEjectPack(enum EjectPackTiming timing);
 bool32 EmergencyExitCanBeTriggered(enum BattlerId battler, enum Ability ability);

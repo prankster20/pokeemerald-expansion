@@ -513,10 +513,20 @@ struct BattlerState
     u32 canPickupItem:1;
     u32 ateBoost:1;
     u32 wasAboveHalfHp:1; // For Berserk, Emergency Exit, Wimp Out and Anger Shell.
-    // --- Custom Archetype natures: Resilient & Resolute ---
+    // --- Custom Archetype nature: Resolute ---
     // Re-arms whenever HP rises above one third, allowing a fresh trigger
     // on the next downward crossing.
     u32 wasAboveThirdHp:1;
+    // --- Custom Archetype nature: Bitter ---
+    // Bitter stores one charge when a foe heals with a move, then spends it
+    // on the next damaging move.
+    u32 bitterBoostCharge:1;
+    u32 bitterBoostSpentThisMove:1;
+    u32 moveHealingThisUpdate:1;
+    // --- Custom Archetype nature: Indomitable ---
+    // If lethal move damage would KO this battler before it acts, it hangs
+    // on only long enough to complete its pending action, then faints.
+    u32 indomitableFaintPending:1;
     // --- Custom Archetype nature: Delicate ---
     // Set when the 1.5x entry-hazard damage multiplier actually applied, so
     // PassiveDataHpUpdate knows to show Delicate's popup only for that case
@@ -1220,6 +1230,12 @@ static inline void SetHealAmount(enum BattlerId battler, s32 value)
     if (value == 0)
         value = 1;
     gBattleStruct->passiveHpUpdate[battler] = -1 * value;
+}
+
+static inline void SetMoveHealAmount(enum BattlerId battler, s32 value)
+{
+    SetHealAmount(battler, value);
+    gBattleStruct->battlerState[battler].moveHealingThisUpdate = TRUE;
 }
 
 static inline bool32 IsGhostBattleWithoutScope(void)

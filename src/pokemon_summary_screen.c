@@ -231,6 +231,8 @@ static void Task_SetHandleReplaceMoveInput(u8);
 static void Task_HandleReplaceMoveInput(u8);
 static bool8 CanReplaceMove(void);
 static void ShowCantForgetHMsWindow(u8);
+static void ShowCantForgetNostalgicWindow(u8);
+static void ShowCantForgetEclecticWindow(u8);
 static void Task_HandleInputCantForgetHMsMoves(u8);
 static void DrawPagination(void);
 static void PositionPowerAccSlidingWindow(u16, s16);
@@ -292,6 +294,8 @@ static void PrintNewMoveDetailsOrCancelText(void);
 static void AddAndFillMoveNamesWindow(void);
 static void SwapMovesNamesPP(u8, u8);
 static void PrintHMMovesCantBeForgotten(void);
+static void PrintNostalgicMovesCantBeForgotten(void);
+static void PrintEclecticNeedsSameCategoryMove(void);
 static void ResetSpriteIds(void);
 static void SetSpriteInvisibility(u8, bool8);
 static void HidePageSpecificSprites(void);
@@ -2366,9 +2370,17 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             }
             else if (HasMoreThanOneMove() == TRUE)
             {
-                PlaySE(SE_SELECT);
-                ShowUtilityPrompt(SUMMARY_MODE_SELECT_MOVE);
-                SwitchToMovePositionSwitchMode(taskId);
+                if (sMonSummaryScreen->summary.mintNature == NATURE_NOSTALGIC
+                 && sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
+                {
+                    PlaySE(SE_FAILURE);
+                }
+                else
+                {
+                    PlaySE(SE_SELECT);
+                    ShowUtilityPrompt(SUMMARY_MODE_SELECT_MOVE);
+                    SwitchToMovePositionSwitchMode(taskId);
+                }
             }
             else
             {
@@ -2666,7 +2678,12 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
                 else
                 {
                     PlaySE(SE_FAILURE);
-                    ShowCantForgetHMsWindow(taskId);
+                    if (CannotForgetMove(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]))
+                        ShowCantForgetHMsWindow(taskId);
+                    else if (IsBoxMonMoveSlotLockedByNature(GetCurrentBoxmon(), sMonSummaryScreen->firstMoveIndex))
+                        ShowCantForgetNostalgicWindow(taskId);
+                    else
+                        ShowCantForgetEclecticWindow(taskId);
                 }
             }
             else if (JOY_NEW(B_BUTTON))
@@ -2685,11 +2702,17 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
 static bool8 CanReplaceMove(void)
 {
     if (sMonSummaryScreen->firstMoveIndex == MAX_MON_MOVES
-        || sMonSummaryScreen->newMove == MOVE_NONE
-        || !CannotForgetMove(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]))
+        || (sMonSummaryScreen->newMove == MOVE_NONE
+         && !IsBoxMonMoveSlotLockedByNature(GetCurrentBoxmon(), sMonSummaryScreen->firstMoveIndex)))
         return TRUE;
-    else
+
+    if (CannotForgetMove(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]))
         return FALSE;
+
+    if (!CanBoxMonReplaceMoveWithMoveForNature(GetCurrentBoxmon(), sMonSummaryScreen->firstMoveIndex, sMonSummaryScreen->newMove))
+        return FALSE;
+
+    return TRUE;
 }
 
 static void ShowCantForgetHMsWindow(u8 taskId)
@@ -2701,6 +2724,30 @@ static void ShowCantForgetHMsWindow(u8 taskId)
     PositionPowerAccSlidingWindow(0, 3);
     PositionAppealJamSlidingWindow(0, 3, 0);
     PrintHMMovesCantBeForgotten();
+    gTasks[taskId].func = Task_HandleInputCantForgetHMsMoves;
+}
+
+static void ShowCantForgetNostalgicWindow(u8 taskId)
+{
+    ClearWindowTilemap(PSS_LABEL_WINDOW_MOVES_POWER_ACC);
+    ClearWindowTilemap(PSS_LABEL_WINDOW_MOVES_APPEAL_JAM);
+    gSprites[sMonSummaryScreen->categoryIconSpriteId].invisible = TRUE;
+    ScheduleBgCopyTilemapToVram(0);
+    PositionPowerAccSlidingWindow(0, 3);
+    PositionAppealJamSlidingWindow(0, 3, 0);
+    PrintNostalgicMovesCantBeForgotten();
+    gTasks[taskId].func = Task_HandleInputCantForgetHMsMoves;
+}
+
+static void ShowCantForgetEclecticWindow(u8 taskId)
+{
+    ClearWindowTilemap(PSS_LABEL_WINDOW_MOVES_POWER_ACC);
+    ClearWindowTilemap(PSS_LABEL_WINDOW_MOVES_APPEAL_JAM);
+    gSprites[sMonSummaryScreen->categoryIconSpriteId].invisible = TRUE;
+    ScheduleBgCopyTilemapToVram(0);
+    PositionPowerAccSlidingWindow(0, 3);
+    PositionAppealJamSlidingWindow(0, 3, 0);
+    PrintEclecticNeedsSameCategoryMove();
     gTasks[taskId].func = Task_HandleInputCantForgetHMsMoves;
 }
 
@@ -4116,8 +4163,9 @@ static void PrintMoveNameAndPP(u8 moveIndex)
     if (move != 0)
     {
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
-        // --- Custom Archetype nature: Serious ---
-        if (summary->mintNature == NATURE_SERIOUS)
+        // --- Custom Archetype natures: Serious & Methodical ---
+        if (summary->mintNature == NATURE_SERIOUS
+         || (summary->mintNature == NATURE_METHODICAL && moveIndex == 3))
             pp += 1;
         PrintTextOnWindowToFit(moveNameWindowId, GetMoveName(move), 0, moveIndex * 16 + 1, 0, 1);
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);
@@ -4323,6 +4371,20 @@ static void PrintHMMovesCantBeForgotten(void)
     u8 windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
     FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
     PrintTextOnWindow(windowId, gText_HMMovesCantBeForgotten2, 6, 1, 0, 0);
+}
+
+static void PrintNostalgicMovesCantBeForgotten(void)
+{
+    u8 windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
+    PrintTextOnWindow(windowId, gText_NostalgicMovesCantBeForgotten, 6, 1, 0, 0);
+}
+
+static void PrintEclecticNeedsSameCategoryMove(void)
+{
+    u8 windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
+    PrintTextOnWindow(windowId, gText_EclecticNeedsSameCategoryMove, 6, 1, 0, 0);
 }
 
 static void ResetSpriteIds(void)

@@ -15,6 +15,7 @@ void ItemUseOutOfBattle_Medicine(u8 taskId);
 void ItemUseOutOfBattle_AbilityCapsule(u8 taskId);
 void ItemUseOutOfBattle_AbilityPatch(u8 taskId);
 void ItemUseOutOfBattle_Mint(u8 taskId);
+void ItemUseOutOfBattle_BottleCap(u8 taskId);
 void ItemUseOutOfBattle_RandomMint(u8 taskId);
 void ItemUseOutOfBattle_UniversalMint(u8 taskId);
 void ItemUseOutOfBattle_SplitMint(u8 taskId);

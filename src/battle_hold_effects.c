@@ -75,7 +75,8 @@ enum ItemEffect TryBoosterEnergy(enum BattlerId battler, enum Ability ability)
 
 static enum ItemEffect TryRoomService(enum BattlerId battler)
 {
-    if (gFieldStatuses & STATUS_FIELD_TRICK_ROOM && CompareStat(battler, STAT_SPEED, MIN_STAT_STAGE, CMP_GREATER_THAN, GetBattlerAbility(battler)))
+    if ((gFieldStatuses & STATUS_FIELD_TRICK_ROOM || HasNature(battler, NATURE_DECEITFUL))
+     && CompareStat(battler, STAT_SPEED, MIN_STAT_STAGE, CMP_GREATER_THAN, GetBattlerAbility(battler)))
     {
         gEffectBattler = gBattleScripting.battler = battler;
         gLastUsedItem = gBattleMons[battler].item;
@@ -258,7 +259,7 @@ static enum ItemEffect TryWeaknessPolicy(enum BattlerId battlerDef)
     enum ItemEffect effect = ITEM_NO_EFFECT;
 
     if (IsBattlerTurnDamaged(battlerDef, EXCLUDING_SUBSTITUTES)
-     && gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_SUPER_EFFECTIVE)
+     && (gBattleStruct->moveResultFlags[battlerDef] & MOVE_RESULT_SUPER_EFFECTIVE || HasNature(battlerDef, NATURE_DECEITFUL)))
     {
         SetStatChange(battlerDef, STAT_ATK, 2);
         SetStatChange(battlerDef, STAT_SPATK, 2);
@@ -532,7 +533,12 @@ static enum ItemEffect TryShellBell(enum BattlerId battlerAtk)
      && !IsBattlerAtMaxHp(battlerAtk)
      && !(B_HEAL_BLOCKING >= GEN_5 && gBattleMons[battlerAtk].volatiles.healBlock))
     {
-        SetHealAmount(battlerAtk, gBattleScripting.savedDmg / GetBattlerHoldEffectParam(battlerAtk));
+        s32 healAmount = gBattleScripting.savedDmg / GetBattlerHoldEffectParam(battlerAtk);
+
+        if (HasNature(battlerAtk, NATURE_RESOURCEFUL))
+            healAmount = healAmount * 125 / 100;
+
+        SetHealAmount(battlerAtk, healAmount);
         BattleScriptCall(BattleScript_ItemHealHP_Ret);
         effect = ITEM_HP_CHANGE;
     }
@@ -640,6 +646,10 @@ static enum ItemEffect TryLeftovers(enum BattlerId battler, enum HoldEffect hold
         // Boosts Leftovers by 1.5x (not Black Sludge, which shares this function).
         if (holdEffect == HOLD_EFFECT_LEFTOVERS && HasNature(battler, NATURE_VORACIOUS))
             healAmount = healAmount * 3 / 2;
+
+        if ((holdEffect == HOLD_EFFECT_LEFTOVERS || holdEffect == HOLD_EFFECT_BLACK_SLUDGE)
+         && HasNature(battler, NATURE_RESOURCEFUL))
+            healAmount = healAmount * 125 / 100;
 
         SetHealAmount(battler, healAmount);
         RecordItemEffectBattle(battler, holdEffect);
@@ -843,6 +853,9 @@ static u32 ItemHealHp(enum BattlerId battler, enum Item itemId, enum HealAmount 
 
         if (ability == ABILITY_RIPEN && GetItemPocket(itemId) == POCKET_BERRIES)
             healAmount *= 2;
+
+        if (GetItemPocket(itemId) == POCKET_BERRIES && HasNature(battler, NATURE_RESOURCEFUL))
+            healAmount = healAmount * 125 / 100;
 
         SetHealAmount(battler, healAmount);
         if (GetItemPocket(itemId) == POCKET_BERRIES)

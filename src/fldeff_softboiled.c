@@ -80,7 +80,7 @@ static void Task_SoftboiledRestoreHealth(u8 taskId)
         if (species != SPECIES_NONE && species != SPECIES_EGG
          && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_BENEVOLENT)
         {
-            healAmount += healAmount / 4; // +25%
+            healAmount = healAmount * 120 / 100;
             break;
         }
     }

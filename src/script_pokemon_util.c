@@ -365,6 +365,7 @@ static u32 ScriptGiveMonParameterized(u8 side, u8 slot, enum Species species, u8
     u32 i;
     bool32 isShiny;
 
+    (void)ivs;
     ResolveRandomMonGeneration(species, &ball, moves);
 
     u32 personality = GetMonPersonality(species, gender, nature, RANDOM_UNOWN_LETTER);
@@ -398,9 +399,9 @@ static u32 ScriptGiveMonParameterized(u8 side, u8 slot, enum Species species, u8
         if (evs[i] <= MAX_PER_STAT_EVS)
             SetMonData(&mon, MON_DATA_HP_EV + i, &evs[i]);
 
-        // IV
-        if (ivs[i] <= MAX_PER_STAT_IVS)
-            SetMonData(&mon, MON_DATA_HP_IV + i, &ivs[i]);
+        // All player-facing generated Pokémon have perfect IVs.
+        u32 perfectIv = MAX_PER_STAT_IVS;
+        SetMonData(&mon, MON_DATA_HP_IV + i, &perfectIv);
     }
     CalculateMonStats(&mon);
 

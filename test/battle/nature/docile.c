@@ -7,7 +7,7 @@ ASSUMPTIONS
     ASSUME(GetMoveEffect(MOVE_ATTRACT) == EFFECT_ATTRACT);
 }
 
-SINGLE_BATTLE_TEST("Docile prevents Confusion")
+SINGLE_BATTLE_TEST("Docile does not prevent Confusion")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
@@ -16,15 +16,13 @@ SINGLE_BATTLE_TEST("Docile prevents Confusion")
         SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_CONFUSE_RAY); }
-    } SCENE {
-        ABILITY_POPUP(opponent);
     } THEN {
         u32 confusionTurns = gBattleMons[B_POSITION_OPPONENT_LEFT].volatiles.confusionTurns;
-        EXPECT_EQ(confusionTurns, 0);
+        EXPECT(confusionTurns > 0);
     }
 }
 
-SINGLE_BATTLE_TEST("Docile prevents Infatuation")
+SINGLE_BATTLE_TEST("Docile does not prevent Infatuation")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_ATTRACT); }
@@ -33,10 +31,8 @@ SINGLE_BATTLE_TEST("Docile prevents Infatuation")
         SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_ATTRACT); }
-    } SCENE {
-        ABILITY_POPUP(opponent);
     } THEN {
         u32 infatuation = gBattleMons[B_POSITION_OPPONENT_LEFT].volatiles.infatuation;
-        EXPECT_EQ(infatuation, 0);
+        EXPECT(infatuation != 0);
     }
 }

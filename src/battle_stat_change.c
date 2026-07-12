@@ -470,7 +470,7 @@ static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct St
         TryPlayStatChangeAnimation(cv, st);
 
         // --- Custom Archetype nature: Vain ---
-        // The first successful stat drop permanently removes its 8% battle
+        // The first successful stat drop permanently removes its 5% battle
         // stat boost and replaces this drop's message script with a wrapper
         // that also shows the nature popup and vanity-break message.
         if (HasNature(cv->battlerDef, NATURE_VAIN)

@@ -6960,8 +6960,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Stockpile"),
         .description = COMPOUND_STRING(
-            "Charges up power for up to\n"
-            "3 turns."),
+            "Gains 3 Hoard Counters\n"
+            "and raises defenses."),
         .effect = EFFECT_STOCKPILE,
         .power = 0,
         .type = TYPE_NORMAL,
@@ -6992,7 +6992,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Spit Up"),
         .description = COMPOUND_STRING(
-            "Releases stockpiled power\n"
+            "Releases Hoard Counter power\n"
             "(the more the better)."),
         .effect = EFFECT_SPIT_UP,
         .power = 1,
@@ -7015,7 +7015,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Swallow"),
         .description = COMPOUND_STRING(
-            "Absorbs stockpiled power\n"
+            "Absorbs Hoard Counter power\n"
             "and restores HP."),
         .effect = EFFECT_SWALLOW,
         .power = 0,

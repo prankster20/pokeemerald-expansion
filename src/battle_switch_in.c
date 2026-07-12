@@ -307,22 +307,18 @@ static void SetDmgHazardsBattlescript(enum BattlerId battler, u8 multistringId)
     BattleScriptCall(BattleScript_DmgHazardsOnBattler);
 }
 
-// --- Custom Archetype natures: Delicate & Rugged ---
-// Delicate suffers 1.5x damage from entry hazards; Rugged is fully immune.
+// --- Custom Archetype nature: Rugged ---
+// Delicate's multiplier is applied centrally to all indirect damage in
+// PassiveDataHpUpdate. Rugged remains fully immune to entry hazards here.
 static inline s32 ApplyHazardDamageNatureMultiplier(enum BattlerId battler, s32 damage)
 {
     if (HasNature(battler, NATURE_RUGGED))
         return 0;
-    if (HasNature(battler, NATURE_DELICATE))
-    {
-        gBattleStruct->battlerState[battler].delicateHazardBoosted = TRUE; // pranks / jimh
-        return damage * 3 / 2;
-    }
     return damage;
 }
 
 // pranks / jimh - Custom Archetype switch-in natures
-// Arrogant/Benevolent/Tempestuous/Territorial/Vain
+// Arrogant/Benevolent/Ambient/Vain
 // just show a popup - their actual effects (damage boost, healing boost,
 // stat boosts) are implemented elsewhere and don't depend on this trigger
 // at all. Cantankerous's HP-loss-for-everyone IS implemented here, since
@@ -360,22 +356,8 @@ static bool32 TryNatureSwitchInEffects(enum BattlerId battler)
         BattleScriptCall(BattleScript_BenevolentBoostsHealingRet);
         return TRUE;
     }
-    else if (HasNature(battler, NATURE_TEMPESTUOUS) && (gBattleWeather & B_WEATHER_ANY))
-    {
-        gBattleScripting.battler = battler;
-        gBattleScripting.showNaturePopup = TRUE;
-        gBattleScripting.naturePopupId = NATURE_TEMPESTUOUS;
-        BattleScriptCall(BattleScript_TempestuousChasesStormsRet);
+    else if (TryAmbientExtendActiveFieldTimers(battler))
         return TRUE;
-    }
-    else if (HasNature(battler, NATURE_TERRITORIAL) && (gFieldStatuses & STATUS_FIELD_TERRAIN_ANY))
-    {
-        gBattleScripting.battler = battler;
-        gBattleScripting.showNaturePopup = TRUE;
-        gBattleScripting.naturePopupId = NATURE_TERRITORIAL;
-        BattleScriptCall(BattleScript_TerritorialGuardsTerritoryRet);
-        return TRUE;
-    }
     else if (HasNature(battler, NATURE_CANTANKEROUS))
     {
         gBattleScripting.battler = battler;

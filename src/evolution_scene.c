@@ -612,12 +612,14 @@ static const u8 sCallowBlacklistedNatures[] =
 {
     NATURE_AUSTERE,
     NATURE_COMPULSIVE,
-    NATURE_DEPENDENT,
+    NATURE_IMPRESSIONABLE,
 };
 
 static bool32 IsCallowBlacklistedNature(u32 nature)
 {
     if (nature == NATURE_CALLOW)
+        return TRUE;
+    if (IsNatureExcludedFromRandomAcquisition(nature))
         return TRUE;
 
     for (u32 i = 0; i < ARRAY_COUNT(sCallowBlacklistedNatures); i++)
@@ -628,13 +630,21 @@ static bool32 IsCallowBlacklistedNature(u32 nature)
     return FALSE;
 }
 
-static void TryRerollCallowNatureOnEvolution(struct Pokemon *mon)
+static void TryChangeNatureOnEvolution(struct Pokemon *mon)
 {
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_CALLOW)
+    u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+
+    if (nature == NATURE_CALLOW)
     {
         u32 newNature = RandomUniformExcept(RNG_CALLOW_EVOLUTION, 0, NUM_NATURES - 1, IsCallowBlacklistedNature);
         SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
         AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
+    }
+    else if (nature == NATURE_INNOCENT)
+    {
+        u32 newNature = GetInnocentEvolutionNatureFromFriendship(GetMonData(mon, MON_DATA_FRIENDSHIP));
+        SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
+        AdjustPPForSeriousNatureChange(mon, NATURE_INNOCENT, newNature);
     }
 }
 
@@ -823,7 +833,7 @@ static void Task_EvolutionScene(u8 taskId)
             gTasks[taskId].tState++;
             SetMonData(mon, MON_DATA_SPECIES, (void *)(&gTasks[taskId].tPostEvoSpecies));
             SetMonData(mon, MON_DATA_EVOLUTION_TRACKER, &zero);
-            TryRerollCallowNatureOnEvolution(mon);
+            TryChangeNatureOnEvolution(mon);
             CalculateMonStats(mon);
             EvolutionRenameMon(mon, gTasks[taskId].tPreEvoSpecies, gTasks[taskId].tPostEvoSpecies);
             GetSetPokedexFlag(SpeciesToNationalPokedexNum(gTasks[taskId].tPostEvoSpecies), FLAG_SET_SEEN);
@@ -1054,7 +1064,8 @@ static void Task_EvolutionScene(u8 taskId)
                 {
                     // Selected move to forget
                     enum Move move = GetMonData(mon, var + MON_DATA_MOVE1);
-                    if (CannotForgetMove(move))
+                    if (CannotForgetMove(move)
+                     || !CanBoxMonReplaceMoveWithMoveForNature(&mon->box, var, gMoveToLearn))
                     {
                         // Can't forget HMs
                         BattleStringExpandPlaceholdersToDisplayedString(gBattleStringsTable[STRINGID_HMMOVESCANTBEFORGOTTEN]);
@@ -1285,7 +1296,7 @@ static void Task_TradeEvolutionScene(u8 taskId)
             gTasks[taskId].tState++;
             SetMonData(mon, MON_DATA_SPECIES, (&gTasks[taskId].tPostEvoSpecies));
             SetMonData(mon, MON_DATA_EVOLUTION_TRACKER, &zero);
-            TryRerollCallowNatureOnEvolution(mon);
+            TryChangeNatureOnEvolution(mon);
             CalculateMonStats(mon);
             EvolutionRenameMon(mon, gTasks[taskId].tPreEvoSpecies, gTasks[taskId].tPostEvoSpecies);
             GetSetPokedexFlag(SpeciesToNationalPokedexNum(gTasks[taskId].tPostEvoSpecies), FLAG_SET_SEEN);
@@ -1508,7 +1519,8 @@ static void Task_TradeEvolutionScene(u8 taskId)
                 {
                     // Selected move to forget
                     enum Move move = GetMonData(mon, var + MON_DATA_MOVE1);
-                    if (CannotForgetMove(move))
+                    if (CannotForgetMove(move)
+                     || !CanBoxMonReplaceMoveWithMoveForNature(&mon->box, var, gMoveToLearn))
                     {
                         // Can't forget HMs
                         BattleStringExpandPlaceholdersToDisplayedString(gBattleStringsTable[STRINGID_HMMOVESCANTBEFORGOTTEN]);

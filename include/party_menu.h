@@ -92,6 +92,7 @@ void ItemUseCB_Medicine(u8 taskId, TaskFunc task);
 void ItemUseCB_AbilityCapsule(u8 taskId, TaskFunc task);
 void ItemUseCB_AbilityPatch(u8 taskId, TaskFunc task);
 void ItemUseCB_Mint(u8 taskId, TaskFunc task);
+void ItemUseCB_BottleCap(u8 taskId, TaskFunc task);
 void ItemUseCB_RandomMint(u8 taskId, TaskFunc task);
 void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task);
 void ItemUseCB_SplitMint(u8 taskId, TaskFunc task);

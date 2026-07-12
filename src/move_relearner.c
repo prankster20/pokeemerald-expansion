@@ -884,6 +884,47 @@ static u32 GetRelearnerLevelUpMoves(struct BoxPokemon *mon, u16 *moves)
     // Learns moves 1 level early - so the relearner offers them 1 level early too.
     if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
         level += 1;
+
+    // --- Custom Archetype nature: Pack-Rat ---
+    // Always offers Stockpile first in the level-up relearner list.
+    if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_PACK_RAT
+     && !BoxMonKnowsMove(mon, MOVE_STOCKPILE))
+        moves[numMoves++] = MOVE_STOCKPILE;
+
+    // --- Custom Archetype nature: Scholarly ---
+    // Prepends the base species' egg moves to the level-up relearner list,
+    // allowing evolved Pokémon to study those moves too.
+    if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_SCHOLARLY)
+    {
+        enum Species eggSpecies = species;
+        while (GetSpeciesPreEvolution(eggSpecies) != SPECIES_NONE)
+            eggSpecies = GetSpeciesPreEvolution(eggSpecies);
+
+        const u16 *eggMoves = GetSpeciesEggMoves(eggSpecies);
+        if (eggMoves[0] != MOVE_UNAVAILABLE)
+        {
+            for (u32 i = 0; eggMoves[i] != MOVE_UNAVAILABLE; i++)
+            {
+                bool32 alreadyInList = FALSE;
+
+                if (BoxMonKnowsMove(mon, eggMoves[i]))
+                    continue;
+
+                for (u32 j = 0; j < numMoves; j++)
+                {
+                    if (eggMoves[i] == moves[j])
+                    {
+                        alreadyInList = TRUE;
+                        break;
+                    }
+                }
+
+                if (!alreadyInList)
+                    moves[numMoves++] = eggMoves[i];
+            }
+        }
+    }
+
     do
     {
         const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
@@ -1024,6 +1065,29 @@ static bool32 HasRelearnerLevelUpMoves(struct BoxPokemon *boxMon)
     // Learns moves 1 level early - so the relearner offers them 1 level early too.
     if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
         level += 1;
+
+    // --- Custom Archetype nature: Pack-Rat ---
+    if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_PACK_RAT
+     && !BoxMonKnowsMove(boxMon, MOVE_STOCKPILE))
+        return TRUE;
+
+    // --- Custom Archetype nature: Scholarly ---
+    if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_SCHOLARLY)
+    {
+        enum Species eggSpecies = species;
+        while (GetSpeciesPreEvolution(eggSpecies) != SPECIES_NONE)
+            eggSpecies = GetSpeciesPreEvolution(eggSpecies);
+
+        const u16 *eggMoves = GetSpeciesEggMoves(eggSpecies);
+        if (eggMoves[0] != MOVE_UNAVAILABLE)
+        {
+            for (u32 i = 0; eggMoves[i] != MOVE_UNAVAILABLE; i++)
+            {
+                if (!BoxMonKnowsMove(boxMon, eggMoves[i]))
+                    return TRUE;
+            }
+        }
+    }
 
     do
     {

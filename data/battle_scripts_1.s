@@ -509,6 +509,13 @@ BattleScript_AffectionBasedEndurance::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_AffectionateEndurance::
+	call BattleScript_AbilityPopUpScripting
+	playanimation BS_TARGET, B_ANIM_AFFECTION_HANGED_ON
+	printstring STRINGID_TARGETTOUGHEDITOUT
+	waitmessage B_WAIT_TIME_LONG
+	return
+
 BattleScript_AffectionBasedStatusHeal::
 	jumpifstatus BS_ATTACKER, STATUS1_POISON | STATUS1_TOXIC_POISON, BattleScript_AffectionBasedStatus_HealPoisonString
 	jumpifstatus BS_ATTACKER, STATUS1_SLEEP, BattleScript_AffectionBasedStatus_HealSleepString
@@ -1546,6 +1553,16 @@ BattleScript_AromaVeilProtectsRet::
 
 BattleScript_AromaVeilProtects:
 	call BattleScript_AromaVeilProtectsRet
+	setmoveresultflags MOVE_RESULT_FAILED
+	goto BattleScript_MoveEnd
+
+BattleScript_RebelliousProtectsRet::
+	pause B_WAIT_TIME_SHORT
+	call BattleScript_AbilityPopUpScripting
+	return
+
+BattleScript_RebelliousProtects::
+	call BattleScript_RebelliousProtectsRet
 	setmoveresultflags MOVE_RESULT_FAILED
 	goto BattleScript_MoveEnd
 
@@ -2743,6 +2760,12 @@ BattleScript_FaintBattler::
 	trytrainerslidemsgfirstoff BS_FAINTED
 	return
 
+BattleScript_IndomitableFaint::
+	healthbarupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	datahpupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	tryfaintmon BS_SCRIPTING
+	return
+
 BattleScript_GiveExp::
 	setbyte sGIVEEXP_STATE, 0
 	getexp BS_TARGET
@@ -2889,6 +2912,7 @@ BattleScript_LocalBattleWonReward::
 BattleScript_PayDayMoneyAndPickUpItems::
 	givepaydaymoney
 	pickup
+	waitmessage B_WAIT_TIME_LONG
 	end2
 
 BattleScript_RivalBattleLost::
@@ -3026,6 +3050,7 @@ BattleScript_FrontierTrainerBattleWon_LoseTexts:
 BattleScript_TryPickUpItems:
 	jumpifnotbattletype BATTLE_TYPE_PYRAMID, BattleScript_FrontierTrainerBattleWon_End
 	pickup
+	waitmessage B_WAIT_TIME_LONG
 BattleScript_FrontierTrainerBattleWon_End:
 	end2
 
@@ -3870,6 +3895,12 @@ BattleScript_SnatchedMove::
 	return
 
 BattleScript_EnduredMsg::
+	printstring STRINGID_PKMNENDUREDHIT
+	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_IndomitableEnduredMsg::
+	call BattleScript_AbilityPopUpScripting
 	printstring STRINGID_PKMNENDUREDHIT
 	waitmessage B_WAIT_TIME_LONG
 	return
@@ -5402,7 +5433,7 @@ BattleScript_ItemHealHP_Ret::
 
 @ pranks / jimh - generic nature-triggered heal, now with a nature popup too
 @ (set gBattleScripting.battler/showNaturePopup/naturePopupId before calling).
-@ Used by the Custom Archetype nature Resilient; reusable for future nature heals.
+@ Used by the Custom Archetype nature Resolute; reusable for future nature heals.
 BattleScript_GenericNatureHealRet::
 	copybyte gBattlerAbility, sBATTLER
 	showabilitypopup
@@ -5447,6 +5478,12 @@ BattleScript_TerritorialGuardsTerritoryRet::
 	pause B_WAIT_TIME_SHORT
 	printstring STRINGID_TERRITORIALGUARDSTERRITORY
 	waitmessage B_WAIT_TIME_LONG
+	return
+
+BattleScript_TerritorialSwitchOutDamage::
+	healthbarupdate BS_ATTACKER, PASSIVE_HP_UPDATE
+	datahpupdate BS_ATTACKER, PASSIVE_HP_UPDATE
+	tryfaintmon BS_ATTACKER
 	return
 
 BattleScript_VainHaughtyRet::

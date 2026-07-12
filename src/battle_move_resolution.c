@@ -800,7 +800,8 @@ bool32 IsAffectedByFollowMe(enum BattlerId battlerAtk, enum BattleSide defSide, 
         || effect == EFFECT_SNIPE_SHOT
         || effect == EFFECT_SKY_DROP
         || IsAbilityAndRecord(battlerAtk, ability, ABILITY_PROPELLER_TAIL)
-        || IsAbilityAndRecord(battlerAtk, ability, ABILITY_STALWART))
+        || IsAbilityAndRecord(battlerAtk, ability, ABILITY_STALWART)
+        || HasNature(battlerAtk, NATURE_LEVEL_HEADED))
         return FALSE;
 
     if (effect == EFFECT_PURSUIT && IsPursuitTargetSet())
@@ -863,7 +864,8 @@ static bool32 HandleMoveTargetRedirection(struct BattleCalcValues *cv, enum Move
                  || (ability == ABILITY_STORM_DRAIN && moveType == TYPE_WATER))
                 && GetBattlerTurnOrderNum(battler) < redirectorOrderNum
                 && !IsAbilityAndRecord(cv->battlerAtk, abilityAtk, ABILITY_PROPELLER_TAIL)
-                && !IsAbilityAndRecord(cv->battlerAtk, abilityAtk, ABILITY_STALWART))
+                && !IsAbilityAndRecord(cv->battlerAtk, abilityAtk, ABILITY_STALWART)
+                && !HasNature(cv->battlerAtk, NATURE_LEVEL_HEADED))
             {
                 redirectorOrderNum = GetBattlerTurnOrderNum(battler);
             }
@@ -1303,6 +1305,7 @@ static enum CancelerResult CancelerMoveFailure(struct BattleCalcValues *cv)
         if (GetItemPocket(gBattleMons[cv->battlerAtk].item) != POCKET_BERRIES
          || gFieldStatuses & STATUS_FIELD_MAGIC_ROOM
          || cv->abilities[cv->battlerAtk] == ABILITY_KLUTZ
+         || HasNature(cv->battlerAtk, NATURE_FINICKY)
          || gBattleMons[cv->battlerAtk].volatiles.embargo)
             battleScript = BattleScript_ButItFailed;
         break;
@@ -2498,6 +2501,13 @@ enum CancelerResult DoAttackCanceler(void)
 
 static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 {
+    if (gBattleStruct->battlerState[cv->battlerAtk].bitterBoostSpentThisMove)
+    {
+        gBattleStruct->battlerState[cv->battlerAtk].bitterBoostCharge = FALSE;
+        gBattleStruct->battlerState[cv->battlerAtk].bitterBoostSpentThisMove = FALSE;
+    }
+    for (enum BattlerId battler = 0; battler < gBattlersCount; battler++)
+        gBattleStruct->battlerState[battler].moveHealingThisUpdate = FALSE;
     gBattleScripting.savedDmg += gBattleStruct->moveDamage[cv->battlerDef];
     gBattleStruct->eventState.moveEndBattler = 0;
     gBattleStruct->eventState.moveEndBlock = 0;
@@ -2604,7 +2614,7 @@ static void SetHealScript(struct BattleCalcValues *cv, s32 healAmount)
     }
     else if (!IsBattlerAtMaxHp(cv->battlerAtk) || GetConfig(B_ABSORB_MESSAGE) < GEN_5)
     {
-        SetHealAmount(cv->battlerAtk, healAmount);
+        SetMoveHealAmount(cv->battlerAtk, healAmount);
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_ABSORB;
         BattleScriptCall(BattleScript_EffectAbsorb);
     }
@@ -3487,24 +3497,6 @@ static enum MoveEndResult MoveEndMoveBlock(struct BattleCalcValues *cv)
     {
     case EFFECT_SPIT_UP:
     case EFFECT_SWALLOW:
-        if (!gBattleStruct->unableToUseMove)
-        {
-            gBattleMons[cv->battlerAtk].volatiles.stockpileCounter = 0;
-
-            if (gBattleMons[cv->battlerAtk].volatiles.stockpileDef > 0)
-            {
-                SetStatChange(gBattlerAttacker, STAT_DEF, -1 * gBattleMons[gBattlerAttacker].volatiles.stockpileDef);
-                gBattleMons[gBattlerAttacker].volatiles.stockpileDef = 0;
-            }
-            if (gBattleMons[gBattlerAttacker].volatiles.stockpileSpDef > 0)
-            {
-                SetStatChange(gBattlerAttacker, STAT_SPDEF, -1 * gBattleMons[gBattlerAttacker].volatiles.stockpileSpDef);
-                gBattleMons[gBattlerAttacker].volatiles.stockpileSpDef = 0;
-            }
-
-            BattleScriptCall(BattleScript_MoveEffectStockpileWoreOff);
-            result = MOVEEND_RESULT_RUN_SCRIPT;
-        }
         break;
     case EFFECT_KNOCK_OFF:
         if (gBattleMons[cv->battlerDef].item != ITEM_NONE
@@ -3885,6 +3877,25 @@ static enum MoveEndResult MoveEndLifeOrbShellBell(struct BattleCalcValues *cv)
     return result;
 }
 
+static enum MoveEndResult MoveEndIndomitable(struct BattleCalcValues *cv)
+{
+    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+
+    if (gBattleStruct->battlerState[cv->battlerAtk].indomitableFaintPending
+     && IsBattlerAlive(cv->battlerAtk)
+     && !gBattleStruct->battlerState[cv->battlerAtk].notOnField)
+    {
+        gBattleStruct->battlerState[cv->battlerAtk].indomitableFaintPending = FALSE;
+        gBattleScripting.battler = cv->battlerAtk;
+        SetPassiveDamageAmount(cv->battlerAtk, gBattleMons[cv->battlerAtk].hp);
+        BattleScriptCall(BattleScript_IndomitableFaint);
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+    }
+
+    gBattleScripting.moveendState++;
+    return result;
+}
+
 static enum MoveEndResult MoveEndEmergencyExit(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
@@ -4041,29 +4052,6 @@ static enum MoveEndResult MoveEndPickpocket(struct BattleCalcValues *cv)
     return result;
 }
 
-// pranks / jimh - Custom Archetype nature: Resilient
-// When HP falls to 1/3, recovers 1/8 max HP.
-static bool32 TryResilientHeal(enum BattlerId battler)
-{
-    if (IsBattlerAlive(battler)
-     && HasNature(battler, NATURE_RESILIENT)
-     && HadMoreThanThirdHpNowDoesnt(battler))
-    {
-        u32 healAmount = GetNonDynamaxMaxHP(battler) / 8;
-
-        gBattleStruct->battlerState[battler].wasAboveThirdHp = FALSE;
-        if (healAmount == 0)
-            healAmount = 1;
-        SetHealAmount(battler, healAmount);
-        gBattleScripting.battler = battler;
-        gBattleScripting.showNaturePopup = TRUE; // pranks / jimh
-        gBattleScripting.naturePopupId = NATURE_RESILIENT; // pranks / jimh
-        BattleScriptCall(BattleScript_GenericNatureHealRet);
-        return TRUE;
-    }
-    return FALSE;
-}
-
 static void ClearResoluteHarmfulVolatiles(enum BattlerId battler)
 {
     struct Volatiles *v = &gBattleMons[battler].volatiles;
@@ -4132,12 +4120,17 @@ static bool32 TryResoluteCleanse(enum BattlerId battler)
      && HasNature(battler, NATURE_RESOLUTE)
      && HadMoreThanThirdHpNowDoesnt(battler))
     {
+        u32 healAmount = GetNonDynamaxMaxHP(battler) / 8;
+
         gBattleStruct->battlerState[battler].wasAboveThirdHp = FALSE;
         ClearResoluteHarmfulVolatiles(battler);
+        if (healAmount == 0)
+            healAmount = 1;
+        SetHealAmount(battler, healAmount);
         gBattleScripting.battler = battler;
         gBattleScripting.showNaturePopup = TRUE;
         gBattleScripting.naturePopupId = NATURE_RESOLUTE;
-        BattleScriptCall(BattleScript_AbilityPopUpScripting);
+        BattleScriptCall(BattleScript_GenericNatureHealRet);
         return TRUE;
     }
     return FALSE;
@@ -4164,26 +4157,13 @@ static bool32 TryLazyHeal(enum BattlerId battler)
 
 // pranks / jimh - consumes a popup queued earlier via SetPendingNaturePopup
 // (e.g. Bad-Tempered/Bashful/Tongue-tied, set during damage calc - too early
-// in the pipeline to safely BattleScriptCall from there directly). Most
-// natures just want the plain popup; Tempestuous/Territorial have their own
-// scripts since they also print a custom message.
+// in the pipeline to safely BattleScriptCall from there directly).
 static bool32 TryShowPendingNaturePopup(enum BattlerId battler)
 {
     if (gBattleScripting.showNaturePopup && gBattleScripting.naturePopupBattler == battler)
     {
         gBattleScripting.battler = battler;
-        switch (gBattleScripting.naturePopupId)
-        {
-        case NATURE_TEMPESTUOUS:
-            BattleScriptCall(BattleScript_TempestuousChasesStormsRet);
-            break;
-        case NATURE_TERRITORIAL:
-            BattleScriptCall(BattleScript_TerritorialGuardsTerritoryRet);
-            break;
-        default:
-            BattleScriptCall(BattleScript_AbilityPopUpScripting);
-            break;
-        }
+        BattleScriptCall(BattleScript_AbilityPopUpScripting);
         return TRUE;
     }
     return FALSE;
@@ -4197,7 +4177,6 @@ static enum MoveEndResult MoveEndItemsEffectsAll(struct BattleCalcValues *cv)
 
         if (ItemBattleEffects(battler, 0, cv->holdEffects[battler], IsOnStatusChangeActivation)
          || ItemBattleEffects(battler, 0, cv->holdEffects[battler], IsOnHpThresholdActivation)
-         || TryResilientHeal(battler)
          || TryResoluteCleanse(battler)
          || TryLazyHeal(battler)
          || TryShowPendingNaturePopup(battler))
@@ -4399,7 +4378,7 @@ static enum MoveEndResult MoveEndConfusionAfterSkyDrop(struct BattleCalcValues *
         if (CanBeConfused(cv->battlerDef, cv->battlerDef))
         {
             gBattleScripting.battler = cv->battlerDef;
-            gBattleMons[cv->battlerDef].volatiles.confusionTurns = GetGullibleVolatileDuration(cv->battlerDef, RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS)); // 2-5 turns
+            gBattleMons[cv->battlerDef].volatiles.confusionTurns = GetPersuasiveInflictedDuration(cv->battlerAtk, GetGullibleVolatileDuration(cv->battlerDef, RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS))); // 2-5 turns
             BattleScriptCall(BattleScript_ConfusionAfterRampage);
             result = MOVEEND_RESULT_BREAK;
         }
@@ -4414,6 +4393,11 @@ static enum MoveEndResult MoveEndSprayLeppaBlunder(struct BattleCalcValues *cv)
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
     // Throat Spray, Leppa Berry, Blunder Policy
+    if (cv->holdEffects[cv->battlerAtk] == HOLD_EFFECT_BLUNDER_POLICY
+     && HasNature(cv->battlerAtk, NATURE_DECEITFUL)
+     && !gBattleStruct->battlerState[cv->battlerAtk].redCardSwitched)
+        gBattleStruct->blunderPolicy = TRUE;
+
     if (ItemBattleEffects(cv->battlerAtk, 0, cv->holdEffects[cv->battlerAtk], IsSprayLeppaBlunderActivation))
         result = MOVEEND_RESULT_RUN_SCRIPT;
 
@@ -4595,6 +4579,7 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *c
     [MOVEEND_CARD_BUTTON] = MoveEndCardButton,
     [MOVEEND_FORM_CHANGE] = MoveEndFormChange,
     [MOVEEND_LIFE_ORB_SHELL_BELL] = MoveEndLifeOrbShellBell,
+    [MOVEEND_INDOMITABLE] = MoveEndIndomitable,
     [MOVEEND_EMERGENCY_EXIT] = MoveEndEmergencyExit,
     [MOVEEND_HIT_ESCAPE] = MoveEndHitEscape,
     [MOVEEND_PICKPOCKET] = MoveEndPickpocket,
@@ -4833,7 +4818,7 @@ static enum MoveResult StatChangeBeforeChange(struct BattleCalcValues *cv)
         BattleScriptCall(BattleScript_StuffCheeks);
         return MOVE_RESULT_RUN_SCRIPT_INCREMENT;
     case EFFECT_STOCKPILE:
-        gBattleMons[cv->battlerAtk].volatiles.stockpileCounter++;
+        gBattleMons[cv->battlerAtk].volatiles.stockpileCounter = 3;
         PREPARE_BYTE_NUMBER_BUFFER(gBattleTextBuff1, 1, gBattleMons[cv->battlerAtk].volatiles.stockpileCounter);
         BattleScriptCall(BattleScript_Stockpile);
         return MOVE_RESULT_RUN_SCRIPT_INCREMENT;

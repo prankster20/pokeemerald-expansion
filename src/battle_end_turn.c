@@ -150,8 +150,8 @@ static bool32 HandleEndTurnWeatherDamage(enum BattlerId battler)
          && gBattleMons[battler].volatiles.semiInvulnerable != STATE_UNDERWATER
          && GetBattlerHoldEffect(battler) != HOLD_EFFECT_SAFETY_GOGGLES
          && !IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD)
-         // --- Custom Archetype nature: Rugged ---
-         && !HasNature(battler, NATURE_RUGGED))
+         // --- Custom Archetype nature: Apathetic ---
+         && !HasNature(battler, NATURE_APATHETIC))
         {
             SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
             gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_SANDSTORM;
@@ -175,8 +175,8 @@ static bool32 HandleEndTurnWeatherDamage(enum BattlerId battler)
              && gBattleMons[battler].volatiles.semiInvulnerable != STATE_UNDERWATER
              && GetBattlerHoldEffect(battler) != HOLD_EFFECT_SAFETY_GOGGLES
              && !IsAbilityAndRecord(battler, ability, ABILITY_MAGIC_GUARD)
-             // --- Custom Archetype nature: Rugged ---
-             && !HasNature(battler, NATURE_RUGGED))
+             // --- Custom Archetype nature: Apathetic ---
+             && !HasNature(battler, NATURE_APATHETIC))
             {
                 SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_HAIL;
@@ -400,7 +400,7 @@ static bool32 HandleEndTurnFirstEventBlock(enum BattlerId battler)
          && !IsBattlerAtMaxHp(battler)
          && !gBattleMons[battler].volatiles.healBlock
          && !IsSemiInvulnerable(battler, CHECK_ALL)
-         && IsBattlerGrounded(battler, GetBattlerAbility(battler), GetBattlerHoldEffect(battler)))
+         && IsGrassyTerrainAffected(battler, GetBattlerAbility(battler), GetBattlerHoldEffect(battler), gFieldStatuses))
         {
             SetHealAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
             BattleScriptCall(BattleScript_GrassyTerrainHeals);

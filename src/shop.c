@@ -25,6 +25,8 @@
 #include "overworld.h"
 #include "palette.h"
 #include "party_menu.h"
+#include "pokemon.h"
+#include "random.h"
 #include "scanline_effect.h"
 #include "script.h"
 #include "shop.h"
@@ -151,6 +153,7 @@ static void BuyMenuConfirmPurchase(u8 taskId);
 static void BuyMenuPrintItemQuantityAndPrice(u8 taskId);
 static void Task_BuyHowManyDialogueHandleInput(u8 taskId);
 static void BuyMenuSubtractMoney(u8 taskId);
+static void TryDoFrivolousPurchases(u8 taskId);
 static void RecordItemPurchase(u8 taskId);
 static void Task_ReturnToItemListAfterItemPurchase(u8 taskId);
 static void Task_ReturnToItemListAfterDecorationPurchase(u8 taskId);
@@ -1178,6 +1181,7 @@ static void BuyMenuSubtractMoney(u8 taskId)
 {
     IncrementGameStat(GAME_STAT_SHOPPED);
     RemoveMoney(&gSaveBlock1Ptr->money, sShopData->totalCost);
+    TryDoFrivolousPurchases(taskId);
     PlaySE(SE_SHOP);
     PrintMoneyAmountInMoneyBox(WIN_MONEY, GetMoney(&gSaveBlock1Ptr->money), 0);
 
@@ -1185,6 +1189,80 @@ static void BuyMenuSubtractMoney(u8 taskId)
         gTasks[taskId].func = Task_ReturnToItemListAfterItemPurchase;
     else
         gTasks[taskId].func = Task_ReturnToItemListAfterDecorationPurchase;
+}
+
+static enum Item GetRandomDifferentMartItem(enum Item boughtItem)
+{
+    u32 count = 0;
+    u32 chosen;
+
+    for (u32 i = 0; i < sMartInfo.itemCount; i++)
+    {
+        enum Item item = sMartInfo.itemList[i];
+        if (item != ITEM_NONE && item != boughtItem)
+            count++;
+    }
+
+    if (count == 0)
+        return ITEM_NONE;
+
+    chosen = Random() % count;
+    for (u32 i = 0; i < sMartInfo.itemCount; i++)
+    {
+        enum Item item = sMartInfo.itemList[i];
+        if (item == ITEM_NONE || item == boughtItem)
+            continue;
+
+        if (chosen == 0)
+            return item;
+        chosen--;
+    }
+
+    return ITEM_NONE;
+}
+
+static u32 GetFrivolousDiscountPrice(enum Item item)
+{
+    u32 price = GetItemPrice(item) >> IsPokeNewsActive(POKENEWS_SLATEPORT);
+
+    if (price == 0)
+        return 0;
+
+    return max(1, (price * 2) / 3);
+}
+
+static void TryDoFrivolousPurchases(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+
+    if (sMartInfo.martType != MART_TYPE_NORMAL || !PlayerPartyHasNature(NATURE_FRIVOLOUS))
+        return;
+
+    for (u32 i = 0; i < tItemCount; i++)
+    {
+        enum Item extraItem;
+        u32 price;
+
+        if (Random() % 10 != 0)
+            continue;
+
+        extraItem = GetRandomDifferentMartItem(tItemId);
+        if (extraItem == ITEM_NONE)
+            continue;
+
+        price = GetFrivolousDiscountPrice(extraItem);
+        if (price == 0)
+            continue;
+
+        if (!IsEnoughMoney(&gSaveBlock1Ptr->money, price))
+            break;
+
+        if (!AddBagItem(extraItem, 1))
+            continue;
+
+        GetSetItemObtained(extraItem, FLAG_SET_ITEM_OBTAINED);
+        RemoveMoney(&gSaveBlock1Ptr->money, price);
+    }
 }
 
 static void Task_ReturnToItemListAfterItemPurchase(u8 taskId)

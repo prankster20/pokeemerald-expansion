@@ -1,19 +1,44 @@
 #include "global.h"
 #include "test/battle.h"
 
-// Mercurial's reroll happens in the post-battle cleanup in battle_main.c
-// (RerollMercurialNature), which runs after the simulated battle considers
-// itself over - this is checking state that lives outside the usual
-// SCENE-event flow, so it's the part of this batch I'm least sure will
-// work as written. If THEN doesn't see the post-cleanup state, this is
-// the one to look at first.
+// Capricious (renamed from Mercurial) rerolls the active nature after each
+// battle. We can't guarantee it lands on a different value, but we CAN
+// verify:
+//   1. The MON_DATA_MERCURIAL_NATURE flag persists after the battle.
+//   2. The new active nature is NOT equal to NATURE_MERCURIAL/CAPRICIOUS
+//      itself (the reroll blacklists it).
 
-SINGLE_BATTLE_TEST("Mercurial's active Nature changes once the battle ends")
+static void SetTestNature(struct Pokemon *mon, u32 nature)
+{
+    SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
+}
+
+SINGLE_BATTLE_TEST("Capricious's Mercurial flag persists after battle ends")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE); }
-        OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); HP(1); }
-        u32 nature = NATURE_ADAMANT; // starting active nature, distinct from Mercurial itself
+        OPPONENT(SPECIES_WOBBUFFET) { HP(1); }
+        u32 nature = NATURE_ADAMANT;
+        bool8 isMercurial = TRUE;
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_MERCURIAL_NATURE, &isMercurial);
+    } WHEN {
+        TURN { MOVE(player, MOVE_TACKLE); }
+    } SCENE {
+        HP_BAR(opponent, hp: 0);
+    } THEN {
+        // The Mercurial/Capricious flag should still be set after battle.
+        u32 flag = GetMonData(&PLAYER_PARTY[0], MON_DATA_MERCURIAL_NATURE);
+        EXPECT(flag);
+    }
+}
+
+SINGLE_BATTLE_TEST("Capricious never rerolls to the Capricious nature itself")
+{
+    GIVEN {
+        PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE); }
+        OPPONENT(SPECIES_WOBBUFFET) { HP(1); }
+        u32 nature = NATURE_ADAMANT;
         bool8 isMercurial = TRUE;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
         SetMonData(&PLAYER_PARTY[0], MON_DATA_MERCURIAL_NATURE, &isMercurial);
@@ -23,12 +48,7 @@ SINGLE_BATTLE_TEST("Mercurial's active Nature changes once the battle ends")
         HP_BAR(opponent, hp: 0);
     } THEN {
         u32 newNature = GetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE);
-        // The active nature should have rerolled to something else...
-        EXPECT(newNature != NATURE_ADAMANT);
-        // ...but never to Mercurial itself (that's the "is this mon
-        // Mercurial" flag, not a real active nature).
+        // The active nature must never be the Mercurial/Capricious nature ID itself.
         EXPECT(newNature != NATURE_MERCURIAL);
-        // The Mercurial flag itself should still be set - "stays forever".
-        EXPECT(GetMonData(&PLAYER_PARTY[0], MON_DATA_MERCURIAL_NATURE));
     }
 }

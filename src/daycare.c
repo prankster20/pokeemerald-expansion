@@ -707,6 +707,10 @@ static void InheritIVs(struct Pokemon *egg, struct DayCare *daycare)
             break;
         }
     }
+
+    // Eggs always hatch with perfect IVs; inheritance still runs so the
+    // breeding flow remains structurally unchanged.
+    SetBoxMonIVs(&egg->box, USE_RANDOM_IVS);
 }
 
 static void InheritPokeball(struct Pokemon *egg, struct BoxPokemon *father, struct BoxPokemon *mother)

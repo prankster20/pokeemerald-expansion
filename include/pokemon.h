@@ -779,8 +779,20 @@ void GiveBoxMonDefaultMove(struct BoxPokemon *boxMon, u32 slot);
 enum Move MonTryLearningNewMoveAtLevel(struct Pokemon *mon, bool32 firstMove, u32 level);
 enum Move MonTryLearningNewMove(struct Pokemon *mon, bool8 firstMove);
 bool32 DoesBoxMonNatureRefuseMove(struct BoxPokemon *boxMon, enum Move move);
+bool32 DoesBoxMonNatureRefuseHeldItem(struct BoxPokemon *boxMon, enum Item item);
+bool32 DoesBoxMonNeedToReplaceMoveForNature(struct BoxPokemon *boxMon, enum Move move);
+bool32 CanBoxMonReplaceMoveWithMoveForNature(struct BoxPokemon *boxMon, u32 moveSlot, enum Move newMove);
+bool32 IsBoxMonMoveSlotLockedByNature(struct BoxPokemon *boxMon, u32 moveSlot);
+u32 CountBoxMonMovesInCategory(struct BoxPokemon *boxMon, enum DamageCategory category);
+u32 SanitizeBoxMonMovesForNature(struct BoxPokemon *boxMon);
+bool32 SanitizeBoxMonHeldItemForNature(struct BoxPokemon *boxMon);
+void TryFastidiousCleanPartyStatusAfterBattle(void);
 u32 ApplyMintedNature(struct Pokemon *mon, u32 nature);
+void ApplyInnocentFriendshipRule(struct Pokemon *mon);
+bool32 IsNatureExcludedFromRandomAcquisition(u32 nature);
+u32 GetInnocentEvolutionNatureFromFriendship(u32 friendship);
 bool32 RerollMercurialNature(struct Pokemon *mon);
+bool32 TrySwapEccentricPokeBall(struct Pokemon *mon);
 void DeleteFirstMoveAndGiveMoveToMon(struct Pokemon *mon, enum Move move);
 void DeleteFirstMoveAndGiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move);
 u8 CountAliveMonsInBattle(u8 caseId, enum BattlerId battler);
@@ -883,8 +895,13 @@ u16 GetLinkTrainerFlankId(u8 linkPlayerId);
 s32 GetBattlerMultiplayerId(u16 id);
 u8 GetTrainerEncounterMusicId(u16 trainerOpponentId);
 u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality);
+///< Returns Impressionable's party-order stat modifier for this stat, or 0 if inactive.
+s32 GetImpressionableStatBoostPercent(const struct Pokemon *mon, enum Stat stat);
 u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex);
-u32 GetMaterialisticBoostPercent(void);
+u32 GetSupportiveBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex);
+s32 GetPompousWeightPercent(const struct Pokemon *mon); // pranks / jimh
+// pranks / jimh - Custom Archetype nature: Devoted
+u32 GetDevotedBondData(const struct Pokemon *devotedMon, s32 *outBondIndex);
 u32 GetLoyalBoostPercent(u32 level, u32 metLevel);
 void AdjustFriendship(struct Pokemon *mon, u8 event);
 s32 CalculateFriendshipBonuses(struct Pokemon *mon, s32 modifier, enum HoldEffect itemHoldEffect);

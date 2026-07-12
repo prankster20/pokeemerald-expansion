@@ -1744,7 +1744,11 @@ void TryToRevertMimicryAndFlags(void)
 s32 GetDrainedBigRootHp(enum BattlerId battler, s32 hp)
 {
     if (GetBattlerHoldEffect(battler) == HOLD_EFFECT_BIG_ROOT)
+    {
         hp = (hp * 1300) / 1000;
+        if (HasNature(battler, NATURE_RESOURCEFUL))
+            hp = hp * 125 / 100;
+    }
     if (hp == 0)
         hp = 1;
 
@@ -1974,6 +1978,99 @@ bool32 HasNoMonsToSwitch(enum BattlerId battler, u8 partyIdBattlerOn1, u8 partyI
     }
 }
 
+static bool32 HasAmbientNatureOnField(void)
+{
+    for (enum BattlerId i = 0; i < gBattlersCount; i++)
+    {
+        if (IsBattlerAlive(i) && HasNature(i, NATURE_AMBIENT))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+void TryAmbientExtendNewFieldTimer(u16 *timer)
+{
+    if (timer == NULL || *timer == 0 || !HasAmbientNatureOnField())
+        return;
+
+    (*timer)++;
+    for (enum BattlerId i = 0; i < gBattlersCount; i++)
+    {
+        if (IsBattlerAlive(i) && HasNature(i, NATURE_AMBIENT))
+        {
+            SetPendingNaturePopup(i, NATURE_AMBIENT);
+            break;
+        }
+    }
+}
+
+static bool32 IncrementTimerIfActive(u16 *timer)
+{
+    if (*timer > 0)
+    {
+        (*timer)++;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 IncrementWeatherTimerIfActive(void)
+{
+    if (gBattleStruct->weatherDuration > 0)
+    {
+        gBattleStruct->weatherDuration++;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 ExtendAmbientTimedFieldEffects(void)
+{
+    bool32 extended = FALSE;
+
+    extended |= IncrementWeatherTimerIfActive();
+    extended |= IncrementTimerIfActive(&gFieldTimers.mudSportTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.waterSportTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.wonderRoomTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.magicRoomTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.trickRoomTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.terrainTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.gravityTimer);
+    extended |= IncrementTimerIfActive(&gFieldTimers.fairyLockTimer);
+
+    for (enum BattleSide side = 0; side < NUM_BATTLE_SIDES; side++)
+    {
+        extended |= IncrementTimerIfActive(&gSideTimers[side].reflectTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].lightscreenTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].mistTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].safeguardTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].auroraVeilTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].tailwindTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].luckyChantTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].damageNonTypesTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].rainbowTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].seaOfFireTimer);
+        extended |= IncrementTimerIfActive(&gSideTimers[side].swampTimer);
+    }
+
+    return extended;
+}
+
+bool32 TryAmbientExtendActiveFieldTimers(enum BattlerId battler)
+{
+    if (!IsBattlerAlive(battler) || !HasNature(battler, NATURE_AMBIENT))
+        return FALSE;
+
+    if (!ExtendAmbientTimedFieldEffects())
+        return FALSE;
+
+    gBattleScripting.battler = battler;
+    gBattleScripting.showNaturePopup = TRUE;
+    gBattleScripting.naturePopupId = NATURE_AMBIENT;
+    BattleScriptCall(BattleScript_AbilityPopUpScripting);
+    return TRUE;
+}
+
 bool32 TryChangeBattleWeather(enum BattlerId battler, u32 battleWeatherId, enum Ability ability)
 {
     if (gBattleWeather & sBattleWeatherInfo[battleWeatherId].flag)
@@ -2020,17 +2117,18 @@ bool32 TryChangeBattleWeather(enum BattlerId battler, u32 battleWeatherId, enum 
         ResetParadoxWeatherStat(i);
     }
 
-    // --- Custom Archetype nature: Tempestuous ---
-    // Popup whenever weather is set/changed while it's on the field. Queued
-    // (not called directly) since this function runs from multiple contexts
-    // (move script, ability switch-in) that each have their own message to
-    // show first; consumed later by whichever pipeline picks it up.
-    for (enum BattlerId i = 0; i < gBattlersCount; i++)
+    // --- Custom Archetype nature: Ambient ---
+    // Timed field effects created while Ambient is active last one extra turn.
+    if (HasAmbientNatureOnField() && gBattleStruct->weatherDuration > 0)
     {
-        if (IsBattlerAlive(i) && HasNature(i, NATURE_TEMPESTUOUS))
+        gBattleStruct->weatherDuration++;
+        for (enum BattlerId i = 0; i < gBattlersCount; i++)
         {
-            SetPendingNaturePopup(i, NATURE_TEMPESTUOUS);
-            break;
+            if (IsBattlerAlive(i) && HasNature(i, NATURE_AMBIENT))
+            {
+                SetPendingNaturePopup(i, NATURE_AMBIENT);
+                break;
+            }
         }
     }
 
@@ -2057,14 +2155,18 @@ bool32 TryChangeBattleTerrain(enum BattlerId battler, u32 statusFlag)
             gFieldTimers.terrainTimer = 5;
         gBattleScripting.battler = battler;
 
-        // --- Custom Archetype nature: Territorial ---
-        // Popup whenever terrain is set/changed while it's on the field.
-        for (enum BattlerId i = 0; i < gBattlersCount; i++)
+        // --- Custom Archetype nature: Ambient ---
+        // Timed field effects created while Ambient is active last one extra turn.
+        if (HasAmbientNatureOnField() && gFieldTimers.terrainTimer > 0)
         {
-            if (IsBattlerAlive(i) && HasNature(i, NATURE_TERRITORIAL))
+            gFieldTimers.terrainTimer++;
+            for (enum BattlerId i = 0; i < gBattlersCount; i++)
             {
-                SetPendingNaturePopup(i, NATURE_TERRITORIAL);
-                break;
+                if (IsBattlerAlive(i) && HasNature(i, NATURE_AMBIENT))
+                {
+                    SetPendingNaturePopup(i, NATURE_AMBIENT);
+                    break;
+                }
             }
         }
 
@@ -2207,7 +2309,7 @@ bool32 HadMoreThanHalfHpNowDoesnt(enum BattlerId battler)
         && gBattleMons[battler].hp <= gBattleMons[battler].maxHP / 2;
 }
 
-// pranks / jimh - Custom Archetype natures: Resilient & Resolute
+// pranks / jimh - Custom Archetype nature: Resolute
 bool32 HadMoreThanThirdHpNowDoesnt(enum BattlerId battler)
 {
     return gBattleStruct->battlerState[battler].wasAboveThirdHp
@@ -2217,6 +2319,14 @@ bool32 HadMoreThanThirdHpNowDoesnt(enum BattlerId battler)
 u32 GetGullibleVolatileDuration(enum BattlerId battler, u32 turns)
 {
     return turns + HasNature(battler, NATURE_GULLIBLE);
+}
+
+// pranks / jimh - Custom Archetype nature: Persuasive
+// Volatile statuses inflicted BY this Pokémon last 1 extra turn.
+// battlerAtk = the attacker with Persuasive, turns = base duration.
+u32 GetPersuasiveInflictedDuration(enum BattlerId battlerAtk, u32 turns)
+{
+    return turns + HasNature(battlerAtk, NATURE_PERSUASIVE);
 }
 
 u32 NumFaintedBattlersByAttacker(enum BattlerId battlerAtk)
@@ -3971,15 +4081,25 @@ u32 AbilityBattleEffects(enum AbilityEffect caseID, enum BattlerId battler, enum
              && gBattleMons[gBattlerAttacker].volatiles.disabledMove == MOVE_NONE
              && IsBattlerAlive(gBattlerAttacker)
              && !gSpecialStatuses[gBattlerAttacker].attackerInParty
-             && !IsAbilityOnSide(gBattlerAttacker, ABILITY_AROMA_VEIL)
              && gChosenMove != MOVE_STRUGGLE
              && RandomPercentage(RNG_CURSED_BODY, 30))
             {
-                gBattleMons[gBattlerAttacker].volatiles.disabledMove = gChosenMove;
-                gBattleMons[gBattlerAttacker].volatiles.disableTimer = GetGullibleVolatileDuration(gBattlerAttacker, B_DISABLE_TIMER);
-                PREPARE_MOVE_BUFFER(gBattleTextBuff1, gChosenMove);
-                BattleScriptCall(BattleScript_CursedBodyActivates);
-                effect++;
+                if (HasNature(gBattlerAttacker, NATURE_REBELLIOUS))
+                {
+                    gBattleScripting.battler = gBattlerAttacker;
+                    gBattleScripting.showNaturePopup = TRUE;
+                    gBattleScripting.naturePopupId = NATURE_REBELLIOUS;
+                    BattleScriptCall(BattleScript_AbilityPopUpScripting);
+                    effect++;
+                }
+                else if (!IsAbilityOnSide(gBattlerAttacker, ABILITY_AROMA_VEIL))
+                {
+                    gBattleMons[gBattlerAttacker].volatiles.disabledMove = gChosenMove;
+                    gBattleMons[gBattlerAttacker].volatiles.disableTimer = GetGullibleVolatileDuration(gBattlerAttacker, B_DISABLE_TIMER);
+                    PREPARE_MOVE_BUFFER(gBattleTextBuff1, gChosenMove);
+                    BattleScriptCall(BattleScript_CursedBodyActivates);
+                    effect++;
+                }
             }
             break;
         case ABILITY_LINGERING_AROMA:
@@ -5190,6 +5310,8 @@ bool32 IsAnyTerrainAffected(enum BattlerId battler, enum Ability ability, enum H
 
 bool32 IsBattlerTerrainAffected(enum BattlerId battler, enum Ability ability, enum HoldEffect holdEffect, u32 fieldStatus, u32 terrainFlag)
 {
+    if (HasNature(battler, NATURE_APATHETIC))
+        return FALSE;
     if (!(fieldStatus & terrainFlag))
         return FALSE;
     if (IsSemiInvulnerable(battler, CHECK_ALL))
@@ -5432,6 +5554,10 @@ bool32 IsSafeguardProtected(enum BattlerId battlerAtk, enum BattlerId battlerDef
         return TRUE;
     if (abilityAtk == ABILITY_INFILTRATOR)
         return FALSE;
+    // --- Custom Archetype nature: Pugnacious ---
+    // Infiltrates like ABILITY_INFILTRATOR — bypasses Safeguard, Screens, Substitute.
+    if (HasNature(battlerAtk, NATURE_PUGNACIOUS))
+        return FALSE;
     return TRUE;
 }
 
@@ -5665,8 +5791,8 @@ bool32 CanBeConfused(enum BattlerId battlerAtk, enum BattlerId effectBattler)
      || IsSafeguardProtected(battlerAtk, effectBattler, GetBattlerAbility(battlerAtk))
      || IsMistyTerrainAffected(effectBattler, effectAbility, GetBattlerHoldEffect(effectBattler), gFieldStatuses)
      || IsAbilityAndRecord(effectBattler, effectAbility, ABILITY_OWN_TEMPO)
-     // --- Custom Archetype nature: Docile ---
-     || HasNature(effectBattler, NATURE_DOCILE))
+     // --- Custom Archetype nature: Level-Headed ---
+     || HasNature(effectBattler, NATURE_LEVEL_HEADED))
         return FALSE;
 
     return TRUE;
@@ -5880,6 +6006,15 @@ enum Obedience GetAttackerObedienceForAction(void)
 
 enum HoldEffect GetBattlerHoldEffect(enum BattlerId battler)
 {
+    // --- Custom Archetype nature: Finicky ---
+    // Behaves like Klutz: the item remains held, but its battle effect is
+    // unavailable. The ignore-ability accessor below deliberately bypasses
+    // this too, matching the engine's special Klutz checks.
+    if (!gBattleStruct->battlerState[battler].notOnField
+     && !gSpecialStatuses[battler].attackerInParty
+     && HasNature(battler, NATURE_FINICKY))
+        return HOLD_EFFECT_NONE;
+
     return GetBattlerHoldEffectInternal(battler, GetBattlerAbility(battler));
 }
 
@@ -6127,6 +6262,39 @@ u32 GetMoveSlot(u16 *moves, enum Move move)
     return i;
 }
 
+static bool32 IsMethodicalMoveSlot(enum BattlerId battler, enum Move move, u32 slot)
+{
+    u32 moveSlot;
+
+    if (!HasNature(battler, NATURE_METHODICAL))
+        return FALSE;
+
+    if (battler == gBattlerAttacker)
+        moveSlot = gCurrMovePos;
+    else
+        moveSlot = GetMoveSlot(gBattleMons[battler].moves, move);
+
+    return moveSlot == slot;
+}
+
+static bool32 IsMoveInSpeciesLevelUpLine(enum Species species, enum Move move)
+{
+    while (species != SPECIES_NONE)
+    {
+        const struct LevelUpMove *learnset = GetSpeciesLevelUpLearnset(species);
+
+        for (u32 i = 0; i < MAX_LEVEL_UP_MOVES && learnset[i].move != LEVEL_UP_MOVE_END; i++)
+        {
+            if (learnset[i].move == move)
+                return TRUE;
+        }
+
+        species = GetSpeciesPreEvolution(species);
+    }
+
+    return FALSE;
+}
+
 u32 GetBattlerWeight(enum BattlerId battler)
 {
     u32 i;
@@ -6156,12 +6324,21 @@ u32 GetBattlerWeight(enum BattlerId battler)
     if (holdEffect == HOLD_EFFECT_FLOAT_STONE)
         weight /= 2;
 
+    // --- Custom Archetype nature: Pompous ---
+    // Weight scales based on nickname length (0–12 chars → 40–160% of base).
+    if (HasNature(battler, NATURE_POMPOUS))
+    {
+        struct Pokemon *mon = GetBattlerMon(battler);
+        s32 offset = GetPompousWeightPercent(mon); // signed, e.g. -60 or +60
+        // Apply as: weight * (100 + offset) / 100, clamped to min 1.
+        weight = (u32)((s32)weight * (100 + offset) / 100);
+    }
+
     if (weight == 0)
         weight = 1;
 
     return weight;
 }
-
 u32 CountBattlerStatIncreases(enum BattlerId battler, bool32 countEvasionAcc)
 {
     enum Stat i;
@@ -6270,6 +6447,9 @@ static inline u32 CalcFuryCutterBasePower(enum BattlerId battlerAtk, u32 basePow
 static inline u32 CalcTerrainBoostedPower(struct DamageContext *ctx, u32 basePower)
 {
     bool32 isTerrainAffected = FALSE;
+
+    if (HasNature(ctx->battlerAtk, NATURE_APATHETIC))
+        return basePower;
 
     if (GetMoveTerrainBoost_GroundCheck(ctx->move) == GROUND_CHECK_USER)
         isTerrainAffected = IsBattlerTerrainAffected(ctx->battlerAtk, ctx->abilities[ctx->battlerAtk], ctx->holdEffects[ctx->battlerAtk], ctx->fieldStatuses, GetMoveTerrainBoost_Terrain(ctx->move));
@@ -6391,7 +6571,8 @@ static inline u32 CalcMoveBasePower(struct DamageContext *ctx)
             basePower *= 2;
         break;
     case EFFECT_WEATHER_BALL:
-        if (GetAttackerWeather(ctx->holdEffects[ctx->battlerAtk], ctx->abilities[ctx->battlerAtk], ctx->weather) & (B_WEATHER_ANY & ~B_WEATHER_STRONG_WINDS))
+        if (!HasNature(ctx->battlerAtk, NATURE_APATHETIC)
+         && GetAttackerWeather(ctx->holdEffects[ctx->battlerAtk], ctx->abilities[ctx->battlerAtk], ctx->weather) & (B_WEATHER_ANY & ~B_WEATHER_STRONG_WINDS))
             basePower *= 2;
         break;
     case EFFECT_PURSUIT:
@@ -6636,7 +6817,9 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
         break;
     case EFFECT_MAGNITUDE:
     case EFFECT_EARTHQUAKE:
-        if (ctx->fieldStatuses & STATUS_FIELD_GRASSY_TERRAIN && !IsSemiInvulnerable(battlerDef, CHECK_ALL))
+        if (ctx->fieldStatuses & STATUS_FIELD_GRASSY_TERRAIN
+         && !HasNature(battlerDef, NATURE_APATHETIC)
+         && !IsSemiInvulnerable(battlerDef, CHECK_ALL))
             modifier = uq4_12_multiply(modifier, UQ_4_12(0.5));
         break;
     case EFFECT_KNOCK_OFF:
@@ -6910,10 +7093,44 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
     if (HasNature(battlerAtk, NATURE_ARROGANT) && gBattleMons[battlerDef].level > gBattleMons[battlerAtk].level)
         modifier = uq4_12_multiply(modifier, UQ_4_12(1.1));
 
+    // --- Custom Archetype nature: Childish ---
+    // Deals 10% less move damage.
+    if (HasNature(battlerAtk, NATURE_CHILDISH))
+        modifier = uq4_12_multiply(modifier, UQ_4_12(0.9));
+
     // --- Custom Archetype nature: Relentless ---
     // Deals 10% more move damage.
     if (HasNature(battlerAtk, NATURE_RELENTLESS))
         modifier = uq4_12_multiply(modifier, UQ_4_12(1.1));
+
+    // --- Custom Archetype nature: Scholarly ---
+    // Boosts moves studied outside the species' level-up line.
+    if (HasNature(battlerAtk, NATURE_SCHOLARLY)
+     && move != MOVE_NONE
+     && move != MOVE_STRUGGLE
+     && !IsMoveInSpeciesLevelUpLine(gBattleMons[battlerAtk].species, move))
+        modifier = uq4_12_multiply(modifier, UQ_4_12(1.1));
+
+    // --- Custom Archetype nature: Bitter ---
+    // If a foe healed with a move, Bitter's next damaging move is boosted.
+    // The charge is spent at move-end so spread/multi-hit moves get the boost
+    // for the whole move, not only the first target/hit.
+    if (HasNature(battlerAtk, NATURE_BITTER)
+     && gBattleStruct->battlerState[battlerAtk].bitterBoostCharge)
+    {
+        modifier = uq4_12_multiply(modifier, UQ_4_12(1.2));
+        gBattleStruct->battlerState[battlerAtk].bitterBoostSpentThisMove = TRUE;
+    }
+
+    // --- Custom Archetype nature: Methodical ---
+    // Moves in slot 1 have 10% more base power.
+    if (IsMethodicalMoveSlot(battlerAtk, ctx->chosenMove, 0))
+        modifier = uq4_12_multiply(modifier, UQ_4_12(1.1));
+
+    // --- Custom Archetype nature: Nostalgic ---
+    // The first two move slots are locked in and boosted.
+    if (HasNature(battlerAtk, NATURE_NOSTALGIC) && gCurrMovePos < 2)
+        modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
 
     // --- Custom Archetype nature: Shortsighted ---
     // Deals 20% more damage on the user's first turn on the field.
@@ -7060,12 +7277,19 @@ static inline u32 CalcAttackStat(struct DamageContext *ctx)
     atkStat *= gStatStageRatios[atkStage][0];
     atkStat /= gStatStageRatios[atkStage][1];
 
-    // --- Custom Archetype natures: Tempestuous & Territorial ---
-    // Boosts all non-HP stats by 5% in any Weather / on any Terrain, respectively.
-    if (HasNature(battlerAtk, NATURE_TEMPESTUOUS) && (ctx->weather & B_WEATHER_ANY))
-        atkStat = atkStat * 105 / 100;
-    else if (HasNature(battlerAtk, NATURE_TERRITORIAL) && (ctx->fieldStatuses & STATUS_FIELD_TERRAIN_ANY))
-        atkStat = atkStat * 105 / 100;
+    // --- Custom Archetype nature: Flighty ---
+    // U-turn, Volt Switch, Flip Turn and other damaging pivot moves deal 10% more damage.
+    if (HasNature(battlerAtk, NATURE_FLIGHTY) && moveEffect == EFFECT_HIT_ESCAPE)
+        atkStat = atkStat * 110 / 100;
+
+    // --- Custom Archetype nature: Devoted ---
+    // Boosts own Atk/SpA by the bond tier percent when a party partner exists.
+    if (HasNature(battlerAtk, NATURE_DEVOTED))
+    {
+        u32 boost = GetDevotedBondData(GetBattlerMon(battlerAtk), NULL);
+        if (boost > 0)
+            atkStat = atkStat * (100 + boost) / 100;
+    }
 
     // apply attack stat modifiers
     modifier = UQ_4_12(1.0);
@@ -7302,7 +7526,7 @@ static bool32 CanEvolve(enum Species species)
 static inline u32 CalcDefenseStat(struct DamageContext *ctx)
 {
     bool32 usesDefStat;
-    u8 defStage;
+    u8 defStage, spDefStage;
     u32 defStat, def, spDef;
     uq4_12_t modifier;
     enum BattlerId battlerDef = ctx->battlerDef;
@@ -7312,37 +7536,36 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
     spDef = gBattleMons[battlerDef].spDefense;
 
     // --- Custom Archetype nature: Calculating ---
-    // Hits the target's weaker defense stat, regardless of the move's category (like Psyshock,
-    // but picked dynamically rather than being fixed to one stat).
+    // Uses the average of the target's effective Defense and Sp. Defense.
+    // Psyshock-style moves are treated exactly like every other damaging
+    // move here: Calculating replaces their usual Defense-only rule.
     if (HasNature(ctx->battlerAtk, NATURE_CALCULATING))
     {
-        if (ctx->fieldStatuses & STATUS_FIELD_WONDER_ROOM) // the defense stats are swapped
+        usesDefStat = moveEffect == EFFECT_PSYSHOCK || IsBattleMovePhysical(move);
+        defStage = gBattleMons[battlerDef].statStages[STAT_DEF];
+        spDefStage = gBattleMons[battlerDef].statStages[STAT_SPDEF];
+
+        // Apply stage-ignoring rules to both halves before averaging.
+        if (ctx->isCrit)
         {
-            if (def <= spDef)
-            {
-                defStat = spDef;
-                usesDefStat = FALSE;
-            }
-            else
-            {
-                defStat = def;
-                usesDefStat = TRUE;
-            }
+            if (defStage > DEFAULT_STAT_STAGE)
+                defStage = DEFAULT_STAT_STAGE;
+            if (spDefStage > DEFAULT_STAT_STAGE)
+                spDefStage = DEFAULT_STAT_STAGE;
         }
-        else
+        if (ctx->abilities[ctx->battlerAtk] == ABILITY_UNAWARE
+         || MoveIgnoresDefenseEvasionStages(move))
         {
-            if (def <= spDef)
-            {
-                defStat = def;
-                usesDefStat = TRUE;
-            }
-            else
-            {
-                defStat = spDef;
-                usesDefStat = FALSE;
-            }
+            defStage = DEFAULT_STAT_STAGE;
+            spDefStage = DEFAULT_STAT_STAGE;
         }
-        defStage = gBattleMons[battlerDef].statStages[usesDefStat ? STAT_DEF : STAT_SPDEF];
+
+        def = def * gStatStageRatios[defStage][0] / gStatStageRatios[defStage][1];
+        spDef = spDef * gStatStageRatios[spDefStage][0] / gStatStageRatios[spDefStage][1];
+        defStat = (def + spDef) / 2;
+
+        // The stages have already been applied independently above.
+        defStage = DEFAULT_STAT_STAGE;
     }
     else if (moveEffect == EFFECT_PSYSHOCK || IsBattleMovePhysical(move)) // uses defense stat instead of sp.def
     {
@@ -7390,12 +7613,24 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
     defStat *= gStatStageRatios[defStage][0];
     defStat /= gStatStageRatios[defStage][1];
 
-    // --- Custom Archetype natures: Tempestuous & Territorial ---
-    // Boosts all non-HP stats by 5% in any Weather / on any Terrain, respectively.
-    if (HasNature(battlerDef, NATURE_TEMPESTUOUS) && (ctx->weather & B_WEATHER_ANY))
-        defStat = defStat * 105 / 100;
-    else if (HasNature(battlerDef, NATURE_TERRITORIAL) && (ctx->fieldStatuses & STATUS_FIELD_TERRAIN_ANY))
-        defStat = defStat * 105 / 100;
+    // --- Custom Archetype nature: Devoted ---
+    // If any party member has Devoted and its closest personality match is
+    // THIS battler, boost this battler's Def/SpDef by the same bond tier.
+    u32 _devotedDefenseBoost = 0;
+    for (u32 _di = 0; _di < PARTY_SIZE; _di++)
+    {
+        struct Pokemon *_cand = &gParties[B_TRAINER_PLAYER][_di];
+        if (GetMonData(_cand, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE) continue;
+        if (GetMonData(_cand, MON_DATA_HIDDEN_NATURE) != NATURE_DEVOTED) continue;
+
+        s32 _bondSlot = -1;
+        u32 _boost = GetDevotedBondData(_cand, &_bondSlot);
+        if (_boost > 0 && _bondSlot >= 0
+         && &gParties[B_TRAINER_PLAYER][_bondSlot] == GetBattlerMon(battlerDef))
+            _devotedDefenseBoost += _boost;
+    }
+    if (_devotedDefenseBoost != 0)
+        defStat = defStat * (100 + _devotedDefenseBoost) / 100;
 
     // apply defense stat modifiers
     modifier = UQ_4_12(1.0);
@@ -7423,7 +7658,9 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
         }
         break;
     case ABILITY_GRASS_PELT:
-        if (ctx->fieldStatuses & STATUS_FIELD_GRASSY_TERRAIN && usesDefStat)
+        if (ctx->fieldStatuses & STATUS_FIELD_GRASSY_TERRAIN
+         && !HasNature(battlerDef, NATURE_APATHETIC)
+         && usesDefStat)
         {
             modifier = uq4_12_multiply_half_down(modifier, UQ_4_12(1.5));
             if (ctx->updateFlags)
@@ -7570,6 +7807,8 @@ static inline uq4_12_t GetSameTypeAttackBonusModifier(struct DamageContext *ctx)
 static uq4_12_t GetWeatherDamageModifier(struct DamageContext *ctx)
 {
     u32 attackerWeather = GetAttackerWeather(ctx->holdEffects[ctx->battlerAtk], ctx->abilities[ctx->battlerAtk], ctx->weather);
+    if (HasNature(ctx->battlerAtk, NATURE_APATHETIC) || HasNature(ctx->battlerDef, NATURE_APATHETIC))
+        return UQ_4_12(1.0);
     if ((attackerWeather | ctx->weather) == B_WEATHER_NONE)
         return UQ_4_12(1.0);// This early exit helps limit AI thinking time
     if (GetMoveEffect(ctx->move) == EFFECT_HYDRO_STEAM && (attackerWeather & B_WEATHER_SUN))
@@ -7696,6 +7935,9 @@ static inline uq4_12_t GetScreensModifier(struct DamageContext *ctx)
             RecordAbilityBattle(ctx->battlerAtk, ctx->abilities[ctx->battlerAtk]);
         return UQ_4_12(1.0);
     }
+    // --- Custom Archetype nature: Pugnacious ---
+    if (HasNature(ctx->battlerAtk, NATURE_PUGNACIOUS) && !IsBattlerAlly(ctx->battlerAtk, ctx->battlerDef))
+        return UQ_4_12(1.0);
     if (reflect || lightScreen || auroraVeil)
     {
         return (IsDoubleBattle()) ? UQ_4_12(0.667) : UQ_4_12(0.5);
@@ -7938,7 +8180,15 @@ static inline s32 DoMoveDamageCalcVars(struct DamageContext *ctx)
 
     if (ctx->randomFactor)
     {
-        dmg *= DMG_ROLL_PERCENT_HI - RandomUniform(RNG_DAMAGE_MODIFIER, 0, DMG_ROLL_PERCENT_HI - DMG_ROLL_PERCENT_LO);
+        u32 damageRollLow = DMG_ROLL_PERCENT_LO;
+
+        // --- Custom Archetype nature: Realistic ---
+        // Damage variance is still present, but the roll is always in the
+        // upper half of the normal range.
+        if (HasNature(ctx->battlerAtk, NATURE_REALISTIC))
+            damageRollLow = (DMG_ROLL_PERCENT_HI + DMG_ROLL_PERCENT_LO + 1) / 2;
+
+        dmg *= DMG_ROLL_PERCENT_HI - RandomUniform(RNG_DAMAGE_MODIFIER, 0, DMG_ROLL_PERCENT_HI - damageRollLow);
         dmg /= 100;
     }
     else // Apply rest of modifiers in the ai function
@@ -7966,6 +8216,17 @@ s32 ApplyModifiersAfterDmgRoll(struct DamageContext *ctx, s32 dmg)
     DAMAGE_APPLY_MODIFIER(GetInfatuationModifier(ctx));
     DAMAGE_APPLY_MODIFIER(GetZMaxMoveAgainstProtectionModifier(ctx));
     DAMAGE_APPLY_MODIFIER(GetOtherModifiers(ctx));
+
+    // --- Custom Archetype nature: Pack-Rat / Hoard Counters ---
+    // Each Hoard Counter grants +10% damage, then a real damage calculation
+    // spends 1 counter. AI/prediction passes see the boost but do not mutate.
+    if (gBattleMons[ctx->battlerAtk].volatiles.stockpileCounter > 0)
+    {
+        u32 hoardCounters = gBattleMons[ctx->battlerAtk].volatiles.stockpileCounter;
+        DAMAGE_APPLY_MODIFIER(PercentToUQ4_12AddOne(hoardCounters * 10));
+        if (ctx->updateFlags && !ctx->aiCalc)
+            gBattleMons[ctx->battlerAtk].volatiles.stockpileCounter--;
+    }
 
     return dmg;
 }
@@ -8266,6 +8527,16 @@ static bool32 IsCriticalHit(struct DamageContext *ctx)
     if (gSideStatuses[GetBattlerSide(ctx->battlerDef)] & SIDE_STATUS_LUCKY_CHANT)
         return FALSE;
 
+    // --- Custom Archetype nature: Diplomatic ---
+    // No Pokémon can land critical hits while a Diplomatic mon is on the field.
+    // This overrides even moves that always crit (Storm Throw, Frost Breath, etc.)
+    // since it checks any active battler, not just the attacker or defender.
+    for (u32 _dip = 0; _dip < gBattlersCount; _dip++)
+    {
+        if (IsBattlerAlive(_dip) && HasNature(_dip, NATURE_DIPLOMATIC))
+            return FALSE;
+    }
+
     bool32 isCrit = FALSE;
     s32 critChance = 0;
 
@@ -8275,6 +8546,16 @@ static bool32 IsCriticalHit(struct DamageContext *ctx)
         critChance = CalcCritChanceStage(ctx);
 
     if (critChance == CRITICAL_HIT_BLOCKED)
+        isCrit = FALSE;
+    // --- Custom Archetype nature: Idealistic ---
+    // Ignores crits only when all final modifiers still leave the move at the
+    // ordinary modern base crit rate, i.e. 1/24. If the attacker actually
+    // invests in crit modifiers, Idealistic has to deal with reality.
+    else if (HasNature(ctx->battlerDef, NATURE_IDEALISTIC)
+          && GetConfig(B_CRIT_CHANCE) != GEN_1
+          && GetConfig(B_CRIT_CHANCE) != GEN_2
+          && critChance >= 0
+          && GetCriticalHitOdds(critChance) == 24)
         isCrit = FALSE;
     else if (critChance == CRITICAL_HIT_ALWAYS)
         isCrit = TRUE;
@@ -8305,6 +8586,7 @@ s32 GetAdjustedDamage(struct DamageContext *ctx, s32 damage)
         return damage;
 
     bool32 enduredHit = FALSE;
+    bool32 indomitableHit = FALSE;
     u32 rand = Random() % 100;
     u32 affectionScore = GetBattlerAffectionHearts(ctx->battlerDef);
 
@@ -8338,6 +8620,36 @@ s32 GetAdjustedDamage(struct DamageContext *ctx, s32 damage)
         gLastUsedItem = gBattleMons[ctx->battlerDef].item;
         gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FOE_HUNG_ON;
     }
+    // --- Custom Archetype nature: Indomitable ---
+    // If it would be knocked out by move damage before its pending action,
+    // let it finish that action, then faint during MoveEnd. This deliberately
+    // does not save a battler that has already acted this turn.
+    else if (ctx->updateFlags
+          && HasNature(ctx->battlerDef, NATURE_INDOMITABLE)
+          && gChosenActionByBattler[ctx->battlerDef] == B_ACTION_USE_MOVE
+          && GetBattlerTurnOrderNum(ctx->battlerDef) > gCurrentTurnActionNumber)
+    {
+        enduredHit = TRUE;
+        indomitableHit = TRUE;
+        gBattleStruct->battlerState[ctx->battlerDef].indomitableFaintPending = TRUE;
+    }
+    // --- Custom Archetype nature: Affectionate ---
+    // At exactly max Friendship, has a Focus Band-like 20% chance to endure
+    // lethal move damage with 1 HP. This is separate from the global
+    // affection-mechanics toggle and uses the existing affection message.
+    else if (HasNature(ctx->battlerDef, NATURE_AFFECTIONATE)
+          && gBattleMons[ctx->battlerDef].friendship == MAX_FRIENDSHIP
+          && rand < 20)
+    {
+        enduredHit = TRUE;
+        if (ctx->updateFlags)
+        {
+            gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FOE_ENDURED_AFFECTIONATE;
+            gBattleScripting.battler = ctx->battlerDef;
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_AFFECTIONATE;
+        }
+    }
     // --- Custom Archetype nature: Noble ---
     // Once per battle, a Noble Pokémon spares a wild opponent at 1 HP.
     else if (ctx->updateFlags
@@ -8366,6 +8678,8 @@ s32 GetAdjustedDamage(struct DamageContext *ctx, s32 damage)
     {
         damage = gBattleMons[ctx->battlerDef].hp - 1; // Reduce damage to 1 hp.
         gProtectStructs[ctx->battlerDef].assuranceDoubled = TRUE;
+        if (indomitableHit)
+            gBattleStruct->moveResultFlags[ctx->battlerDef] |= MOVE_RESULT_FOE_ENDURED;
     }
 
     return damage;
@@ -9303,11 +9617,6 @@ enum ImmunityHealStatusOutcome TryImmunityAbilityHealStatus(enum BattlerId battl
 
 uq4_12_t GetBadgeBoostModifier(enum BattlerId battler)
 {
-    // --- Custom Archetype nature: Ambitious ---
-    // Badge Boosts are increased from 10% to 12% for this Pokémon.
-    if (HasNature(battler, NATURE_AMBITIOUS))
-        return UQ_4_12(1.12);
-
     if (GetConfig(B_BADGE_BOOST) < GEN_3)
         return UQ_4_12(1.125);
     else
@@ -9357,6 +9666,13 @@ enum DamageCategory GetBattleMoveCategory(enum Move move)
             return gBattleStruct->categoryOverride;
         if (IsBattleMoveStatus(move))
             return DAMAGE_CATEGORY_STATUS;
+
+        // --- Custom Archetype nature: Old-Fashioned ---
+        // Uses the Gen 1-3 type-based Physical/Special split for damaging moves.
+        // Fairy is treated as Special (doesn't exist in Gen 3, but matches its
+        // "feel" and the player-facing description).
+        if (HasNature(gBattlerAttacker, NATURE_OLD_FASHIONED))
+            return gTypesInfo[GetBattleMoveType(move)].damageCategory;
     }
 
     if (B_PHYSICAL_SPECIAL_SPLIT < GEN_4)
@@ -9450,6 +9766,7 @@ bool32 CanFling(enum BattlerId battlerAtk, enum Ability abilityAtk)
 
     if (item == ITEM_NONE
       || (GetConfig(B_KLUTZ_FLING_INTERACTION) >= GEN_5 && abilityAtk == ABILITY_KLUTZ)
+      || HasNature(battlerAtk, NATURE_FINICKY)
       || gFieldStatuses & STATUS_FIELD_MAGIC_ROOM
       || gBattleMons[battlerAtk].volatiles.embargo
       || (GetItemTMHMIndex(item) != 0 && GetItemImportance(item) == 1) // don't fling reusable TMs
@@ -9602,6 +9919,10 @@ bool32 IsBattlerAffectedByHazards(enum BattlerId battler, enum HoldEffect holdEf
 {
     bool32 ret = TRUE;
     if (!IsBattlerAlive(battler))
+    {
+        ret = FALSE;
+    }
+    else if (HasNature(battler, NATURE_RUGGED))
     {
         ret = FALSE;
     }
@@ -9760,11 +10081,11 @@ void CopyMonLevelAndBaseStatsToBattleMon(enum BattlerId battler, struct Pokemon 
 
 void ApplyVainStatLoss(enum BattlerId battler)
 {
-    gBattleMons[battler].attack = gBattleMons[battler].attack * 100 / 110;
-    gBattleMons[battler].defense = gBattleMons[battler].defense * 100 / 110;
-    gBattleMons[battler].speed = gBattleMons[battler].speed * 100 / 110;
-    gBattleMons[battler].spAttack = gBattleMons[battler].spAttack * 100 / 110;
-    gBattleMons[battler].spDefense = gBattleMons[battler].spDefense * 100 / 110;
+    gBattleMons[battler].attack = gBattleMons[battler].attack * 100 / 105;
+    gBattleMons[battler].defense = gBattleMons[battler].defense * 100 / 105;
+    gBattleMons[battler].speed = gBattleMons[battler].speed * 100 / 105;
+    gBattleMons[battler].spAttack = gBattleMons[battler].spAttack * 100 / 105;
+    gBattleMons[battler].spDefense = gBattleMons[battler].spDefense * 100 / 105;
 }
 
 void CopyMonAbilityAndTypesToBattleMon(enum BattlerId battler, struct Pokemon *mon)
@@ -9832,8 +10153,6 @@ bool32 AreBattlersOfOppositeGender(enum BattlerId battler1, enum BattlerId battl
 
 u32 GetInfatuationImmuneNature(enum BattlerId battler)
 {
-    if (HasNature(battler, NATURE_DOCILE))
-        return NATURE_DOCILE;
     if (HasNature(battler, NATURE_FLIRTY))
         return NATURE_FLIRTY;
     if (HasNature(battler, NATURE_STOIC))
@@ -9871,6 +10190,17 @@ u32 CalcSecondaryEffectChance(enum BattlerId battler, enum Ability battlerAbilit
     // --- Custom Archetype nature: Relentless ---
     // Adds 10 percentage points (e.g. 10% becomes 20%).
     if (additionalEffect->chance != 0 && HasNature(battler, NATURE_RELENTLESS))
+        secondaryEffectChance += 10;
+
+    // --- Custom Archetype nature: Methodical ---
+    // Moves in slot 2 gain 10 percentage points of effect chance.
+    if (additionalEffect->chance != 0
+     && IsMethodicalMoveSlot(battler, gCurrentMove, 1))
+        secondaryEffectChance += 10;
+
+    // --- Custom Archetype nature: Realistic ---
+    // Adds 10 percentage points (e.g. 10% becomes 20%).
+    if (additionalEffect->chance != 0 && HasNature(battler, NATURE_REALISTIC))
         secondaryEffectChance += 10;
 
     return min(secondaryEffectChance, 100);
@@ -10855,6 +11185,11 @@ u32 GetTotalAccuracy(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum 
     if (HasWeatherEffect() && gBattleWeather & B_WEATHER_FOG)
         calc = (calc * 60) / 100; // modified by 3/5
 
+    // --- Custom Archetype nature: Methodical ---
+    // Moves in slot 3 have 10% more accuracy.
+    if (IsMethodicalMoveSlot(battlerAtk, move, 2))
+        calc = (calc * 110) / 100;
+
     return calc;
 }
 
@@ -10904,6 +11239,8 @@ bool32 DoesOHKOMoveMissTarget(struct BattleCalcValues *cv)
         u32 odds = GetMoveAccuracy(cv->move) + (gBattleMons[cv->battlerAtk].level - gBattleMons[cv->battlerDef].level);
         if (MoveHasIncreasedAccByTenOnSameType(cv->move) && !IS_BATTLER_OF_TYPE(cv->battlerAtk, GetMoveType(cv->move)))
             odds -= 10;
+        if (IsMethodicalMoveSlot(cv->battlerAtk, cv->move, 2))
+            odds = odds * 110 / 100;
         if (RandomPercentage(RNG_ACCURACY, odds) && gBattleMons[cv->battlerAtk].level >= gBattleMons[cv->battlerDef].level)
             lands = SURE_HIT;
     }

@@ -2738,8 +2738,8 @@ const struct ItemInfo gItemsInfo[] =
             "a silver gleam."),
         .pocket = POCKET_ITEMS,
         .sortType = ITEM_TYPE_SELLABLE,
-        .type = ITEM_USE_BAG_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_BottleCap,
         .flingPower = 30,
         .iconPic = gItemIcon_BottleCap,
         .iconPalette = gItemIconPalette_BottleCap,
@@ -2760,6 +2760,23 @@ const struct ItemInfo gItemsInfo[] =
         .flingPower = 30,
         .iconPic = gItemIcon_BottleCap,
         .iconPalette = gItemIconPalette_GoldBottleCap,
+    },
+
+    [ITEM_RUSTED_BOTTLE_CAP] =
+    {
+        .name = ITEM_NAME("Rusted Bottle Cap"),
+        .price = (I_PRICE >= GEN_9) ? 20000 : 5000,
+        .description = COMPOUND_STRING(
+            "A beautiful bottle\n"
+            "cap that gives off\n"
+            "a silver gleam."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_SELLABLE,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_BottleCap,
+        .flingPower = 30,
+        .iconPic = gItemIcon_BottleCap,
+        .iconPalette = gItemIconPalette_BottleCap,
     },
 
     [ITEM_NUGGET] =

@@ -1485,8 +1485,6 @@ static u32 GetBattlerMonData(enum BattlerId battler, struct Pokemon *party, u32 
 
             if (nature == NATURE_COMMUNAL)
                 boostPercent = GetCommunalBoostPercent(party, PARTY_SIZE, monId);
-            else if (nature == NATURE_MATERIALISTIC && IsOnPlayerSide(battler))
-                boostPercent = GetMaterialisticBoostPercent();
 
             battleMon.defense = battleMon.defense * (100 + boostPercent) / 100;
             battleMon.spDefense = battleMon.spDefense * (100 + boostPercent) / 100;

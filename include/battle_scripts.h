@@ -23,6 +23,7 @@ extern const u8 BattleScript_AlreadyAtFullHp[];
 extern const u8 BattleScript_PresentHealTarget[];
 extern const u8 BattleScript_MoveUsedMustRecharge[];
 extern const u8 BattleScript_FaintBattler[];
+extern const u8 BattleScript_IndomitableFaint[];
 extern const u8 BattleScript_GiveExp[];
 extern const u8 BattleScript_HandleFaintedMon[];
 extern const u8 BattleScript_LocalTrainerBattleWon[];
@@ -114,6 +115,7 @@ extern const u8 BattleScript_MagicCoat[];
 extern const u8 BattleScript_MagicCoatPrankster[];
 extern const u8 BattleScript_SnatchedMove[];
 extern const u8 BattleScript_EnduredMsg[];
+extern const u8 BattleScript_IndomitableEnduredMsg[];
 extern const u8 BattleScript_OneHitKOMsg[];
 extern const u8 BattleScript_FocusPunchSetUp[];
 extern const u8 BattleScript_FocusPunchLostFocus[];
@@ -215,6 +217,7 @@ extern const u8 BattleScript_ArrogantConfidentRet[]; // pranks / jimh
 extern const u8 BattleScript_BenevolentBoostsHealingRet[]; // pranks / jimh
 extern const u8 BattleScript_TempestuousChasesStormsRet[]; // pranks / jimh
 extern const u8 BattleScript_TerritorialGuardsTerritoryRet[]; // pranks / jimh
+extern const u8 BattleScript_TerritorialSwitchOutDamage[]; // pranks / jimh
 extern const u8 BattleScript_VainHaughtyRet[];
 extern const u8 BattleScript_VainBrokenAfterStatDrop[];
 extern const u8 BattleScript_CantankerousActivates[]; // pranks / jimh
@@ -411,6 +414,7 @@ extern const u8 BattleScript_BeakBlastSetUp[];
 extern const u8 BattleScript_BeakBlastBurn[];
 extern const u8 BattleScript_AffectionBasedStatusHeal[];
 extern const u8 BattleScript_AffectionBasedEndurance[];
+extern const u8 BattleScript_AffectionateEndurance[];
 extern const u8 BattleScript_SymbiosisActivates[];
 extern const u8 BattleScript_MultiHitPrintStrings[];
 extern const u8 BattleScript_BattlerAvoidedMultiHit[];
@@ -467,6 +471,8 @@ extern const u8 BattleScript_TheSwampActivates[];
 extern const u8 BattleScript_TheSwampDisappeared[];
 extern const u8 BattleScript_MoveEffectPsychicNoise[];
 extern const u8 BattleScript_AromaVeilProtectsRet[];
+extern const u8 BattleScript_RebelliousProtects[];
+extern const u8 BattleScript_RebelliousProtectsRet[];
 extern const u8 BattleScript_Terastallization[];
 extern const u8 BattleScript_BoosterEnergyRet[];
 extern const u8 BattleScript_TeraShellDistortingTypeMatchups[];
