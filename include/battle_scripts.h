@@ -498,6 +498,7 @@ extern const u8 BattleScript_QuestionForfeitBattle[];
 extern const u8 BattleScript_ForfeitBattleGaveMoney[];
 extern const u8 BattleScript_AbilityPopUp[];
 extern const u8 BattleScript_AbilityPopUpScripting[]; // pranks / jimh - was missing, used by Custom Archetype nature popups
+extern const u8 BattleScript_AbilityPopUpScriptingLonger[]; // pranks / jimh - was missing, used by Custom Archetype nature popups
 extern const u8 BattleScript_Attackstring[];
 extern const u8 BattleScript_SubmoveAttackstring[];
 extern const u8 BattleScript_MetronomeAttackstring[];

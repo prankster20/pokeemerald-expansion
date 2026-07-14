@@ -336,7 +336,7 @@ static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler)
     gBattleScripting.battler = battler;
     gBattleScripting.showNaturePopup = TRUE;
     gBattleScripting.naturePopupId = nature;
-    BattleScriptCall(BattleScript_AbilityPopUpScripting);
+    BattleScriptCall(BattleScript_AbilityPopUpScriptingLonger);
     return TRUE;
 }
 

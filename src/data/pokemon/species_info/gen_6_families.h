@@ -2435,7 +2435,7 @@ const struct SpeciesInfo gSpeciesInfoGen6[] =
         .baseSpeed     = 68,
         .baseSpAttack  = 97,
         .baseSpDefense = 81,
-        .types = MON_TYPES(TYPE_GRASS),
+        .types = MON_TYPES(TYPE_GRASS, TYPE_GROUND),
         .catchRate = 45,
         .expYield = 186,
         .evYield_HP = 2,
@@ -4449,7 +4449,7 @@ const struct SpeciesInfo gSpeciesInfoGen6[] =
         .baseSpeed     = 109,
         .baseSpAttack  = 109,
         .baseSpDefense = 94,
-        .types = MON_TYPES(TYPE_ELECTRIC, TYPE_NORMAL),
+        .types = MON_TYPES(TYPE_ELECTRIC, TYPE_DRAGON),
         .catchRate = 75,
         .expYield = 168,
         .evYield_Speed = 1,
@@ -5073,6 +5073,7 @@ const struct SpeciesInfo gSpeciesInfoGen6[] =
         )
         .levelUpLearnset = sCarbinkLevelUpLearnset,
         .teachableLearnset = sCarbinkTeachableLearnset,
+        .evolutions = EVOLUTION({EVO_LEVEL, 33, SPECIES_DIANCIE}),
     },
 #endif //P_FAMILY_CARBINK
 

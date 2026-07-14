@@ -4519,6 +4519,17 @@ BattleScript_AbilityPopUp::
 	recordability BS_ABILITY_BATTLER
 	sethword sABILITY_OVERWRITE, 0
 	return
+BattleScript_AbilityPopUpLonger::
+	tryactivateabilityshield BS_ABILITY_BATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_LONG
+	recordability BS_ABILITY_BATTLER
+	sethword sABILITY_OVERWRITE, 0
+	return
+
+BattleScript_AbilityPopUpScriptingLonger::
+	copybyte gBattlerAbility, sBATTLER
+	goto BattleScript_AbilityPopUpLonger
 
 BattleScript_AbilityPopUpScripting::
 	copybyte gBattlerAbility, sBATTLER
