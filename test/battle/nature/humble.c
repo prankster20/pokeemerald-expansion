@@ -7,7 +7,7 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_TACKLE) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("Humble's stats can be raised to +1 normally")
+SINGLE_BATTLE_TEST("pranks Humble's stats can be raised to +1 normally")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_SWORDS_DANCE); }
@@ -16,16 +16,12 @@ SINGLE_BATTLE_TEST("Humble's stats can be raised to +1 normally")
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_SWORDS_DANCE); }
-    } SCENE {
-        MESSAGE("Mienfoo's Attack rose!");
-        ABILITY_POPUP(player);
-        MESSAGE("Mienfoo's Attack won't go any higher!");
     } THEN {
         EXPECT_EQ(gBattleMons[B_POSITION_PLAYER_LEFT].statStages[STAT_ATK], DEFAULT_STAT_STAGE + 1);
     }
 }
 
-SINGLE_BATTLE_TEST("Humble cannot have a stat raised past +1")
+SINGLE_BATTLE_TEST("pranks Humble cannot have a stat raised past +1")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_SWORDS_DANCE); }
@@ -35,16 +31,12 @@ SINGLE_BATTLE_TEST("Humble cannot have a stat raised past +1")
     } WHEN {
         TURN { MOVE(player, MOVE_SWORDS_DANCE); }
         TURN { MOVE(player, MOVE_SWORDS_DANCE); }
-    } SCENE {
-        MESSAGE("Mienfoo's Attack rose!");
-        ABILITY_POPUP(player);
-        MESSAGE("Mienfoo's Attack won't go any higher!");
     } THEN {
         EXPECT_EQ(gBattleMons[B_POSITION_PLAYER_LEFT].statStages[STAT_ATK], DEFAULT_STAT_STAGE + 1);
     }
 }
 
-SINGLE_BATTLE_TEST("Humble boosts all non-HP stats by 5%", s16 damage)
+SINGLE_BATTLE_TEST("pranks Humble boosts all non-HP stats by 5%", s16 damage)
 {
     u32 nature;
     PARAMETRIZE(nature = NATURE_HARDY); // a no-op classic nature as the baseline

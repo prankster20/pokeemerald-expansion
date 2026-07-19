@@ -6,7 +6,7 @@ ASSUMPTIONS
     ASSUME(GetMoveEffect(MOVE_U_TURN) == EFFECT_HIT_ESCAPE);
 }
 
-SINGLE_BATTLE_TEST("Flighty boosts damaging pivot moves by 10%", s16 damage)
+SINGLE_BATTLE_TEST("pranks Flighty boosts damaging pivot moves by 10%", s16 damage)
 {
     u32 nature;
 

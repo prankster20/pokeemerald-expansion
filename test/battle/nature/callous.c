@@ -7,7 +7,7 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_TACKLE) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("Callous has a 1/8 chance to inflict Frostbite when attacking")
+SINGLE_BATTLE_TEST("pranks Callous has a 1/8 chance to inflict Frostbite when attacking")
 {
     PASSES_RANDOMLY(1, 8, RNG_NATURE_CALLOUS);
     GIVEN {
@@ -23,7 +23,7 @@ SINGLE_BATTLE_TEST("Callous has a 1/8 chance to inflict Frostbite when attacking
     }
 }
 
-SINGLE_BATTLE_TEST("Callous is immune to Frostbite")
+SINGLE_BATTLE_TEST("pranks Callous is immune to Frostbite")
 {
     PASSES_RANDOMLY(1, 8, RNG_NATURE_CALLOUS);
     GIVEN {

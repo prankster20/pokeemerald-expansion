@@ -11,39 +11,29 @@
 
 // ===== FRUGAL =====
 
-TEST("Frugal refuses to hold items costing above 5000")
+TEST("pranks Frugal refuses exactly the held items whose price is above 5000")
 {
     struct Pokemon mon;
     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
     u32 nature = NATURE_FRUGAL;
     SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
 
-    // Choice Band costs > 5000 — should be refused.
-    EXPECT(DoesBoxMonNatureRefuseHeldItem(&mon.box, ITEM_CHOICE_BAND));
+    for (enum Item item = ITEM_NONE; item < ITEMS_COUNT; item++)
+        EXPECT_EQ(DoesBoxMonNatureRefuseHeldItem(&mon.box, item), item != ITEM_NONE && GetItemPrice(item) > 5000);
 }
 
-TEST("Frugal can hold items costing 5000 or less")
-{
-    struct Pokemon mon;
-    CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
-    u32 nature = NATURE_FRUGAL;
-    SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
-
-    // Oran Berry costs less than 5000 — should be allowed.
-    EXPECT(!DoesBoxMonNatureRefuseHeldItem(&mon.box, ITEM_ORAN_BERRY));
-}
-
-TEST("Non-Frugal nature can hold any item regardless of price")
+TEST("pranks Non-Frugal nature can hold any item regardless of price")
 {
     struct Pokemon mon;
     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
     u32 nature = NATURE_DOCILE;
     SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
 
-    EXPECT(!DoesBoxMonNatureRefuseHeldItem(&mon.box, ITEM_CHOICE_BAND));
+    for (enum Item item = ITEM_NONE; item < ITEMS_COUNT; item++)
+        EXPECT(!DoesBoxMonNatureRefuseHeldItem(&mon.box, item));
 }
 
-TEST("Frugal does not refuse ITEM_NONE")
+TEST("pranks Frugal does not refuse ITEM_NONE")
 {
     struct Pokemon mon;
     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
@@ -59,7 +49,7 @@ TEST("Frugal does not refuse ITEM_NONE")
 // doesn't accidentally block or modify the move-learning or item-refusal
 // checks (i.e., it's purely a shop-trigger effect).
 
-TEST("Frivolous does not refuse any held item")
+TEST("pranks Frivolous does not refuse any held item")
 {
     struct Pokemon mon;
     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
@@ -71,7 +61,7 @@ TEST("Frivolous does not refuse any held item")
     EXPECT(!DoesBoxMonNatureRefuseHeldItem(&mon.box, ITEM_ORAN_BERRY));
 }
 
-TEST("Frivolous does not refuse any learnable move")
+TEST("pranks Frivolous does not refuse any learnable move")
 {
     struct Pokemon mon;
     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);

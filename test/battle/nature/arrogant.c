@@ -6,7 +6,7 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_SCRATCH) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("Arrogant boosts damage dealt by 10% vs higher-level targets", s16 damage)
+SINGLE_BATTLE_TEST("pranks Arrogant boosts damage dealt by 10% vs higher-level targets", s16 damage)
 {
     u32 level;
     PARAMETRIZE(level = 40);

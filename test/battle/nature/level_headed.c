@@ -6,7 +6,7 @@ ASSUMPTIONS
     ASSUME(GetMoveEffect(MOVE_CONFUSE_RAY) == EFFECT_CONFUSE);
 }
 
-SINGLE_BATTLE_TEST("Level-Headed prevents Confusion")
+SINGLE_BATTLE_TEST("pranks Level-Headed prevents Confusion")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
@@ -23,7 +23,7 @@ SINGLE_BATTLE_TEST("Level-Headed prevents Confusion")
     }
 }
 
-SINGLE_BATTLE_TEST("Level-Headed prevents flinching")
+SINGLE_BATTLE_TEST("pranks Level-Headed prevents flinching")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET);
@@ -40,7 +40,7 @@ SINGLE_BATTLE_TEST("Level-Headed prevents flinching")
     }
 }
 
-DOUBLE_BATTLE_TEST("Level-Headed ignores Follow Me redirection")
+DOUBLE_BATTLE_TEST("pranks Level-Headed ignores Follow Me redirection")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_POUND); }
@@ -62,7 +62,7 @@ DOUBLE_BATTLE_TEST("Level-Headed ignores Follow Me redirection")
     }
 }
 
-DOUBLE_BATTLE_TEST("Level-Headed ignores ability redirection")
+DOUBLE_BATTLE_TEST("pranks Level-Headed ignores ability redirection")
 {
     GIVEN {
         WITH_CONFIG(B_REDIRECT_ABILITY_IMMUNITY, GEN_5);

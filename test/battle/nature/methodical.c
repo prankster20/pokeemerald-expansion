@@ -8,7 +8,7 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_POUND) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("Tactical boosts the base power of only move slot 1", s16 damage)
+SINGLE_BATTLE_TEST("pranks Tactical boosts the base power of only move slot 1", s16 damage)
 {
     u32 nature;
     enum Move move;

@@ -6,7 +6,7 @@ static void SetTestNature(struct Pokemon *mon, u32 nature)
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
 }
 
-SINGLE_BATTLE_TEST("Apathetic attackers ignore weather damage boosts", s16 damage)
+SINGLE_BATTLE_TEST("pranks Apathetic attackers ignore weather damage boosts", s16 damage)
 {
     u32 setupMove;
     u32 nature;
@@ -30,7 +30,7 @@ SINGLE_BATTLE_TEST("Apathetic attackers ignore weather damage boosts", s16 damag
     }
 }
 
-SINGLE_BATTLE_TEST("Apathetic attackers ignore weather damage reductions", s16 damage)
+SINGLE_BATTLE_TEST("pranks Apathetic attackers ignore weather damage reductions", s16 damage)
 {
     u32 setupMove;
     u32 nature;
@@ -54,7 +54,7 @@ SINGLE_BATTLE_TEST("Apathetic attackers ignore weather damage reductions", s16 d
     }
 }
 
-SINGLE_BATTLE_TEST("Apathetic targets never take Rising Voltage's grounded double damage", s16 damage)
+SINGLE_BATTLE_TEST("pranks Apathetic targets never take Rising Voltage's grounded double damage", s16 damage)
 {
     u32 setupMove;
     u32 nature;
@@ -81,7 +81,7 @@ SINGLE_BATTLE_TEST("Apathetic targets never take Rising Voltage's grounded doubl
     }
 }
 
-SINGLE_BATTLE_TEST("Apathetic ignores passive Sandstorm damage")
+SINGLE_BATTLE_TEST("pranks Apathetic ignores passive Sandstorm damage")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { MaxHP(160); HP(160); }
@@ -96,7 +96,7 @@ SINGLE_BATTLE_TEST("Apathetic ignores passive Sandstorm damage")
     }
 }
 
-SINGLE_BATTLE_TEST("Apathetic ignores passive Hail damage")
+SINGLE_BATTLE_TEST("pranks Apathetic ignores passive Hail damage")
 {
     GIVEN {
         ASSUME(B_PREFERRED_ICE_WEATHER != B_ICE_WEATHER_SNOW);

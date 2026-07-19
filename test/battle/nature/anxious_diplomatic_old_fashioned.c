@@ -14,7 +14,7 @@ ASSUMPTIONS
 // ===== ANXIOUS =====
 // -20% Speed at full HP. +20% Speed at ≤half HP.
 
-SINGLE_BATTLE_TEST("Anxious moves last at full HP due to -20% Speed")
+SINGLE_BATTLE_TEST("pranks Anxious moves last at full HP due to -20% Speed")
 {
     GIVEN {
         // Player (Anxious, 100 Speed) should be slower than opponent (85 Speed)
@@ -33,7 +33,7 @@ SINGLE_BATTLE_TEST("Anxious moves last at full HP due to -20% Speed")
     }
 }
 
-SINGLE_BATTLE_TEST("Anxious moves first at half HP due to +20% Speed")
+SINGLE_BATTLE_TEST("pranks Anxious moves first at half HP due to +20% Speed")
 {
     GIVEN {
         // At half HP, Anxious (100 * 1.2 = 120) outspeed opponent (110 Speed).
@@ -54,9 +54,9 @@ SINGLE_BATTLE_TEST("Anxious moves first at half HP due to +20% Speed")
 // No Pokémon can land critical hits while a Diplomatic mon is on the field.
 // Overrides even always-crit moves like Storm Throw.
 
-SINGLE_BATTLE_TEST("Diplomatic prevents random critical hits")
+SINGLE_BATTLE_TEST("pranks Diplomatic prevents random critical hits")
 {
-    PASSES_RANDOMLY(0, 1, RNG_CRITICAL_HIT); // force a crit roll that would normally hit
+    PASSES_RANDOMLY(1, 1, RNG_CRITICAL_HIT); // force a successful crit roll
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
@@ -70,7 +70,7 @@ SINGLE_BATTLE_TEST("Diplomatic prevents random critical hits")
     }
 }
 
-SINGLE_BATTLE_TEST("Diplomatic prevents Storm Throw from always critting", s16 damage)
+SINGLE_BATTLE_TEST("pranks Diplomatic prevents Storm Throw from always critting", s16 damage)
 {
     // Storm Throw uses CRITICAL_HIT_ALWAYS — Diplomatic must override this.
     u32 nature;
@@ -92,7 +92,7 @@ SINGLE_BATTLE_TEST("Diplomatic prevents Storm Throw from always critting", s16 d
     }
 }
 
-SINGLE_BATTLE_TEST("Diplomatic blocks crits even on the opponent's attacks")
+SINGLE_BATTLE_TEST("pranks Diplomatic blocks crits even on the opponent's attacks")
 {
     PASSES_RANDOMLY(0, 1, RNG_CRITICAL_HIT);
     GIVEN {
@@ -113,7 +113,7 @@ SINGLE_BATTLE_TEST("Diplomatic blocks crits even on the opponent's attacks")
 // Dark is Special in the old split, Physical in modern GEN 4+ split.
 // So Night Slash (Dark, Physical in GEN4+) should use SpAtk/SpDef for Old-Fashioned.
 
-SINGLE_BATTLE_TEST("Old-Fashioned uses SpAtk for Dark-type Night Slash", s16 damage)
+SINGLE_BATTLE_TEST("pranks Old-Fashioned uses SpAtk for Dark-type Night Slash", s16 damage)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }      // uses modern Atk/Def (Physical)
@@ -135,7 +135,7 @@ SINGLE_BATTLE_TEST("Old-Fashioned uses SpAtk for Dark-type Night Slash", s16 dam
     }
 }
 
-SINGLE_BATTLE_TEST("Old-Fashioned does not change Fire-type moves (Special in both splits)", s16 damage)
+SINGLE_BATTLE_TEST("pranks Old-Fashioned does not change Fire-type moves (Special in both splits)", s16 damage)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }

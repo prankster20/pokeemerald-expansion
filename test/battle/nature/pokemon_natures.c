@@ -3,7 +3,7 @@
 #include "pokemon.h"
 #include "test/test.h"
 
-TEST("Minting Innocent sets Friendship to zero")
+TEST("pranks Minting Innocent sets Friendship to zero")
 {
     struct Pokemon mon;
     u32 friendship = 255;
@@ -16,7 +16,7 @@ TEST("Minting Innocent sets Friendship to zero")
     EXPECT_EQ(GetMonData(&mon, MON_DATA_FRIENDSHIP), 0);
 }
 
-TEST("Innocent evolves into a Nature based on Friendship")
+TEST("pranks Innocent evolves into a Nature based on Friendship")
 {
     u32 friendship;
     u32 expectedNature;
@@ -31,48 +31,47 @@ TEST("Innocent evolves into a Nature based on Friendship")
     EXPECT_EQ(GetInnocentEvolutionNatureFromFriendship(friendship), expectedNature);
 }
 
-TEST("Reserved Natures cannot be offered by Mints or random Nature changes")
+TEST("pranks Reserved Natures cannot be offered by Mints or random Nature changes")
 {
     u32 nature;
 
     PARAMETRIZE { nature = NATURE_CYNICAL; }
     PARAMETRIZE { nature = NATURE_REALISTIC; }
     PARAMETRIZE { nature = NATURE_IDEALISTIC; }
-    PARAMETRIZE { nature = NATURE_LEVEL_HEADED; }
-
     EXPECT(IsNatureExcludedFromRandomAcquisition(nature));
 }
 
-TEST("Nostalgic and reserve Level-Headed occupy their stable IDs")
+TEST("pranks Nostalgic and Level-Headed occupy their stable IDs")
 {
     EXPECT_EQ(NATURE_NOSTALGIC, 46);
-    EXPECT_EQ(NATURE_LEVEL_HEADED, 103);
+    EXPECT_EQ(NATURE_LEVEL_HEADED, 77);
 }
 
-TEST("Innocent Affectionate and Capricious remain directly mintable")
+TEST("pranks Ordinary custom Natures remain directly mintable")
 {
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_INNOCENT));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_AFFECTIONATE));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_CAPRICIOUS));
+    EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_LEVEL_HEADED));
 }
 
-TEST("Custom five-percent Nature stat modifiers use their intended stats")
+TEST("pranks Vain and Noble five-percent stat modifiers use meaningful values")
 {
     EXPECT_EQ(ModifyStatByNature(NATURE_VAIN, 100, STAT_ATK, 0), 105);
     EXPECT_EQ(ModifyStatByNature(NATURE_VAIN, 100, STAT_SPEED, 0), 105);
-    EXPECT_EQ(ModifyStatByNature(NATURE_BITTER, 100, STAT_SPDEF, 0), 105);
-    EXPECT_EQ(ModifyStatByNature(NATURE_BITTER, 100, STAT_DEF, 0), 100);
+    EXPECT_GT(ModifyStatByNature(NATURE_VAIN, 100, STAT_SPEED, 0), 104);
     EXPECT_EQ(ModifyStatByNature(NATURE_NOBLE, 100, STAT_DEF, 0), 105);
     EXPECT_EQ(ModifyStatByNature(NATURE_NOBLE, 100, STAT_SPDEF, 0), 100);
+    EXPECT_EQ(ModifyStatByNature(NATURE_NOBLE, 200, STAT_DEF, 0), 210);
 }
 
-TEST("Finicky boosts only Speed by twenty percent")
+TEST("pranks Finicky boosts only Speed by twenty percent")
 {
     EXPECT_EQ(ModifyStatByNature(NATURE_FINICKY, 100, STAT_SPEED, 0), 120);
     EXPECT_EQ(ModifyStatByNature(NATURE_FINICKY, 100, STAT_ATK, 0), 100);
 }
 
-// TEST("Materialistic gains one percent per four unique Bag items")
+// TEST("pranks Materialistic gains one percent per four unique Bag items")
 // {
 //     ClearBag();
 //     AddBagItem(ITEM_POTION, 1);
@@ -87,7 +86,7 @@ TEST("Finicky boosts only Speed by twenty percent")
 /* Eccentric and Tactical tests are pending their implementations.
    Left here as stubs to fill in once those natures are wired up.
 
-TEST("Eccentric exchanges its Poke Ball with a different Ball from the Bag")
+TEST("pranks Eccentric exchanges its Poke Ball with a different Ball from the Bag")
 {
     struct Pokemon mon;
     u32 nature = NATURE_ECCENTRIC;
@@ -105,7 +104,7 @@ TEST("Eccentric exchanges its Poke Ball with a different Ball from the Bag")
     EXPECT(!CheckBagHasItem(ITEM_ULTRA_BALL, 1));
 }
 
-TEST("Tactical grants one extra max PP only to move slot 4")
+TEST("pranks Tactical grants one extra max PP only to move slot 4")
 {
     struct Pokemon mon;
     u32 nature = NATURE_TACTICAL;

@@ -8,7 +8,7 @@ static void SetTestNature(struct Pokemon *mon, u32 nature)
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
 }
 
-SINGLE_BATTLE_TEST("Benevolent boosts Recover healing immediately on the HP bar")
+SINGLE_BATTLE_TEST("pranks Benevolent boosts Recover healing immediately on the HP bar")
 {
     GIVEN {
         ASSUME(GetMoveEffect(MOVE_RECOVER) == EFFECT_RESTORE_HP);

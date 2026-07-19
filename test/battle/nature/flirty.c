@@ -6,7 +6,7 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_TACKLE) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("Flirty has a 1/8 chance to infatuate when attacking")
+SINGLE_BATTLE_TEST("pranks Flirty has a 1/8 chance to infatuate when attacking")
 {
     PASSES_RANDOMLY(1, 8, RNG_NATURE_FLIRTY);
     GIVEN {
@@ -24,7 +24,7 @@ SINGLE_BATTLE_TEST("Flirty has a 1/8 chance to infatuate when attacking")
     }
 }
 
-SINGLE_BATTLE_TEST("Flirty is immune to Infatuation")
+SINGLE_BATTLE_TEST("pranks Flirty is immune to Infatuation")
 {
     PASSES_RANDOMLY(1, 8, RNG_NATURE_FLIRTY);
     GIVEN {

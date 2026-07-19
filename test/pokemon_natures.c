@@ -3,7 +3,7 @@
 #include "pokemon.h"
 #include "test/test.h"
 
-TEST("Minting Innocent sets Friendship to zero")
+TEST("pranks Minting Innocent sets Friendship to zero")
 {
     struct Pokemon mon;
     u32 friendship = 255;
@@ -16,7 +16,7 @@ TEST("Minting Innocent sets Friendship to zero")
     EXPECT_EQ(GetMonData(&mon, MON_DATA_FRIENDSHIP), 0);
 }
 
-TEST("Innocent evolves into a Nature based on Friendship")
+TEST("pranks Innocent evolves into a Nature based on Friendship")
 {
     u32 friendship;
     u32 expectedNature;
@@ -31,60 +31,26 @@ TEST("Innocent evolves into a Nature based on Friendship")
     EXPECT_EQ(GetInnocentEvolutionNatureFromFriendship(friendship), expectedNature);
 }
 
-TEST("Reserved Natures cannot be offered by Mints or random Nature changes")
+TEST("pranks Reserved Natures cannot be offered by Mints or random Nature changes")
 {
     u32 nature;
 
     PARAMETRIZE { nature = NATURE_CYNICAL; }
     PARAMETRIZE { nature = NATURE_REALISTIC; }
     PARAMETRIZE { nature = NATURE_IDEALISTIC; }
-    PARAMETRIZE { nature = NATURE_LEVEL_HEADED; }
-
     EXPECT(IsNatureExcludedFromRandomAcquisition(nature));
 }
 
-TEST("Innocent Affectionate and Capricious remain directly mintable")
+TEST("pranks Ordinary custom Natures remain directly mintable")
 {
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_INNOCENT));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_AFFECTIONATE));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_CAPRICIOUS));
+    EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_LEVEL_HEADED));
 }
 
-TEST("Nostalgic and reserve Level-Headed occupy their stable IDs")
+TEST("pranks Nostalgic and Level-Headed occupy their stable IDs")
 {
     EXPECT_EQ(NATURE_NOSTALGIC, 46);
-    EXPECT_EQ(NATURE_LEVEL_HEADED, 103);
+    EXPECT_EQ(NATURE_LEVEL_HEADED, 77);
 }
-
-// TEST("Eccentric exchanges its Poke Ball with a different Ball from the Bag")
-// {
-//     struct Pokemon mon;
-//     u32 nature = NATURE_ECCENTRIC;
-//     u32 ball = BALL_GREAT;
-
-//     ClearBag();
-//     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
-//     SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
-//     SetMonData(&mon, MON_DATA_POKEBALL, &ball);
-//     AddBagItem(ITEM_ULTRA_BALL, 1);
-
-//     EXPECT(TrySwapEccentricPokeBall(&mon));
-//     EXPECT_EQ(GetMonData(&mon, MON_DATA_POKEBALL), BALL_ULTRA);
-//     EXPECT(CheckBagHasItem(ITEM_GREAT_BALL, 1));
-//     EXPECT(!CheckBagHasItem(ITEM_ULTRA_BALL, 1));
-// }
-
-// TEST("Tactical grants one extra max PP only to move slot 4")
-// {
-//     struct Pokemon mon;
-//     u32 nature = NATURE_TACTICAL;
-
-//     CreateMon(&mon, SPECIES_WOBBUFFET, 50, 0, OTID_STRUCT_PLAYER_ID);
-//     SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
-//     SetMonMoveSlot(&mon, MOVE_TACKLE, 2);
-//     SetMonMoveSlot(&mon, MOVE_POUND, 3);
-
-//     EXPECT_EQ(GetMonData(&mon, MON_DATA_PP3), GetMovePP(MOVE_TACKLE));
-//     EXPECT_EQ(GetMonData(&mon, MON_DATA_PP4), GetMovePP(MOVE_POUND) + 1);
-//     EXPECT_EQ(CalculatePPWithBonusForMon(&mon, MOVE_POUND, 0, 3), GetMovePP(MOVE_POUND) + 1);
-// }

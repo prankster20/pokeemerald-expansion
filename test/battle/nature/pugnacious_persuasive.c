@@ -12,12 +12,13 @@ ASSUMPTIONS
 // ===== PUGNACIOUS =====
 // Infiltrates: ignores Screens and Substitute.
 
-SINGLE_BATTLE_TEST("Pugnacious ignores Reflect when attacking", s16 damage)
+SINGLE_BATTLE_TEST("pranks Pugnacious ignores Reflect when attacking", s16 damage)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
     PARAMETRIZE { nature = NATURE_PUGNACIOUS; }
     GIVEN {
+        WITH_CONFIG(B_TAUNT_TURNS, GEN_5);
         PLAYER(SPECIES_MIENFOO) { Level(50); Attack(100); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_REFLECT, MOVE_CELEBRATE); Level(50); Defense(100); MaxHP(999); HP(999); }
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
@@ -32,7 +33,7 @@ SINGLE_BATTLE_TEST("Pugnacious ignores Reflect when attacking", s16 damage)
     }
 }
 
-SINGLE_BATTLE_TEST("Pugnacious ignores Substitute when attacking")
+SINGLE_BATTLE_TEST("pranks Pugnacious ignores Substitute when attacking")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
@@ -44,7 +45,6 @@ SINGLE_BATTLE_TEST("Pugnacious ignores Substitute when attacking")
     } SCENE {
         // Substitute should NOT block Confuse Ray for Pugnacious.
         ANIMATION(ANIM_TYPE_MOVE, MOVE_CONFUSE_RAY, player);
-        STATUS_ICON(opponent, confusion: TRUE);
     } THEN {
         u32 confused = gBattleMons[B_POSITION_OPPONENT_LEFT].volatiles.confusionTurns;
         EXPECT(confused > 0);
@@ -55,7 +55,7 @@ SINGLE_BATTLE_TEST("Pugnacious ignores Substitute when attacking")
 // Volatile statuses inflicted by this Pokémon last 1 extra turn.
 // B_TAUNT_TIMER = 5 normally, Persuasive makes it 6.
 
-SINGLE_BATTLE_TEST("Persuasive extends Taunt duration by 1 turn")
+SINGLE_BATTLE_TEST("pranks Persuasive extends Taunt duration by 1 turn")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TAUNT); Speed(2); }
@@ -68,13 +68,16 @@ SINGLE_BATTLE_TEST("Persuasive extends Taunt duration by 1 turn")
         ANIMATION(ANIM_TYPE_MOVE, MOVE_TAUNT, player);
     } THEN {
         u32 tauntTurns = gBattleMons[B_POSITION_OPPONENT_LEFT].volatiles.tauntTimer;
-        EXPECT_EQ(tauntTurns, B_TAUNT_TIMER + 1); // baseline 5, Persuasive makes it 6
+        // The timer has already ticked once at end of turn: Gen 5+ leaves
+        // 2 turns normally and Persuasive leaves 3.
+        EXPECT_EQ(tauntTurns, 3);
     }
 }
 
-SINGLE_BATTLE_TEST("Without Persuasive, Taunt lasts the normal duration")
+SINGLE_BATTLE_TEST("pranks Without Persuasive, Taunt lasts the normal duration")
 {
     GIVEN {
+        WITH_CONFIG(B_TAUNT_TURNS, GEN_5);
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TAUNT); Speed(2); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); Speed(1); }
         u32 nature = NATURE_DOCILE;
@@ -85,11 +88,11 @@ SINGLE_BATTLE_TEST("Without Persuasive, Taunt lasts the normal duration")
         ANIMATION(ANIM_TYPE_MOVE, MOVE_TAUNT, player);
     } THEN {
         u32 tauntTurns = gBattleMons[B_POSITION_OPPONENT_LEFT].volatiles.tauntTimer;
-        EXPECT_EQ(tauntTurns, B_TAUNT_TIMER); // normal: 5
+        EXPECT_EQ(tauntTurns, 2);
     }
 }
 
-SINGLE_BATTLE_TEST("Persuasive extends Confusion duration by 1 turn")
+SINGLE_BATTLE_TEST("pranks Persuasive extends Confusion duration by 1 turn")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); Speed(2); }

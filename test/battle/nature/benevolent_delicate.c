@@ -9,7 +9,7 @@ ASSUMPTIONS
 
 // --- BENEVOLENT: boosts healing for ALL mons while on field ---
 
-SINGLE_BATTLE_TEST("Benevolent boosts Recover healing by 20% for its user", s16 healAmt)
+SINGLE_BATTLE_TEST("pranks Benevolent boosts Recover healing by 20% for its user", u16 healAmt)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
@@ -23,13 +23,13 @@ SINGLE_BATTLE_TEST("Benevolent boosts Recover healing by 20% for its user", s16 
     } SCENE {
         HP_BAR(player, captureHP: &results[i].healAmt);
     } FINALLY {
-        // Benevolent heals 20% more: base Recover = 50 HP (on 100 max).
-        // Docile: 50, Benevolent: 60.
-        EXPECT_MUL_EQ(results[0].healAmt, Q_4_12(1.2), results[1].healAmt);
+        // captureHP records resulting HP rather than the amount restored.
+        EXPECT_EQ(results[0].healAmt, 51);
+        EXPECT_EQ(results[1].healAmt, 61);
     }
 }
 
-SINGLE_BATTLE_TEST("Benevolent boosts opponent's Recover healing too")
+SINGLE_BATTLE_TEST("pranks Benevolent boosts opponent's Recover healing too")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); }
@@ -46,7 +46,7 @@ SINGLE_BATTLE_TEST("Benevolent boosts opponent's Recover healing too")
 
 // --- DELICATE: 1.5x indirect damage + 1.3x self-healing ---
 
-SINGLE_BATTLE_TEST("Delicate boosts own Recover healing by 30%", s16 healAmt)
+SINGLE_BATTLE_TEST("pranks Delicate boosts own Recover healing by 30%", u16 healAmt)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
@@ -60,11 +60,12 @@ SINGLE_BATTLE_TEST("Delicate boosts own Recover healing by 30%", s16 healAmt)
     } SCENE {
         HP_BAR(player, captureHP: &results[i].healAmt);
     } FINALLY {
-        EXPECT_MUL_EQ(results[0].healAmt, Q_4_12(1.3), results[1].healAmt);
+        EXPECT_EQ(results[0].healAmt, 51);
+        EXPECT_EQ(results[1].healAmt, 66);
     }
 }
 
-SINGLE_BATTLE_TEST("Delicate takes 1.5x damage from Spikes entry hazard")
+SINGLE_BATTLE_TEST("pranks Delicate takes 1.5x damage from Spikes entry hazard")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_SPIKES); }
@@ -83,7 +84,7 @@ SINGLE_BATTLE_TEST("Delicate takes 1.5x damage from Spikes entry hazard")
     }
 }
 
-SINGLE_BATTLE_TEST("Benevolent and Delicate stack multiplicatively")
+SINGLE_BATTLE_TEST("pranks Benevolent and Delicate stack multiplicatively")
 {
     // Benevolent on field (+20%) AND Delicate self (+30%) = 1.2 * 1.3 = 1.56x.
     GIVEN {

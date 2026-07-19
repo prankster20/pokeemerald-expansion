@@ -7,7 +7,7 @@ ASSUMPTIONS
     ASSUME(GetMoveEffect(MOVE_ATTRACT) == EFFECT_ATTRACT);
 }
 
-SINGLE_BATTLE_TEST("Docile does not prevent Confusion")
+SINGLE_BATTLE_TEST("pranks Docile does not prevent Confusion")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
@@ -22,7 +22,7 @@ SINGLE_BATTLE_TEST("Docile does not prevent Confusion")
     }
 }
 
-SINGLE_BATTLE_TEST("Docile does not prevent Infatuation")
+SINGLE_BATTLE_TEST("pranks Docile does not prevent Infatuation")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_ATTRACT); }

@@ -7,7 +7,7 @@ ASSUMPTIONS
     ASSUME(GetMovePower(MOVE_THUNDERPUNCH) > 0);
 }
 
-SINGLE_BATTLE_TEST("Relentless deals 10% more move damage", s16 damage)
+SINGLE_BATTLE_TEST("pranks Relentless deals 10% more move damage", s16 damage)
 {
     u32 nature;
     PARAMETRIZE(nature = NATURE_HARDY); // neutral baseline
@@ -25,7 +25,7 @@ SINGLE_BATTLE_TEST("Relentless deals 10% more move damage", s16 damage)
     }
 }
 
-SINGLE_BATTLE_TEST("Relentless adds 10 percentage points to secondary effect chance")
+SINGLE_BATTLE_TEST("pranks Relentless adds 10 percentage points to secondary effect chance")
 {
     // Thunder Punch has a 10% chance to paralyze - Relentless should push
     // that to 20%, so forcing the roll to the 11th-20th percentile range
@@ -43,7 +43,7 @@ SINGLE_BATTLE_TEST("Relentless adds 10 percentage points to secondary effect cha
     }
 }
 
-SINGLE_BATTLE_TEST("Relentless's moves cost 2 PP per use")
+SINGLE_BATTLE_TEST("pranks Relentless's moves cost 2 PP per use")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE); }
@@ -55,6 +55,6 @@ SINGLE_BATTLE_TEST("Relentless's moves cost 2 PP per use")
     } SCENE {
         HP_BAR(opponent);
     } THEN {
-        EXPECT_EQ(GetMonData(&PLAYER_PARTY[0], MON_DATA_PP1), GetMovePP(MOVE_TACKLE) - 2);
+        EXPECT_EQ(player->pp[0], GetMovePP(MOVE_TACKLE) - 2);
     }
 }

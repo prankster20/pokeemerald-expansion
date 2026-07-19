@@ -6,7 +6,7 @@
 // (src/pokemon.c) at move-learn time, not in battle - that needs a different
 // kind of test (not SINGLE_BATTLE_TEST), so it isn't covered here.
 
-SINGLE_BATTLE_TEST("Hedonistic recovers 1/16 max HP at the end of each turn")
+SINGLE_BATTLE_TEST("pranks Hedonistic recovers 1/16 max HP at the end of each turn")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); MaxHP(160); HP(100); }
@@ -20,7 +20,7 @@ SINGLE_BATTLE_TEST("Hedonistic recovers 1/16 max HP at the end of each turn")
     }
 }
 
-SINGLE_BATTLE_TEST("Hedonistic does not heal past max HP")
+SINGLE_BATTLE_TEST("pranks Hedonistic does not heal past max HP")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); MaxHP(160); HP(155); }

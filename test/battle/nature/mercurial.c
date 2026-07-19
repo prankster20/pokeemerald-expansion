@@ -5,15 +5,10 @@
 // battle. We can't guarantee it lands on a different value, but we CAN
 // verify:
 //   1. The MON_DATA_MERCURIAL_NATURE flag persists after the battle.
-//   2. The new active nature is NOT equal to NATURE_MERCURIAL/CAPRICIOUS
+//   2. The new active nature is not Capricious again.
 //      itself (the reroll blacklists it).
 
-static void SetTestNature(struct Pokemon *mon, u32 nature)
-{
-    SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
-}
-
-SINGLE_BATTLE_TEST("Capricious's Mercurial flag persists after battle ends")
+SINGLE_BATTLE_TEST("pranks Capricious keeps its reroll flag after battle ends")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE); }
@@ -33,7 +28,7 @@ SINGLE_BATTLE_TEST("Capricious's Mercurial flag persists after battle ends")
     }
 }
 
-SINGLE_BATTLE_TEST("Capricious never rerolls to the Capricious nature itself")
+SINGLE_BATTLE_TEST("pranks Capricious never rerolls back into Capricious")
 {
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE); }
@@ -49,6 +44,6 @@ SINGLE_BATTLE_TEST("Capricious never rerolls to the Capricious nature itself")
     } THEN {
         u32 newNature = GetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE);
         // The active nature must never be the Mercurial/Capricious nature ID itself.
-        EXPECT(newNature != NATURE_MERCURIAL);
+        EXPECT(newNature != NATURE_CAPRICIOUS);
     }
 }

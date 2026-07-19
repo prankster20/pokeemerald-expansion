@@ -6,7 +6,7 @@ ASSUMPTIONS
     ASSUME(gItemsInfo[ITEM_LIFE_ORB].holdEffect == HOLD_EFFECT_LIFE_ORB);
 }
 
-SINGLE_BATTLE_TEST("Finicky prevents held item effects")
+SINGLE_BATTLE_TEST("pranks Finicky prevents held item effects")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_LIFE_ORB); }
@@ -25,7 +25,7 @@ SINGLE_BATTLE_TEST("Finicky prevents held item effects")
     }
 }
 
-SINGLE_BATTLE_TEST("Finicky cannot use Fling")
+SINGLE_BATTLE_TEST("pranks Finicky cannot use Fling")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_IRON_BALL); Moves(MOVE_FLING); }

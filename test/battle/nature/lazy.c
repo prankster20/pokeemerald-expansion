@@ -6,7 +6,7 @@ static void SetTestNature(struct Pokemon *mon, u32 nature)
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
 }
 
-SINGLE_BATTLE_TEST("Lazy recovers 1/8 max HP after losing a turn to sleep")
+SINGLE_BATTLE_TEST("pranks Lazy recovers 1/8 max HP after losing a turn to sleep")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { MaxHP(100); HP(50); Status1(STATUS1_SLEEP_TURN(2)); Moves(MOVE_CELEBRATE); }
@@ -22,7 +22,7 @@ SINGLE_BATTLE_TEST("Lazy recovers 1/8 max HP after losing a turn to sleep")
     }
 }
 
-SINGLE_BATTLE_TEST("Lazy recovers 1/8 max HP after losing a turn to flinching")
+SINGLE_BATTLE_TEST("pranks Lazy recovers 1/8 max HP after losing a turn to flinching")
 {
     GIVEN {
         ASSUME(MoveHasAdditionalEffectWithChance(MOVE_FAKE_OUT, MOVE_EFFECT_FLINCH, 100));
