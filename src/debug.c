@@ -220,8 +220,8 @@ struct DebugMonData
 {
     enum Species species;
     u8 level;
-    bool8 isShiny:1;
-    u8 nature:7; // Widened from 5 bits: NATURE_RANDOM is now NUM_NATURES (100), which needs 7 bits (2^7=128 > 100).
+    bool8 isShiny;
+    u8 nature; // Includes the NATURE_RANDOM sentinel (128), so this cannot be a 7-bit field.
     u8 abilityNum:2;
     u8 monIVs[NUM_STATS];
     u16 monMoves[MAX_MON_MOVES];

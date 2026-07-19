@@ -610,8 +610,8 @@ static void CreateShedinja(enum Species preEvoSpecies, enum Species postEvoSpeci
 // Add more entries here as needed - this array is the single place to edit.
 static const u8 sCallowBlacklistedNatures[] =
 {
-    NATURE_AUSTERE,
-    NATURE_COMPULSIVE,
+        NATURE_AUSTERE,
+        NATURE_COMPULSIVE,
     NATURE_IMPRESSIONABLE,
 };
 
@@ -634,11 +634,11 @@ static void TryChangeNatureOnEvolution(struct Pokemon *mon)
 {
     u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
 
-    if (nature == NATURE_CALLOW)
+        if (nature == NATURE_CALLOW)
     {
         u32 newNature = RandomUniformExcept(RNG_CALLOW_EVOLUTION, 0, NUM_NATURES - 1, IsCallowBlacklistedNature);
         SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
-        AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
+            AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
     }
     else if (nature == NATURE_INNOCENT)
     {

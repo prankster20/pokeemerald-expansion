@@ -5267,7 +5267,7 @@ static void PrintMoveNameAndPP(u8 moveIndex)
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
         // --- Custom Archetype natures: Serious & Methodical ---
         if (summary->mintNature == NATURE_SERIOUS
-         || (summary->mintNature == NATURE_METHODICAL && moveIndex == 3))
+                  || (summary->mintNature == NATURE_METHODICAL && moveIndex == 3))
             pp += 1;
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);
         ConvertIntToDecimalStringN(gStringVar2, pp, STR_CONV_MODE_RIGHT_ALIGN, 2);

@@ -25,20 +25,19 @@ SINGLE_BATTLE_TEST("pranks Dreamy can act even while asleep")
     }
 }
 
-SINGLE_BATTLE_TEST("pranks Dreamy lowers Speed by 10%")
+TEST("pranks Dreamy lowers calculated Speed to 0.9x")
 {
-    GIVEN {
-        PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); Speed(100); }
-        OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); Speed(95); }
-        u32 nature = NATURE_DREAMY;
-        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
-    } WHEN {
-        TURN { MOVE(player, MOVE_CELEBRATE); MOVE(opponent, MOVE_CELEBRATE); }
-    } SCENE {
-        // Without Dreamy's -10%, Mienfoo (100 Speed) would move first. With
-        // it, Mienfoo's effective Speed (90) is below Wobbuffet's (95), so
-        // Wobbuffet should move first instead.
-        MESSAGE("The opposing Wobbuffet used Celebrate!");
-        MESSAGE("Mienfoo used Celebrate!");
-    }
+    struct Pokemon mon;
+    u32 nature = NATURE_DREAMY;
+    u32 friendship = 0;
+
+    CreateMon(&mon, SPECIES_MIENFOO, 50, 0, OTID_STRUCT_PLAYER_ID);
+    SetMonData(&mon, MON_DATA_FRIENDSHIP, &friendship);
+    CalculateMonStats(&mon);
+    u32 neutralSpeed = GetMonData(&mon, MON_DATA_SPEED);
+
+    SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
+    CalculateMonStats(&mon);
+
+    EXPECT_EQ(GetMonData(&mon, MON_DATA_SPEED), neutralSpeed * 90 / 100);
 }

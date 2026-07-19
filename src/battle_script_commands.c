@@ -11687,7 +11687,7 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
 
     // --- Custom Archetype nature: Callow ---
     // Gains 5% less EXP.
-    if (GetMonData(&gParties[B_TRAINER_PLAYER][expGetterMonId], MON_DATA_HIDDEN_NATURE) == NATURE_CALLOW)
+        if (GetMonData(&gParties[B_TRAINER_PLAYER][expGetterMonId], MON_DATA_HIDDEN_NATURE) == NATURE_CALLOW)
         *expAmount = (*expAmount * 95) / 100;
 
     // --- Custom Archetype nature: Childish ---

@@ -104,7 +104,7 @@ TEST("ModifyPersonalityForNature can set any nature")
     u32 personality = 0, nature = 0, j = 0, k = 0;
     for (j = 0; j < 64; j++)
     {
-        for (k = 0; k < NUM_NATURES; k++)
+        for (k = 0; k < NUM_PUBLIC_NATURES; k++)
         {
             PARAMETRIZE { personality = Random32(); nature = k; }
         }

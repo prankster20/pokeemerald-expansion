@@ -2088,25 +2088,11 @@ void OpenPokemon(u32 sourceLine, enum BattleTrainer trainer, enum Species specie
     CalculateMonStats(DATA.currentMon);
 }
 
-// (sNaturePersonalities[i] % NUM_NATURES) == i
-// (sNaturePersonalities[i] & 0xFF) == 0
-// NOTE: Using 25 << 8 rather than 0 << 8 to prevent shiny females.
-static const u16 sNaturePersonalities[NUM_NATURES] =
-{
-    25 << 8, 21 << 8, 17 << 8, 13 << 8,  9 << 8,
-     5 << 8,  1 << 8, 22 << 8, 18 << 8, 14 << 8,
-    10 << 8,  6 << 8,  2 << 8, 23 << 8, 19 << 8,
-    15 << 8, 11 << 8,  7 << 8,  3 << 8, 24 << 8,
-    20 << 8, 16 << 8, 12 << 8,  8 << 8,  4 << 8,
-};
-
 static u32 GenerateNature(u32 nature, u32 offset)
 {
-    if (offset <= nature)
-        nature -= offset;
-    else
-        nature = nature + NUM_NATURES - offset;
-    return sNaturePersonalities[nature];
+    // Nature is independent from the low byte used for gender.
+    (void)offset;
+    return nature << 8;
 }
 
 void ClosePokemon(u32 sourceLine)
@@ -2122,7 +2108,7 @@ void ClosePokemon(u32 sourceLine)
             INVALID_IF(GetMonData(DATA.currentMon, MON_DATA_HP) == 0, "Battlers cannot be fainted");
         }
     }
-    UpdateMonPersonality(&DATA.currentMon->box, GenerateNature(DATA.nature, DATA.gender % NUM_NATURES) | DATA.gender);
+    UpdateMonPersonality(&DATA.currentMon->box, GenerateNature(DATA.nature, DATA.gender % NUM_PERSONALITY_NATURES) | DATA.gender);
     data = DATA.isShiny;
     SetMonData(DATA.currentMon, MON_DATA_IS_SHINY, &data);
     DATA.currentMon = NULL;
@@ -2163,7 +2149,7 @@ void Gender_(u32 sourceLine, u32 gender)
 void Nature_(u32 sourceLine, u32 nature)
 {
     INVALID_IF(!DATA.currentMon, "Nature outside of PLAYER/OPPONENT");
-    INVALID_IF(nature >= NUM_NATURES, "Illegal nature: %d", nature);
+    INVALID_IF(nature >= NUM_PERSONALITY_NATURES, "Illegal personality nature: %d", nature);
     DATA.nature = nature;
 }
 

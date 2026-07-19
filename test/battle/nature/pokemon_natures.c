@@ -41,6 +41,34 @@ TEST("pranks Reserved Natures cannot be offered by Mints or random Nature change
     EXPECT(IsNatureExcludedFromRandomAcquisition(nature));
 }
 
+TEST("pranks seven-bit Nature domains remain disjoint and exhaustive")
+{
+    EXPECT_EQ(NUM_PUBLIC_NATURES, 100);
+    EXPECT_EQ(NUM_SECRET_NATURES, 3);
+    EXPECT_EQ(NUM_DEFINED_NATURES, 103);
+    EXPECT_EQ(NUM_NATURES, 128);
+
+    for (u32 nature = 0; nature < NUM_NATURES; nature++)
+    {
+        EXPECT_EQ(IsNaturePublic(nature), nature < NUM_PUBLIC_NATURES);
+        EXPECT_EQ(IsNatureSecret(nature), nature >= NATURE_CYNICAL && nature <= NATURE_IDEALISTIC);
+        EXPECT_EQ(IsNatureReserved(nature), nature >= NATURE_RESERVED_START);
+        EXPECT_EQ(IsNatureNaturallyGenerated(nature), nature < NUM_PUBLIC_NATURES);
+        EXPECT_EQ(IsNatureMintable(nature), nature < NUM_PUBLIC_NATURES);
+    }
+}
+
+TEST("pranks requested interaction-heavy Natures have semantic audit groups")
+{
+    EXPECT(NatureHasSemanticGroup(NATURE_APATHETIC, NATURE_GROUP_WEATHER_TERRAIN));
+    EXPECT(NatureHasSemanticGroup(NATURE_AMBIENT, NATURE_GROUP_TIMED_FIELD_EFFECTS));
+    EXPECT(NatureHasSemanticGroup(NATURE_INDOMITABLE, NATURE_GROUP_DELAYED_FAINTING));
+    EXPECT(NatureHasSemanticGroup(NATURE_RUGGED, NATURE_GROUP_RECOIL_CRASH_HAZARDS));
+    EXPECT(NatureHasSemanticGroup(NATURE_RELENTLESS, NATURE_GROUP_MOVE_EFFECT_CHANCE));
+    EXPECT(NatureHasSemanticGroup(NATURE_PERFECTIONIST, NATURE_GROUP_TURN_ORDER_ACCURACY));
+    EXPECT(NatureHasSemanticGroup(NATURE_DREAMY, NATURE_GROUP_SLEEP_ACTION));
+}
+
 TEST("pranks Nostalgic and Level-Headed occupy their stable IDs")
 {
     EXPECT_EQ(NATURE_NOSTALGIC, 46);

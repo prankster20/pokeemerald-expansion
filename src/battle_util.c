@@ -1648,7 +1648,7 @@ u32 CheckMoveLimitations(enum BattlerId battler, u8 unusableMoves, u16 check)
         // Can't Use Twice flag
         else if (check & MOVE_LIMITATION_CANT_USE_TWICE
               && ((MoveCantBeUsedTwice(move) && move == gLastResultingMoves[battler])
-               || (HasNature(battler, NATURE_SUPERSTITIOUS)
+     || (HasNature(battler, NATURE_SUPERSTITIOUS)
                 && gBattleStruct->battlerState[battler].superstitiousCount >= 2
                 && move == gBattleStruct->battlerState[battler].superstitiousMove)))
             unusableMoves |= 1u << i;
@@ -7173,7 +7173,7 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
         if (ctx->updateFlags)
         {
             gBattleStruct->battlerState[battlerAtk].tongueTiedConsumed = TRUE;
-            SetPendingNaturePopup(battlerAtk, NATURE_TONGUE_TIED); // pranks / jimh
+        SetPendingNaturePopup(battlerAtk, NATURE_TONGUE_TIED); // pranks / jimh
         }
     }
 

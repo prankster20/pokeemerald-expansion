@@ -158,8 +158,13 @@ enum __attribute__((packed)) Type
 #define NATURE_REALISTIC        101
 #define NATURE_IDEALISTIC       102
 
-// Legacy aliases keep already-implemented effects attached to their original
-// numeric slots while the in-game Nature identities are replaced.
+// IDs 103-127 are intentionally reserved so every value representable by the
+// seven-bit BoxPokemon nature field has a valid NatureInfo entry.
+#define NATURE_RESERVED_START   103
+#define NATURE_RESERVED_END     127
+
+// Legacy effect-pointer names. These deliberately preserve the identity of
+// the original mechanics until each display-name/effect pairing is reviewed.
 #define NATURE_AUSTERE          NATURE_FINICKY
 #define NATURE_CALLOW           NATURE_AFFECTIONATE
 #define NATURE_COMPULSIVE       NATURE_ECLECTIC
@@ -178,8 +183,14 @@ enum __attribute__((packed)) Type
 #define NATURE_TEMPESTUOUS      NATURE_AMBIENT
 #define NATURE_DEPENDENT        NATURE_IMPRESSIONABLE
 
-#define NUM_PERSONALITY_NATURES 100
-#define NUM_NATURES     103
+// Nature domains. Keep these separate: confusing the number of public,
+// secret, and representable natures can leak secret/reserved IDs into random
+// acquisition or make personality arithmetic use the wrong modulus.
+#define NUM_PUBLIC_NATURES      100 // IDs 0-99: personality/random/mint pool
+#define NUM_SECRET_NATURES      3   // IDs 100-102: evolution-only
+#define NUM_DEFINED_NATURES     103 // public + secret effects currently designed
+#define NUM_NATURES             128 // complete seven-bit definition/storage space
+#define NUM_PERSONALITY_NATURES NUM_PUBLIC_NATURES
 
 #define NATURE_RANDOM            NUM_NATURES
 #define NATURE_MAY_SYNCHRONIZE   NUM_NATURES + 1

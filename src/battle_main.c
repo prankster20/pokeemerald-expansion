@@ -1816,15 +1816,10 @@ static u32 GeneratePartyHash(const struct Trainer *trainer, u32 i)
 
 void ModifyPersonalityForNature(u32 *personality, u32 newNature)
 {
-    u32 nature = GetNatureFromPersonality(*personality);
-    s32 diff = abs((s32)nature - (s32)newNature);
-    s32 sign = (nature > newNature) ? 1 : -1;
-    if (diff > NUM_NATURES / 2)
-    {
-        diff = NUM_NATURES - diff;
-        sign *= -1;
-    }
-    *personality -= (diff * sign);
+    // Nature occupies bits 8-14 of the personality. Preserve the low byte so
+    // forcing a Nature does not unexpectedly alter gender or ability slot.
+    *personality &= ~(0x7F << 8);
+    *personality |= newNature << 8;
 }
 
 u32 GeneratePersonalityForGender(u32 gender, enum Species species)

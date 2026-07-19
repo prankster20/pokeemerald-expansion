@@ -14,7 +14,7 @@ TEST("Nature independent from Hidden Nature")
 {
     u32 i, j, nature = 0, hiddenNature = 0;
     struct Pokemon mon;
-    for (i = 0; i < NUM_NATURES; i++)
+    for (i = 0; i < NUM_PERSONALITY_NATURES; i++)
     {
         for (j = 0; j < NUM_NATURES; j++)
         {

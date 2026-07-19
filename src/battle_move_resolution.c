@@ -3054,7 +3054,7 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
                 // --- Custom Archetype nature: Superstitious ---
                 // Track successful consecutive uses and defer its warning
                 // message until this battler's end-turn event block.
-                if (HasNature(cv->battlerAtk, NATURE_SUPERSTITIOUS))
+        if (HasNature(cv->battlerAtk, NATURE_SUPERSTITIOUS))
                 {
                     struct BattlerState *state = &gBattleStruct->battlerState[cv->battlerAtk];
                     state->superstitiousUsedMoveThisTurn = TRUE;
@@ -3083,7 +3083,7 @@ static enum MoveEndResult MoveEndUpdateLastMoves(struct BattleCalcValues *cv)
         {
             gLastResultingMoves[cv->battlerAtk] = MOVE_UNAVAILABLE;
             gLastUsedMoveType[cv->battlerAtk] = 0;
-            if (HasNature(cv->battlerAtk, NATURE_SUPERSTITIOUS))
+        if (HasNature(cv->battlerAtk, NATURE_SUPERSTITIOUS))
             {
                 gBattleStruct->battlerState[cv->battlerAtk].superstitiousMove = MOVE_NONE;
                 gBattleStruct->battlerState[cv->battlerAtk].superstitiousCount = 0;

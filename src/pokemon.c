@@ -530,6 +530,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Ignores all effects of Weather and Terrain, whether beneficial or harmful."),
+        .semanticGroups = NATURE_GROUP_WEATHER_TERRAIN,
     },
     [NATURE_ARROGANT] =
     {
@@ -777,6 +778,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Can act even while asleep. Does not block other status conditions, however. -10% Speed."),
+        .semanticGroups = NATURE_GROUP_SLEEP_ACTION,
     },
     [NATURE_ECCENTRIC] =
     {
@@ -1089,6 +1091,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Always acts last in a turn, but its moves always hit."),
+        .semanticGroups = NATURE_GROUP_TURN_ORDER_ACCURACY,
     },
     [NATURE_PUGNACIOUS] =
     {
@@ -1154,6 +1157,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Boosts move damage and secondary effect chances by a flat 10%, but consumes 2 PP."),
+        .semanticGroups = NATURE_GROUP_MOVE_EFFECT_CHANCE,
     },
     [NATURE_LEVEL_HEADED] =
     {
@@ -1297,6 +1301,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("If knocked out before using its move, it completes the move and then faints."),
+        .semanticGroups = NATURE_GROUP_DELAYED_FAINTING,
     },
     [NATURE_STUBBORN] =
     {
@@ -1323,6 +1328,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Extends timed field effects by 1 turn."),
+        .semanticGroups = NATURE_GROUP_TIMED_FIELD_EFFECTS,
     },
     [NATURE_TERRITORIAL] =
     {
@@ -1362,6 +1368,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Unaffected by recoil, crash damage or entry hazards."),
+        .semanticGroups = NATURE_GROUP_RECOIL_CRASH_HAZARDS,
     },
     [NATURE_VAIN] =
     {
@@ -1492,6 +1499,18 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Ignores critical hits made at the base critical-hit rate. Cannot be minted into."),
+    },
+    [NATURE_RESERVED_START ... NATURE_RESERVED_END] =
+    {
+        .name = COMPOUND_STRING("Reserved"),
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
+        .backAnim = 0,
+        .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
+        .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
+        .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
+        .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
+        .description = COMPOUND_STRING("Reserved for a future Nature."),
     },
 };
 
@@ -1768,7 +1787,7 @@ static const u32 sCompressedStatuses[] =
 UNUSED static const struct BoxPokemon sBoxPokemonConstantsFit =
 {
     .language = NUM_LANGUAGES - 1,
-    .hiddenNatureModifier = 12,
+    .hiddenNatureModifier = NATURE_RESERVED_END,
     .compressedStatus = ARRAY_COUNT(sCompressedStatuses) - 1,
     .secure.substructs[0].type0 = {
         .species = NUM_SPECIES - 1,
@@ -2007,6 +2026,13 @@ void CreateBoxMon(struct BoxPokemon *boxMon, enum Species species, u8 level, u32
     u16 checksum;
     bool32 isShiny;
 
+    // Personality-derived Natures use a future-proof 128-value basis. Secret
+    // and reserved IDs are not naturally obtainable, so reroll them now.
+    // Nature uses bits 8-14 rather than the low seven bits because the low
+    // byte also determines gender.
+    while (!IsNatureNaturallyGenerated(GetNatureFromPersonality(personality)))
+        personality = Random32();
+
     ZeroBoxMonData(boxMon);
     // Determine original trainer ID
     if (trainerId.method == OT_ID_RANDOM_NO_SHINY)
@@ -2112,7 +2138,8 @@ u32 GetMonPersonality(enum Species species, u8 gender, u8 nature, u8 unownLetter
         personality = Random32();
         actualLetter = GET_UNOWN_LETTER(personality);
     }
-    while ((nature != GetNatureFromPersonality(personality) && nature != NATURE_RANDOM)
+    while (!IsNatureNaturallyGenerated(GetNatureFromPersonality(personality))
+            || (nature != GetNatureFromPersonality(personality) && nature != NATURE_RANDOM)
             || (gender != MON_GENDER_RANDOM && gender != GetGenderFromSpeciesAndPersonality(species, personality))
             || ((actualLetter != unownLetter - 1) && unownLetter > 0));
     return personality;
@@ -2750,7 +2777,7 @@ u16 GiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move)
             u32 pp = GetMovePP(move);
             // --- Custom Archetype natures: Serious & Methodical ---
             u32 nature = GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE);
-            if (nature == NATURE_SERIOUS || (nature == NATURE_METHODICAL && i == 3))
+            if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && i == 3))
                 pp += 1;
             SetBoxMonData(boxMon, MON_DATA_MOVE1 + i, &move);
             SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp);
@@ -2790,7 +2817,7 @@ void SetBoxMonMoveSlot(struct BoxPokemon *mon, enum Move move, u8 slot)
     u32 pp = GetMovePP(move);
     // --- Custom Archetype natures: Serious & Methodical ---
     u32 nature = GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE);
-    if (nature == NATURE_SERIOUS || (nature == NATURE_METHODICAL && slot == 3))
+    if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && slot == 3))
         pp += 1;
     SetBoxMonData(mon, MON_DATA_PP1 + slot, &pp);
 }
@@ -3150,7 +3177,7 @@ static u32 RollMercurialNature(u32 currentNature)
     {
         nature = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
     } while (nature == currentNature
-          || nature == NATURE_MERCURIAL
+          || nature == NATURE_CAPRICIOUS
           || nature == NATURE_CALLOW
           || nature == NATURE_INNOCENT
           || IsNatureExcludedFromRandomAcquisition(nature));
@@ -3160,15 +3187,42 @@ static u32 RollMercurialNature(u32 currentNature)
 
 bool32 IsNatureExcludedFromRandomAcquisition(u32 nature)
 {
-    switch (nature)
-    {
-    case NATURE_CYNICAL:
-    case NATURE_REALISTIC:
-    case NATURE_IDEALISTIC:
-        return TRUE;
-    default:
-        return FALSE;
-    }
+    return !IsNatureNaturallyGenerated(nature);
+}
+
+bool32 IsNatureDefined(u32 nature)
+{
+    return nature < NUM_DEFINED_NATURES;
+}
+
+bool32 IsNaturePublic(u32 nature)
+{
+    return nature < NUM_PUBLIC_NATURES;
+}
+
+bool32 IsNatureSecret(u32 nature)
+{
+    return nature >= NATURE_CYNICAL && nature <= NATURE_IDEALISTIC;
+}
+
+bool32 IsNatureReserved(u32 nature)
+{
+    return nature >= NATURE_RESERVED_START && nature <= NATURE_RESERVED_END;
+}
+
+bool32 IsNatureNaturallyGenerated(u32 nature)
+{
+    return IsNaturePublic(nature);
+}
+
+bool32 IsNatureMintable(u32 nature)
+{
+    return IsNaturePublic(nature);
+}
+
+bool32 NatureHasSemanticGroup(u32 nature, enum NatureSemanticGroup group)
+{
+    return nature < NUM_NATURES && (gNaturesInfo[nature].semanticGroups & group) != 0;
 }
 
 u32 GetInnocentEvolutionNatureFromFriendship(u32 friendship)
@@ -3192,7 +3246,7 @@ void ApplyInnocentFriendshipRule(struct Pokemon *mon)
 u32 ApplyMintedNature(struct Pokemon *mon, u32 nature)
 {
     u32 oldNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
-    bool32 fromMercurial = nature == NATURE_MERCURIAL;
+    bool32 fromMercurial = nature == NATURE_CAPRICIOUS;
     u32 activeNature = fromMercurial ? RollMercurialNature(oldNature) : nature;
 
     SetMonData(mon, MON_DATA_MERCURIAL_NATURE, &fromMercurial);
@@ -4972,7 +5026,7 @@ u8 CalculatePPWithBonusForMon(struct Pokemon *mon, enum Move move, u8 ppBonuses,
     u8 maxPP = CalculatePPWithBonus(move, ppBonuses, moveIndex);
     u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
 
-    if (nature == NATURE_SERIOUS || (nature == NATURE_METHODICAL && moveIndex == 3))
+    if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && moveIndex == 3))
         maxPP += 1;
     return maxPP;
 }
@@ -4984,8 +5038,8 @@ void AdjustPPForSeriousNatureChange(struct Pokemon *mon, u32 oldNature, u32 newN
 {
     for (u32 i = 0; i < MAX_MON_MOVES; i++)
     {
-        bool32 oldBonus = (oldNature == NATURE_SERIOUS || (oldNature == NATURE_METHODICAL && i == 3));
-        bool32 newBonus = (newNature == NATURE_SERIOUS || (newNature == NATURE_METHODICAL && i == 3));
+        bool32 oldBonus = (oldNature == NATURE_SERIOUS || (oldNature == NATURE_TACTICAL && i == 3));
+        bool32 newBonus = (newNature == NATURE_SERIOUS || (newNature == NATURE_TACTICAL && i == 3));
         u32 currentPP = GetMonData(mon, MON_DATA_PP1 + i);
 
         if (currentPP == 0 || oldBonus == newBonus)
@@ -6048,12 +6102,12 @@ u8 *UseStatIncreaseItem(enum Item itemId)
 
 u8 GetNature(struct Pokemon *mon)
 {
-    return GetMonData(mon, MON_DATA_PERSONALITY, 0) % NUM_PERSONALITY_NATURES;
+    return GetNatureFromPersonality(GetMonData(mon, MON_DATA_PERSONALITY, 0));
 }
 
 u8 GetNatureFromPersonality(u32 personality)
 {
-    return personality % NUM_PERSONALITY_NATURES;
+    return (personality >> 8) % NUM_NATURES;
 }
 
 enum Species GetGMaxTargetSpecies(enum Species species)
@@ -6874,7 +6928,10 @@ u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality
     // Each non-HP stat gets its own personality-derived boost from 1-5%.
     if (nature == NATURE_QUIRKY)
     {
-        s32 boostPercent = 1 + ((personality >> ((statIndex - 1) * 3)) % 5);
+        // Isolate this stat's three-bit personality slice before mapping it
+        // to 1-5%. Without the mask, higher slices bleed into lower stats.
+        u32 personalitySlice = (personality >> ((statIndex - 1) * 3)) & 0x7;
+        s32 boostPercent = 1 + (personalitySlice % 5);
         return stat * (100 + boostPercent) / 100;
     }
 
@@ -7584,7 +7641,7 @@ void BoxMonRestorePP(struct BoxPokemon *boxMon)
             u16 bonus = GetBoxMonData(boxMon, MON_DATA_PP_BONUSES, 0);
             u8 pp = CalculatePPWithBonus(move, bonus, i);
             // --- Custom Archetype natures: Serious & Methodical ---
-            if (nature == NATURE_SERIOUS || (nature == NATURE_METHODICAL && i == 3))
+            if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && i == 3))
                 pp += 1;
             SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp);
         }

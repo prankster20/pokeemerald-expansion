@@ -259,7 +259,7 @@ struct BoxPokemon
     u32 personality;
     u32 otId;
     u8 nickname[min(10, POKEMON_NAME_LENGTH)];
-    u8 hiddenNatureModifier:7; // 127 natures (100 used by the custom Archetype system). Widened from 5 bits.
+    u8 hiddenNatureModifier:7; // 128 representable values (100 public Natures). Widened from 5 bits.
     u8 isBadEgg:1;
     // ^ byte boundary: 7+1 = 8/8 bits, no spillover.
     u8 language:3;
@@ -610,6 +610,20 @@ struct NatureInfo
     u8 battlePalaceSmokescreen;
     const u8 *natureGirlMessage;
     const u8 *description;
+    u32 semanticGroups;
+};
+
+// Broad integration surfaces used to audit Nature interactions. A Nature may
+// belong to multiple groups; these do not replace its specific implementation.
+enum NatureSemanticGroup
+{
+    NATURE_GROUP_WEATHER_TERRAIN = 1 << 0,
+    NATURE_GROUP_TIMED_FIELD_EFFECTS = 1 << 1,
+    NATURE_GROUP_DELAYED_FAINTING = 1 << 2,
+    NATURE_GROUP_RECOIL_CRASH_HAZARDS = 1 << 3,
+    NATURE_GROUP_MOVE_EFFECT_CHANCE = 1 << 4,
+    NATURE_GROUP_TURN_ORDER_ACCURACY = 1 << 5,
+    NATURE_GROUP_SLEEP_ACTION = 1 << 6,
 };
 
 struct LevelUpMove
@@ -790,6 +804,13 @@ void TryFastidiousCleanPartyStatusAfterBattle(void);
 u32 ApplyMintedNature(struct Pokemon *mon, u32 nature);
 void ApplyInnocentFriendshipRule(struct Pokemon *mon);
 bool32 IsNatureExcludedFromRandomAcquisition(u32 nature);
+bool32 IsNatureDefined(u32 nature);
+bool32 IsNaturePublic(u32 nature);
+bool32 IsNatureSecret(u32 nature);
+bool32 IsNatureReserved(u32 nature);
+bool32 IsNatureNaturallyGenerated(u32 nature);
+bool32 IsNatureMintable(u32 nature);
+bool32 NatureHasSemanticGroup(u32 nature, enum NatureSemanticGroup group);
 u32 GetInnocentEvolutionNatureFromFriendship(u32 friendship);
 bool32 RerollMercurialNature(struct Pokemon *mon);
 bool32 TrySwapEccentricPokeBall(struct Pokemon *mon);

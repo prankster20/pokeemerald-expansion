@@ -448,7 +448,7 @@ static bool32 HandleEndTurnFirstEventBlock(enum BattlerId battler)
             state->superstitiousCount = 0;
             state->superstitiousMessage = 0;
         }
-        else if (HasNature(battler, NATURE_SUPERSTITIOUS) && state->superstitiousMessage != 0)
+            else if (HasNature(battler, NATURE_SUPERSTITIOUS) && state->superstitiousMessage != 0)
         {
             gBattleScripting.battler = battler;
             if (state->superstitiousMessage == 1)
