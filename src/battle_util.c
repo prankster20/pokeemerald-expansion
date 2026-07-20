@@ -2318,7 +2318,7 @@ bool32 HadMoreThanThirdHpNowDoesnt(enum BattlerId battler)
 
 u32 GetGullibleVolatileDuration(enum BattlerId battler, u32 turns)
 {
-    return turns + HasNature(battler, NATURE_GULLIBLE);
+    return turns + HasNature(battler, NATURE_PERSUASIVE);
 }
 
 // pranks / jimh - Custom Archetype nature: Persuasive
@@ -6266,7 +6266,7 @@ static bool32 IsMethodicalMoveSlot(enum BattlerId battler, enum Move move, u32 s
 {
     u32 moveSlot;
 
-    if (!HasNature(battler, NATURE_METHODICAL))
+    if (!HasNature(battler, NATURE_TACTICAL))
         return FALSE;
 
     if (battler == gBattlerAttacker)
@@ -8639,7 +8639,7 @@ s32 GetAdjustedDamage(struct DamageContext *ctx, s32 damage)
     // affection-mechanics toggle and uses the existing affection message.
     else if (HasNature(ctx->battlerDef, NATURE_AFFECTIONATE)
           && gBattleMons[ctx->battlerDef].friendship == MAX_FRIENDSHIP
-          && rand < 20)
+          && RandomPercentage(RNG_NATURE_AFFECTIONATE, 20))
     {
         enduredHit = TRUE;
         if (ctx->updateFlags)

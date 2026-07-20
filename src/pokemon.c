@@ -1926,20 +1926,22 @@ void CreateMonWithIVs(struct Pokemon *mon, enum Species species, u8 level, u32 p
 
 bool32 ComputePlayerShinyOdds(u32 personality, u32 value)
 {
+    u32 shinyOdds = GetConfiguredShinyOdds();
+
     if (P_FLAG_FORCE_NO_SHINY != 0 && FlagGet(P_FLAG_FORCE_NO_SHINY))
         return FALSE;
-    
+
     if (P_FLAG_FORCE_SHINY != 0 && FlagGet(P_FLAG_FORCE_SHINY))
         return TRUE;
-    
+
     if (P_ONLY_OBTAINABLE_SHINIES && (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE || (FlagGet(WE_FLAG_NO_CATCHING))))
         return FALSE;
-    
+
     if (P_NO_SHINIES_WITHOUT_POKEBALLS && !HasAtLeastOnePokeBall())
         return FALSE;
 
     u32 totalRerolls = 0;
-    
+
     if (CheckBagHasItem(ITEM_SHINY_CHARM, 1))
         totalRerolls += I_SHINY_CHARM_ADDITIONAL_ROLLS;
 
@@ -1950,12 +1952,7 @@ bool32 ComputePlayerShinyOdds(u32 personality, u32 value)
     {
         u32 observantCount = CountPlayerPartyMonsWithNature(NATURE_OBSERVANT);
 
-        if (observantCount != 0)
-        {
-            totalRerolls += 1;
-            if ((Random() % 5) < observantCount - 1)
-                totalRerolls += 1;
-        }
+        totalRerolls += GetObservantRerolls(observantCount, Random());
     }
 
     totalRerolls += CalculateChainFishingShinyRolls();
@@ -1963,13 +1960,37 @@ bool32 ComputePlayerShinyOdds(u32 personality, u32 value)
     if (gDexNavSpecies)
         totalRerolls += CalculateDexNavShinyRolls();
 
-    while (GET_SHINY_VALUE(value, personality) >= SHINY_ODDS && totalRerolls > 0)
+    while (GET_SHINY_VALUE(value, personality) >= shinyOdds && totalRerolls > 0)
     {
         personality = Random32();
         totalRerolls--;
     }
 
-    return GET_SHINY_VALUE(value, personality) < SHINY_ODDS;
+    return GET_SHINY_VALUE(value, personality) < shinyOdds;
+}
+
+u32 GetConfiguredShinyOdds(void)
+{
+    // The stored option is the log2 increase over the base 1/4096 rate:
+    // 0, 1, 2, 3 correspond to 1/4096, 1/1024, 1/256, and 1/64.
+    return 16 << (gSaveBlock2Ptr->optionsShinyOdds * 2);
+}
+
+u32 GetObservantRerolls(u32 observantCount, u32 roll)
+{
+    if (observantCount == 0)
+        return 0;
+
+    // One Observant guarantees one reroll (2x total rolls). Each additional
+    // Observant adds 0.4 expected rerolls, reaching three rerolls / four total
+    // rolls with a full team of six.
+    u32 scaledBonusFifths = (min(observantCount, PARTY_SIZE) - 1) * 2;
+    u32 rerolls = 1 + scaledBonusFifths / 5;
+
+    if ((roll % 5) < scaledBonusFifths % 5)
+        rerolls++;
+
+    return rerolls;
 }
 
 void SetBoxMonIVs(struct BoxPokemon *mon, u8 fixedIV)
@@ -2043,12 +2064,12 @@ void CreateBoxMon(struct BoxPokemon *boxMon, enum Species species, u8 level, u32
     else if (trainerId.method == OT_ID_PRESET)
     {
         value = trainerId.value;
-        isShiny = GET_SHINY_VALUE(value, personality) < SHINY_ODDS;
+        isShiny = GET_SHINY_VALUE(value, personality) < GetConfiguredShinyOdds();
     }
     else // Player is the OT
     {
         value = READ_OTID_FROM_SAVE;
-        isShiny = ComputePlayerShinyOdds(personality, value);    
+        isShiny = ComputePlayerShinyOdds(personality, value);
     }
 
     SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
@@ -7738,12 +7759,7 @@ void SetWildMonHeldItem(void)
 
             u32 observantRerolls = 0;
 
-            if (observantCount != 0)
-            {
-                observantRerolls = 1;
-                if ((Random() % 5) < observantCount - 1)
-                    observantRerolls++;
-            }
+            observantRerolls = GetObservantRerolls(observantCount, Random());
 
             rnd = Random() % 100;
             while (rnd < chanceNoItem && observantRerolls != 0)

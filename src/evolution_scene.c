@@ -610,8 +610,8 @@ static void CreateShedinja(enum Species preEvoSpecies, enum Species postEvoSpeci
 // Add more entries here as needed - this array is the single place to edit.
 static const u8 sCallowBlacklistedNatures[] =
 {
-        NATURE_AUSTERE,
-        NATURE_COMPULSIVE,
+        NATURE_FINICKY,
+        NATURE_ECLECTIC,
     NATURE_IMPRESSIONABLE,
 };
 

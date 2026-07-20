@@ -33,3 +33,29 @@ SINGLE_BATTLE_TEST("pranks Ambient extends newly-created terrain by one turn")
         EXPECT_EQ(gFieldTimers.terrainTimer, 5);
     }
 }
+
+SINGLE_BATTLE_TEST("pranks Ambient extends newly-created Trick Room by one turn")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_TRICK_ROOM); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        SetTestNature(&PLAYER_PARTY[0], NATURE_AMBIENT);
+    } WHEN {
+        TURN { MOVE(player, MOVE_TRICK_ROOM); }
+    } THEN {
+        EXPECT_EQ(gFieldTimers.trickRoomTimer, 5);
+    }
+}
+
+SINGLE_BATTLE_TEST("pranks Ambient extends newly-created Reflect by one turn")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_REFLECT); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        SetTestNature(&PLAYER_PARTY[0], NATURE_AMBIENT);
+    } WHEN {
+        TURN { MOVE(player, MOVE_REFLECT); }
+    } THEN {
+        EXPECT_EQ(gSideTimers[B_SIDE_PLAYER].reflectTimer, 5);
+    }
+}

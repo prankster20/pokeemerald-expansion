@@ -204,6 +204,11 @@ enum Gender
 #define OPTIONS_ANNOUNCE_NATURES_NO 0
 #define OPTIONS_ANNOUNCE_NATURES_YES 1
 
+#define OPTIONS_SHINY_ODDS_4096 0
+#define OPTIONS_SHINY_ODDS_1024 1
+#define OPTIONS_SHINY_ODDS_256  2
+#define OPTIONS_SHINY_ODDS_64   3
+
 enum __attribute__((packed)) Direction
 {
     DIR_NONE,

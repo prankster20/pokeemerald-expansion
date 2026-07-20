@@ -105,6 +105,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsBattleStyle = OPTIONS_BATTLE_STYLE_SET;
     gSaveBlock2Ptr->optionsBattleSceneOff = FALSE;
     gSaveBlock2Ptr->optionsAnnounceNatures = OPTIONS_ANNOUNCE_NATURES_YES;
+    gSaveBlock2Ptr->optionsShinyOdds = OPTIONS_SHINY_ODDS_4096;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
 }
 

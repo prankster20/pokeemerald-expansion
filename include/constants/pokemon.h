@@ -163,25 +163,13 @@ enum __attribute__((packed)) Type
 #define NATURE_RESERVED_START   103
 #define NATURE_RESERVED_END     127
 
-// Legacy effect-pointer names. These deliberately preserve the identity of
-// the original mechanics until each display-name/effect pairing is reviewed.
-#define NATURE_AUSTERE          NATURE_FINICKY
+// Separate legacy mechanics that currently share a numeric slot with a
+// displayed Nature. Keep these identifiers distinct until one side is given
+// its own NatureInfo slot.
 #define NATURE_CALLOW           NATURE_AFFECTIONATE
-#define NATURE_COMPULSIVE       NATURE_ECLECTIC
-#define NATURE_DRAMATIC         NATURE_NOSTALGIC
-#define NATURE_GULLIBLE         NATURE_PERSUASIVE
-#define NATURE_INSIGHTFUL       NATURE_PACK_RAT
-#define NATURE_MERCURIAL        NATURE_CAPRICIOUS
-#define NATURE_METHODICAL       NATURE_TACTICAL
 #define NATURE_PHOBIC           NATURE_PUGNACIOUS
-#define NATURE_PRETENTIOUS      NATURE_SUPPORTIVE
 #define NATURE_SUPERSTITIOUS    NATURE_ANXIOUS
-#define NATURE_RUSTIC           NATURE_RESOURCEFUL
-#define NATURE_SHREWD           NATURE_REBELLIOUS
 #define NATURE_TONGUE_TIED      NATURE_DIPLOMATIC
-#define NATURE_RESILIENT        NATURE_LEVEL_HEADED
-#define NATURE_TEMPESTUOUS      NATURE_AMBIENT
-#define NATURE_DEPENDENT        NATURE_IMPRESSIONABLE
 
 // Nature domains. Keep these separate: confusing the number of public,
 // secret, and representable natures can leak secret/reserved IDs into random

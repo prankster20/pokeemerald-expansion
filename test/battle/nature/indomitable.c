@@ -10,13 +10,13 @@ SINGLE_BATTLE_TEST("pranks Indomitable completes its selected move before fainti
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Speed(100); Attack(999); Moves(MOVE_TACKLE); }
-        OPPONENT(SPECIES_WOBBUFFET) { Speed(1); HP(1); Moves(MOVE_RECOVER); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(1); HP(1); Moves(MOVE_CELEBRATE); }
         SetTestNature(&OPPONENT_PARTY[0], NATURE_INDOMITABLE);
     } WHEN {
-        TURN { MOVE(player, MOVE_TACKLE); MOVE(opponent, MOVE_RECOVER); }
+        TURN { MOVE(player, MOVE_TACKLE); MOVE(opponent, MOVE_CELEBRATE); }
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_TACKLE, player);
-        ANIMATION(ANIM_TYPE_MOVE, MOVE_RECOVER, opponent);
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_CELEBRATE, opponent);
         MESSAGE("The opposing Wobbuffet fainted!");
     }
 }

@@ -6045,7 +6045,7 @@ void ItemUseCB_UniversalMint(u8 taskId, TaskFunc task)
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
     u32 currentNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
     u32 displayedCurrentNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE)
-                               ? NATURE_MERCURIAL
+                               ? NATURE_CAPRICIOUS
                                : currentNature;
 
     sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
@@ -6105,7 +6105,7 @@ void ItemUseCB_SplitMint(u8 taskId, TaskFunc task)
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
     u32 currentNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
     u32 displayedCurrentNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE)
-                               ? NATURE_MERCURIAL
+                               ? NATURE_CAPRICIOUS
                                : currentNature;
     u32 firstNature;
     u32 secondNature;

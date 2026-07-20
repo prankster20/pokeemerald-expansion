@@ -256,6 +256,7 @@ enum RandomTag
     RNG_NATURE_CALLOUS,
     RNG_NATURE_FLIRTY,
     RNG_NATURE_ECCENTRIC,
+    RNG_NATURE_AFFECTIONATE,
 };
 
 #define RandomWeighted(tag, ...) \

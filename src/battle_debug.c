@@ -3,6 +3,7 @@
 #include "battle_anim.h"
 #include "battle_controllers.h"
 #include "battle_message.h"
+#include "battle_main.h"
 #include "main.h"
 #include "menu.h"
 #include "menu_helpers.h"
@@ -97,6 +98,7 @@ enum
 {
     LIST_ITEM_MOVES,
     LIST_ITEM_ABILITY,
+    LIST_ITEM_NATURE,
     LIST_ITEM_HELD_ITEM,
     LIST_ITEM_PP,
     LIST_ITEM_TYPES,
@@ -226,6 +228,7 @@ enum
     VAR_U16_4_ENTRIES,
     VAL_S8,
     VAL_ALL_STAT_STAGES,
+    VAL_NATURE,
 };
 
 // Static Declarations
@@ -233,6 +236,7 @@ static const u8 *GetHoldEffectName(enum HoldEffect holdEffect);
 
 // const rom data
 static const u8 sText_Ability[] = _("Ability");
+static const u8 sText_Nature[] = _("Nature");
 static const u8 sText_HeldItem[] = _("Held Item");
 static const u8 sText_HoldEffect[] = _("Hold Effect");
 static const u8 sText_EmptyString[] = _("");
@@ -313,6 +317,7 @@ static const struct ListMenuItem sMainListItems[] =
 {
     {COMPOUND_STRING("Moves"),        LIST_ITEM_MOVES},
     {sText_Ability,                   LIST_ITEM_ABILITY},
+    {sText_Nature,                    LIST_ITEM_NATURE},
     {sText_HeldItem,                  LIST_ITEM_HELD_ITEM},
     {COMPOUND_STRING("PP"),           LIST_ITEM_PP},
     {COMPOUND_STRING("Types"),        LIST_ITEM_TYPES},
@@ -590,6 +595,7 @@ static const bool8 sHasChangeableEntries[LIST_ITEM_COUNT] =
     [LIST_ITEM_AI_MOVES_PTS] = TRUE,
     [LIST_ITEM_PP] = TRUE,
     [LIST_ITEM_ABILITY] = TRUE,
+    [LIST_ITEM_NATURE] = TRUE,
     [LIST_ITEM_TYPES] = TRUE,
     [LIST_ITEM_HELD_ITEM] = TRUE,
     [LIST_ITEM_STAT_STAGES] = TRUE,
@@ -1357,6 +1363,7 @@ static void CreateSecondaryListMenu(struct BattleDebugMenu *data)
     switch (data->currentMainListItemId)
     {
     case LIST_ITEM_ABILITY:
+    case LIST_ITEM_NATURE:
         itemsCount = 1;
         break;
     case LIST_ITEM_HELD_ITEM:
@@ -1487,6 +1494,11 @@ static void PrintSecondaryEntries(struct BattleDebugMenu *data)
         printer.currentY = printer.y = sSecondaryListTemplate.upText_Y;
         AddTextPrinter(&printer, 0, NULL);
         break;
+    case LIST_ITEM_NATURE:
+        PadString(gNaturesInfo[GetNatureFromPersonality(gBattleMons[data->battlerId].personality)].name, text);
+        printer.currentY = printer.y = sSecondaryListTemplate.upText_Y;
+        AddTextPrinter(&printer, 0, NULL);
+        break;
     case LIST_ITEM_HELD_ITEM:
         PadString(GetItemName(gBattleMons[data->battlerId].item), text);
         printer.currentY = printer.y = sSecondaryListTemplate.upText_Y;
@@ -1595,6 +1607,9 @@ static void UpdateBattlerValue(struct BattleDebugMenu *data)
         break;
     case VAL_U32:
         *(u32 *)(data->modifyArrows.modifiedValPtr) = data->modifyArrows.currValue;
+        break;
+    case VAL_NATURE:
+        ModifyPersonalityForNature(data->modifyArrows.modifiedValPtr, data->modifyArrows.currValue);
         break;
     case VAL_BITFIELD_32:
         *(u32 *)(data->modifyArrows.modifiedValPtr) &= ~(GetBitfieldToAndValue(data->bitfield[data->currentSecondaryListItemId].currBit, data->bitfield[data->currentSecondaryListItemId].bitsCount));
@@ -1887,6 +1902,14 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
         data->modifyArrows.typeOfVal = VAL_U16;
         data->modifyArrows.currValue = gBattleMons[data->battlerId].ability;
         break;
+    case LIST_ITEM_NATURE:
+        data->modifyArrows.minValue = 0;
+        data->modifyArrows.maxValue = NUM_NATURES - 1;
+        data->modifyArrows.maxDigits = 3;
+        data->modifyArrows.modifiedValPtr = &gBattleMons[data->battlerId].personality;
+        data->modifyArrows.typeOfVal = VAL_NATURE;
+        data->modifyArrows.currValue = GetNatureFromPersonality(gBattleMons[data->battlerId].personality);
+        break;
     case LIST_ITEM_MOVES:
         data->modifyArrows.minValue = 0;
         data->modifyArrows.maxValue = MOVES_COUNT - 1;
@@ -2152,6 +2175,7 @@ static void UpdateMonData(struct BattleDebugMenu *data)
             SetMonData(mon, MON_DATA_STATUS, &battleMon->status1);
             SetMonData(mon, MON_DATA_HP, &battleMon->hp);
             SetMonData(mon, MON_DATA_MAX_HP, &battleMon->maxHP);
+            SetMonData(mon, MON_DATA_PERSONALITY, &battleMon->personality);
             for (j = 0; j < 4; j++)
                 SetMonData(mon, MON_DATA_MOVE1 + j, &battleMon->moves[j]);
         }

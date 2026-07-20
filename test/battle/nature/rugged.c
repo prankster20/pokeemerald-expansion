@@ -56,3 +56,36 @@ SINGLE_BATTLE_TEST("pranks Rugged does not ignore passive Sandstorm damage")
         EXPECT_LT(player->hp, 160);
     }
 }
+
+SINGLE_BATTLE_TEST("pranks Rugged ignores move recoil")
+{
+    GIVEN {
+        ASSUME(GetMoveRecoil(MOVE_DOUBLE_EDGE) == 33);
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_DOUBLE_EDGE); MaxHP(200); HP(200); }
+        OPPONENT(SPECIES_WOBBUFFET) { MaxHP(999); HP(999); }
+        SetTestNature(&PLAYER_PARTY[0], NATURE_RUGGED);
+    } WHEN {
+        TURN { MOVE(player, MOVE_DOUBLE_EDGE); }
+    } SCENE {
+        HP_BAR(opponent);
+        NOT HP_BAR(player);
+    } THEN {
+        EXPECT_EQ(player->hp, 200);
+    }
+}
+
+SINGLE_BATTLE_TEST("pranks Rugged ignores crash damage")
+{
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_JUMP_KICK) == EFFECT_RECOIL_IF_MISS);
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_JUMP_KICK); MaxHP(200); HP(200); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        SetTestNature(&PLAYER_PARTY[0], NATURE_RUGGED);
+    } WHEN {
+        TURN { MOVE(player, MOVE_JUMP_KICK, hit: FALSE); }
+    } SCENE {
+        NOT HP_BAR(player);
+    } THEN {
+        EXPECT_EQ(player->hp, 200);
+    }
+}

@@ -1913,6 +1913,14 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
                 otId.value = HIHALF(personalityValue) ^ LOHALF(personalityValue);
             }
             CreateMon(&party[i], partyData[monIndex].species, partyData[monIndex].lvl, personalityValue, otId);
+            // Trainer data is explicit, not random acquisition. Reapply its
+            // personality after CreateMon so even secret Natures are honored
+            // instead of being rejected by the natural-generation reroll.
+            SetMonData(&party[i], MON_DATA_PERSONALITY, &personalityValue);
+            {
+                bool32 isShiny = partyData[monIndex].isShiny;
+                SetMonData(&party[i], MON_DATA_IS_SHINY, &isShiny);
+            }
             SetMonData(&party[i], MON_DATA_HELD_ITEM, &partyData[monIndex].heldItem);
 
             CustomTrainerPartyAssignMoves(&party[i], &partyData[monIndex]);
@@ -1956,11 +1964,6 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
             if (partyData[monIndex].nickname != NULL)
             {
                 SetMonData(&party[i], MON_DATA_NICKNAME, partyData[monIndex].nickname);
-            }
-            if (partyData[monIndex].isShiny)
-            {
-                bool32 data = TRUE;
-                SetMonData(&party[i], MON_DATA_IS_SHINY, &data);
             }
             if (partyData[monIndex].dynamaxLevel > 0)
             {

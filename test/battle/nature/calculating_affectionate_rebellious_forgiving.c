@@ -75,6 +75,22 @@ SINGLE_BATTLE_TEST("pranks Affectionate does not endure without max Friendship")
     }
 }
 
+SINGLE_BATTLE_TEST("pranks Affectionate has a 20 percent chance to endure at max Friendship")
+{
+    PASSES_RANDOMLY(20, 100, RNG_NATURE_AFFECTIONATE);
+    GIVEN {
+        PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); MaxHP(100); HP(1); Friendship(MAX_FRIENDSHIP); }
+        OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_TACKLE); Attack(100); }
+        u32 nature = NATURE_AFFECTIONATE;
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); MOVE(opponent, MOVE_TACKLE); }
+    } SCENE {
+        HP_BAR(player, hp: 1);
+        NOT MESSAGE("Mienfoo fainted!");
+    }
+}
+
 // ===== REBELLIOUS =====
 // Ignores Encore, Taunt, Torment, Disable, Heal Block.
 
