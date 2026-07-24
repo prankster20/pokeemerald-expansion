@@ -2519,7 +2519,7 @@ bool32 TryFindHiddenPokemon(void)
             }
             else
             {
-                species = gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo->wildPokemon[ChooseWildMonIndex_Land()].species;
+                species = gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo->wildPokemon[ChooseWildMonIndex_Land(gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo->wildPokemon)].species;
                 environment = ENCOUNTER_TYPE_LAND;
             }
             break;
@@ -2537,7 +2537,7 @@ bool32 TryFindHiddenPokemon(void)
                 }
                 else
                 {
-                    species = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water()].species;
+                    species = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water(gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo->wildPokemon)].species;
                     environment = ENCOUNTER_TYPE_WATER;
 
                 }

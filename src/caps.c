@@ -32,7 +32,8 @@ u32 GetCurrentLevelCap(void)
     }
     else if (B_LEVEL_CAP_TYPE == LEVEL_CAP_VARIABLE)
     {
-        return VarGet(B_LEVEL_CAP_VARIABLE);
+        u32 levelCap = VarGet(B_LEVEL_CAP_VARIABLE);
+        return levelCap == 0 ? MAX_LEVEL : levelCap;
     }
 
     return MAX_LEVEL;
@@ -64,7 +65,7 @@ u32 GetSoftLevelCapExpValue(u32 level, u32 expValue)
             return expValue;
         }
     }
-    else if (B_EXP_CAP_TYPE == EXP_CAP_HARD)
+    else if (gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD)
     {
         return 0;
     }

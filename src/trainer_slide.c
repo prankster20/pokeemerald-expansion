@@ -60,6 +60,11 @@ static const u8* const sTrainerSlides[DIFFICULTY_COUNT][TRAINER_PARTNER(PARTNER_
 {
     [DIFFICULTY_NORMAL] =
     {
+        [TRAINER_ROXANNE_1] =
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Welcome! Let's begin today's\npractical lesson!{PAUSE_UNTIL_PRESS}"),
+            [TRAINER_SLIDE_LAST_SWITCHIN] = COMPOUND_STRING("One final test! Show me what\nyou've learned!{PAUSE_UNTIL_PRESS}"),
+        },
     },
 };
 

@@ -1391,6 +1391,8 @@ enum NationalDexOrder
     F(CERULEDGE) \
     F(WATTREL) \
     F(KILOWATTREL) \
+    F(CAPSAKID) \
+    F(SCOVILLAIN) \
     F(FLITTLE) \
     F(ESPATHRA) \
     F(TINKATINK) \

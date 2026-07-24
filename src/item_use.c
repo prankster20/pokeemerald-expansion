@@ -20,6 +20,7 @@
 #include "field_screen_effect.h"
 #include "field_weather.h"
 #include "fishing.h"
+#include "fake_rtc.h"
 #include "fldeff.h"
 #include "follower_npc.h"
 #include "item.h"
@@ -36,6 +37,7 @@
 #include "party_menu.h"
 #include "pokeblock.h"
 #include "pokemon.h"
+#include "rtc.h"
 #include "script.h"
 #include "sound.h"
 #include "strings.h"
@@ -47,6 +49,7 @@
 #include "constants/event_objects.h"
 #include "constants/item_effects.h"
 #include "constants/items.h"
+#include "constants/rtc.h"
 #include "constants/songs.h"
 
 static void SetUpItemUseCallback(u8);
@@ -77,6 +80,8 @@ static void Task_StartUseLure(u8 taskId);
 static void Task_UseRepel(u8);
 static void Task_UseLure(u8 taskId);
 static void Task_CloseCantUseKeyItemMessage(u8);
+static void Task_CloseDaylightSaverMessage(u8);
+static void Task_ReloadMapAfterDaylightSaver(u8);
 static void SetDistanceOfClosestHiddenItem(u8, s16, s16);
 static void CB2_OpenPokeblockFromBag(void);
 static void ItemUseOnFieldCB_Honey(u8 taskId);
@@ -87,6 +92,8 @@ static const u8 sText_ItemFinderNearby[] = _("Huh?\nThe ITEMFINDER's responding!
 static const u8 sText_ItemFinderOnTop[] = _("Oh!\nThe ITEMFINDER's shaking wildly!{PAUSE_UNTIL_PRESS}");
 static const u8 sText_ItemFinderNothing[] = _("… … … …Nope!\nThere's no response.{PAUSE_UNTIL_PRESS}");
 static const u8 sText_CoinCase[] = _("Your COINS:\n{STR_VAR_1}{PAUSE_UNTIL_PRESS}");
+static const u8 sText_DaylightSaverDay[] = _("The DAYLIGHT SAVER turned!\pDaylight returned to HOENN!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_DaylightSaverNight[] = _("The DAYLIGHT SAVER turned!\pNight settled over HOENN!{PAUSE_UNTIL_PRESS}");
 static const u8 sText_PowderQty[] = _("POWDER QTY: {STR_VAR_1}{PAUSE_UNTIL_PRESS}");
 static const u8 sText_BootedUpTM[] = _("Booted up a TM.");
 static const u8 sText_BootedUpHM[] = _("Booted up an HM.");
@@ -218,6 +225,23 @@ static void Task_CloseCantUseKeyItemMessage(u8 taskId)
     DestroyTask(taskId);
     ScriptUnfreezeObjectEvents();
     UnlockPlayerFieldControls();
+}
+
+static void Task_CloseDaylightSaverMessage(u8 taskId)
+{
+    ClearDialogWindowAndFrame(0, TRUE);
+    FadeScreen(FADE_TO_BLACK, 0);
+    gTasks[taskId].func = Task_ReloadMapAfterDaylightSaver;
+}
+
+static void Task_ReloadMapAfterDaylightSaver(u8 taskId)
+{
+    if (!gPaletteFade.active)
+    {
+        CleanupOverworldWindowsAndTilemaps();
+        SetMainCallback2(CB2_LoadMap);
+        DestroyTask(taskId);
+    }
 }
 
 u8 CheckIfItemIsTMHMOrEvolutionStone(enum Item itemId)
@@ -770,6 +794,31 @@ void ItemUseOutOfBattle_CoinCase(u8 taskId)
     {
         DisplayItemMessageOnField(taskId, gStringVar4, Task_CloseCantUseKeyItemMessage);
     }
+}
+
+void ItemUseOutOfBattle_DaylightSaver(u8 taskId)
+{
+    const u8 *message;
+
+    RtcCalcLocalTime();
+    if (GetTimeOfDay() == TIME_NIGHT)
+    {
+        FakeRtc_ManuallySetTime(gLocalTime.days, DAY_HOUR_BEGIN + 3, 0, 0);
+        message = sText_DaylightSaverDay;
+    }
+    else
+    {
+        FakeRtc_ManuallySetTime(gLocalTime.days, NIGHT_HOUR_BEGIN + 3, 0, 0);
+        message = sText_DaylightSaverNight;
+    }
+
+    FlagSet(OW_FLAG_PAUSE_TIME);
+    UpdateTimeOfDay();
+
+    if (!gTasks[taskId].tUsingRegisteredKeyItem)
+        DisplayItemMessage(taskId, FONT_NORMAL, message, CloseItemMessage);
+    else
+        DisplayItemMessageOnField(taskId, message, Task_CloseDaylightSaverMessage);
 }
 
 void ItemUseOutOfBattle_PowderJar(u8 taskId)

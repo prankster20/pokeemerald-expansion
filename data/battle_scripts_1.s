@@ -5492,9 +5492,9 @@ BattleScript_TerritorialGuardsTerritoryRet::
 	return
 
 BattleScript_TerritorialSwitchOutDamage::
-	healthbarupdate BS_ATTACKER, PASSIVE_HP_UPDATE
-	datahpupdate BS_ATTACKER, PASSIVE_HP_UPDATE
-	tryfaintmon BS_ATTACKER
+	healthbarupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	datahpupdate BS_SCRIPTING, PASSIVE_HP_UPDATE
+	tryfaintmon BS_SCRIPTING
 	return
 
 BattleScript_VainHaughtyRet::

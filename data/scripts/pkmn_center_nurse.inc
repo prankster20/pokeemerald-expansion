@@ -65,7 +65,8 @@ EventScript_PkmnCenterNurse_ReturnPkmn::
 	waitmessage
 	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
 	waitmovement 0
-	message gText_WeHopeToSeeYouAgain
+	msgbox gText_WeHopeToSeeYouAgain, MSGBOX_DEFAULT
+	call EventScript_PkmnCenterNurse_TryAutosave
 	return
 
 EventScript_PkmnCenterNurse_ReturnPkmn2::
@@ -73,7 +74,8 @@ EventScript_PkmnCenterNurse_ReturnPkmn2::
 	waitmessage
 	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
 	waitmovement 0
-	message gText_WeHopeToSeeYouAgain2
+	msgbox gText_WeHopeToSeeYouAgain2, MSGBOX_DEFAULT
+	call EventScript_PkmnCenterNurse_TryAutosave
 	return
 
 EventScript_PkmnCenterNurse_PlayerWaitingInUnionRoom::
@@ -84,7 +86,15 @@ EventScript_PkmnCenterNurse_PlayerWaitingInUnionRoom::
 	waitmessage
 	applymovement VAR_0x800B, Movement_PkmnCenterNurse_Bow
 	waitmovement 0
-	message gText_WeHopeToSeeYouAgain
+	msgbox gText_WeHopeToSeeYouAgain, MSGBOX_DEFAULT
+	call EventScript_PkmnCenterNurse_TryAutosave
+	return
+
+EventScript_PkmnCenterNurse_TryAutosave::
+	specialvar VAR_RESULT, IsPCAutosaveEnabled
+	goto_if_eq VAR_RESULT, FALSE, EventScript_PkmnCenterNurse_SkipAutosave
+	forcesave
+EventScript_PkmnCenterNurse_SkipAutosave::
 	return
 
 EventScript_PkmnCenterNurse_CheckPokerus::

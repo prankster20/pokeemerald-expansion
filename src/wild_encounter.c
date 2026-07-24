@@ -174,12 +174,150 @@ static void FeebasSeedRng(u16 seed)
     sFeebasRngValue = seed;
 }
 
+static const u32 sLandEncounterSlotWeights[LAND_WILD_COUNT] =
+{
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_0,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_1 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_0,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_2 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_1,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_3 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_2,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_4 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_3,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_5 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_4,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_6 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_5,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_7 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_6,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_8 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_7,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_9 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_8,
+    ENCOUNTER_CHANCE_LAND_MONS_SLOT_10 - ENCOUNTER_CHANCE_LAND_MONS_SLOT_9,
+    ENCOUNTER_CHANCE_LAND_MONS_TOTAL - ENCOUNTER_CHANCE_LAND_MONS_SLOT_10,
+};
+
+static const u32 sWaterEncounterSlotWeights[WATER_WILD_COUNT] =
+{
+    ENCOUNTER_CHANCE_WATER_MONS_SLOT_0,
+    ENCOUNTER_CHANCE_WATER_MONS_SLOT_1 - ENCOUNTER_CHANCE_WATER_MONS_SLOT_0,
+    ENCOUNTER_CHANCE_WATER_MONS_SLOT_2 - ENCOUNTER_CHANCE_WATER_MONS_SLOT_1,
+    ENCOUNTER_CHANCE_WATER_MONS_SLOT_3 - ENCOUNTER_CHANCE_WATER_MONS_SLOT_2,
+    ENCOUNTER_CHANCE_WATER_MONS_TOTAL - ENCOUNTER_CHANCE_WATER_MONS_SLOT_3,
+};
+
+static const u32 sRockEncounterSlotWeights[ROCK_WILD_COUNT] =
+{
+    ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_0,
+    ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_1 - ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_0,
+    ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_2 - ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_1,
+    ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_3 - ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_2,
+    ENCOUNTER_CHANCE_ROCK_SMASH_MONS_TOTAL - ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_3,
+};
+
+static const u32 sSuperRodEncounterSlotWeights[FISH_WILD_COUNT - 2] =
+{
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_2,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_3 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_2,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_4 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_3,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_5 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_4,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_6 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_5,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_7 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_6,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_8 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_7,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_9 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_8,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_10 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_9,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_11 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_10,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_12 - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_11,
+    ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_TOTAL - ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_12,
+};
+
+static bool32 IsWorldlyLeadingParty(void)
+{
+    return GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SPECIES) != SPECIES_NONE
+        && !GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_IS_EGG)
+        && GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HIDDEN_NATURE) == NATURE_WORLDLY;
+}
+
+static u32 ChooseWorldlyWildMonIndex(const struct WildPokemon *wildPokemon, u32 firstSlot, u32 slotCount, const u32 *slotWeights)
+{
+    enum Species species[FISH_WILD_COUNT];
+    u32 normalWeights[FISH_WILD_COUNT] = {0};
+    u32 worldlyWeights[FISH_WILD_COUNT] = {0};
+    u32 speciesCount = 0;
+    u32 lowestWeight;
+    u32 highestWeight;
+    u32 totalWorldlyWeight = 0;
+    u32 chosenSpecies = 0;
+
+    for (u32 i = 0; i < slotCount; i++)
+    {
+        enum Species slotSpecies = wildPokemon[firstSlot + i].species;
+        u32 speciesIndex;
+
+        for (speciesIndex = 0; speciesIndex < speciesCount; speciesIndex++)
+        {
+            if (species[speciesIndex] == slotSpecies)
+                break;
+        }
+
+        if (speciesIndex == speciesCount)
+        {
+            species[speciesCount] = slotSpecies;
+            speciesCount++;
+        }
+
+        normalWeights[speciesIndex] += slotWeights[i];
+    }
+
+    lowestWeight = highestWeight = normalWeights[0];
+    for (u32 i = 1; i < speciesCount; i++)
+    {
+        lowestWeight = min(lowestWeight, normalWeights[i]);
+        highestWeight = max(highestWeight, normalWeights[i]);
+    }
+
+    for (u32 i = 0; i < speciesCount; i++)
+    {
+        worldlyWeights[i] = highestWeight + lowestWeight - normalWeights[i];
+        totalWorldlyWeight += worldlyWeights[i];
+    }
+
+    u32 rand = Random() % totalWorldlyWeight;
+    for (u32 i = 0; i < speciesCount; i++)
+    {
+        if (rand < worldlyWeights[i])
+        {
+            chosenSpecies = i;
+            break;
+        }
+        rand -= worldlyWeights[i];
+    }
+
+    rand = Random() % normalWeights[chosenSpecies];
+    for (u32 i = 0; i < slotCount; i++)
+    {
+        if (wildPokemon[firstSlot + i].species == species[chosenSpecies])
+        {
+            if (rand < slotWeights[i])
+                return firstSlot + i;
+            rand -= slotWeights[i];
+        }
+    }
+
+    return firstSlot;
+}
+
+#if TESTING
+u32 TestChooseWorldlyWildMonIndex(const struct WildPokemon *wildPokemon, u32 firstSlot, u32 slotCount, const u32 *slotWeights)
+{
+    return ChooseWorldlyWildMonIndex(wildPokemon, firstSlot, slotCount, slotWeights);
+}
+#endif
+
 // LAND_WILD_COUNT
-u32 ChooseWildMonIndex_Land(void)
+u32 ChooseWildMonIndex_Land(const struct WildPokemon *wildPokemon)
 {
     u8 wildMonIndex = 0;
     bool8 swap = FALSE;
-    u8 rand = Random() % ENCOUNTER_CHANCE_LAND_MONS_TOTAL;
+    u8 rand;
+
+    if (IsWorldlyLeadingParty())
+        return ChooseWorldlyWildMonIndex(wildPokemon, 0, LAND_WILD_COUNT, sLandEncounterSlotWeights);
+
+    rand = Random() % ENCOUNTER_CHANCE_LAND_MONS_TOTAL;
 
     if (rand < ENCOUNTER_CHANCE_LAND_MONS_SLOT_0)
         wildMonIndex = 0;
@@ -216,11 +354,16 @@ u32 ChooseWildMonIndex_Land(void)
 }
 
 // WATER_WILD_COUNT
-u32 ChooseWildMonIndex_Water(void)
+u32 ChooseWildMonIndex_Water(const struct WildPokemon *wildPokemon)
 {
     u32 wildMonIndex = 0;
     bool8 swap = FALSE;
-    u8 rand = Random() % ENCOUNTER_CHANCE_WATER_MONS_TOTAL;
+    u8 rand;
+
+    if (IsWorldlyLeadingParty())
+        return ChooseWorldlyWildMonIndex(wildPokemon, 0, WATER_WILD_COUNT, sWaterEncounterSlotWeights);
+
+    rand = Random() % ENCOUNTER_CHANCE_WATER_MONS_TOTAL;
 
     if (rand < ENCOUNTER_CHANCE_WATER_MONS_SLOT_0)
         wildMonIndex = 0;
@@ -243,11 +386,16 @@ u32 ChooseWildMonIndex_Water(void)
 }
 
 // ROCK_WILD_COUNT
-u32 ChooseWildMonIndex_Rocks(void)
+u32 ChooseWildMonIndex_Rocks(const struct WildPokemon *wildPokemon)
 {
     u32 wildMonIndex = 0;
     bool8 swap = FALSE;
-    u8 rand = Random() % ENCOUNTER_CHANCE_ROCK_SMASH_MONS_TOTAL;
+    u8 rand;
+
+    if (IsWorldlyLeadingParty())
+        return ChooseWorldlyWildMonIndex(wildPokemon, 0, ROCK_WILD_COUNT, sRockEncounterSlotWeights);
+
+    rand = Random() % ENCOUNTER_CHANCE_ROCK_SMASH_MONS_TOTAL;
 
     if (rand < ENCOUNTER_CHANCE_ROCK_SMASH_MONS_SLOT_0)
         wildMonIndex = 0;
@@ -270,47 +418,56 @@ u32 ChooseWildMonIndex_Rocks(void)
 }
 
 // FISH_WILD_COUNT
-static u32 ChooseWildMonIndex_Fishing(u8 rod)
+static u32 ChooseWildMonIndex_Fishing(const struct WildPokemon *wildPokemon, u8 rod)
 {
-    u8 wildMonIndex = 0;
-    bool8 swap = FALSE;
-    u8 rand = Random() % max(max(ENCOUNTER_CHANCE_FISHING_MONS_OLD_ROD_TOTAL, ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_TOTAL),
-                             ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_TOTAL);
-
-    if (LURE_STEP_COUNT != 0 && (Random() % 10 < 2))
-        swap = TRUE;
-
     switch (rod)
     {
     case OLD_ROD:
-        if (rand < ENCOUNTER_CHANCE_FISHING_MONS_OLD_ROD_SLOT_0)
-            wildMonIndex = 0;
-        else
-            wildMonIndex = 1;
-
-        if (swap)
-            wildMonIndex = 1 - wildMonIndex;
-        break;
+        return 0;
     case GOOD_ROD:
-        if (rand < ENCOUNTER_CHANCE_FISHING_MONS_GOOD_ROD_SLOT_2)
-            wildMonIndex = 2;
-        else
-            wildMonIndex = 3;
-
-        if (swap)
-            wildMonIndex = 5 - wildMonIndex;
-        break;
+        return 1;
     case SUPER_ROD:
-        if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_5)
-            wildMonIndex = 5;
-        else
-            wildMonIndex = 6;
+    {
+        u32 wildMonIndex;
+        u32 rand = Random() % ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_TOTAL;
 
-        if (swap)
-            wildMonIndex = 11 - wildMonIndex;
-        break;
+        if (IsWorldlyLeadingParty())
+            return ChooseWorldlyWildMonIndex(wildPokemon, 2, FISH_WILD_COUNT - 2, sSuperRodEncounterSlotWeights);
+
+        if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_2)
+            wildMonIndex = 2;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_3)
+            wildMonIndex = 3;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_4)
+            wildMonIndex = 4;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_5)
+            wildMonIndex = 5;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_6)
+            wildMonIndex = 6;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_7)
+            wildMonIndex = 7;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_8)
+            wildMonIndex = 8;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_9)
+            wildMonIndex = 9;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_10)
+            wildMonIndex = 10;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_11)
+            wildMonIndex = 11;
+        else if (rand < ENCOUNTER_CHANCE_FISHING_MONS_SUPER_ROD_SLOT_12)
+            wildMonIndex = 12;
+        else
+            wildMonIndex = 13;
+
+        // Lures occasionally reverse the Super Rod table, favoring its rarer slots.
+        if (LURE_STEP_COUNT != 0 && (Random() % 10 < 2))
+            wildMonIndex = 15 - wildMonIndex;
+
+        return wildMonIndex;
     }
-    return wildMonIndex;
+    }
+
+    return 0;
 }
 
 static u32 GetWildTableSize(enum WildPokemonArea area)
@@ -350,6 +507,24 @@ static u32 GetAveragePlayerPartyLevel(void)
     return monCount == 0 ? MIN_LEVEL : totalLevel / monCount;
 }
 
+static u32 GetLowestPlayerPartyLevel(void)
+{
+    u32 lowestLevel = MAX_LEVEL;
+    bool32 foundMon = FALSE;
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) == SPECIES_NONE
+         || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG))
+            continue;
+
+        lowestLevel = min(lowestLevel, GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_LEVEL));
+        foundMon = TRUE;
+    }
+
+    return foundMon ? lowestLevel : MIN_LEVEL;
+}
+
 static s32 GetWildLevelShift(const struct WildPokemon *wildPokemon, u32 wildMonIndex, enum WildPokemonArea area)
 {
     u32 tableMaxLevel = MIN_LEVEL;
@@ -357,18 +532,24 @@ static s32 GetWildLevelShift(const struct WildPokemon *wildPokemon, u32 wildMonI
     u32 tableSize = GetWildTableSize(area);
     u32 targetMaxLevel = max(GetAveragePlayerPartyLevel(), 3) - 2;
 
-    // Each rod now exposes only two of the ten legacy fishing slots. Scale
-    // against that rod's active pair so unused Good/Super Rod slots cannot
-    // pull another rod's level range downward.
+    // Scale fishing levels only against the slots available to the active rod.
     if (area == WILD_AREA_FISHING)
     {
-        tableSize = 2;
-        if (wildMonIndex <= 1)
+        if (wildMonIndex == 0)
+        {
             firstSlot = 0;
-        else if (wildMonIndex <= 3)
-            firstSlot = 2;
+            tableSize = 1;
+        }
+        else if (wildMonIndex == 1)
+        {
+            firstSlot = 1;
+            tableSize = 1;
+        }
         else
-            firstSlot = 5;
+        {
+            firstSlot = 2;
+            tableSize = 12;
+        }
     }
 
     for (u32 i = firstSlot; i < firstSlot + tableSize; i++)
@@ -384,6 +565,10 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
     u8 range;
     u8 rand;
     s32 levelShift = GetWildLevelShift(wildPokemon, wildMonIndex, area);
+    // Keep this signed: levelShift is frequently negative on early routes.
+    // Mixing that negative value with an unsigned floor promotes it to a huge
+    // positive integer before clamping, which can create level 85-100 encounters.
+    s32 partyLevelFloor = GetLowestPlayerPartyLevel();
 
     if (LURE_STEP_COUNT == 0)
     {
@@ -398,8 +583,8 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
             min = wildPokemon[wildMonIndex].maxLevel;
             max = wildPokemon[wildMonIndex].minLevel;
         }
-        min = min(max(min + levelShift, MIN_LEVEL), MAX_LEVEL);
-        max = min(max(max + levelShift, MIN_LEVEL), MAX_LEVEL);
+        min = min(max(min + levelShift, partyLevelFloor), MAX_LEVEL);
+        max = min(max(max + levelShift, partyLevelFloor), MAX_LEVEL);
         range = max - min + 1;
         rand = Random() % range;
 
@@ -423,9 +608,9 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
         // Looks for the max level of all slots that share the same species as the selected slot.
         max = GetMaxLevelOfSpeciesInWildTable(wildPokemon, wildPokemon[wildMonIndex].species, area);
         if (max > 0)
-            return min(max(max + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
+            return min(max(max + levelShift + 1, partyLevelFloor), MAX_LEVEL);
         else // Failsafe
-            return min(max(wildPokemon[wildMonIndex].maxLevel + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
+            return min(max(wildPokemon[wildMonIndex].maxLevel + levelShift + 1, partyLevelFloor), MAX_LEVEL);
     }
 }
 
@@ -545,6 +730,11 @@ bool8 TryGenerateWildMon(const struct WildPokemonInfo *wildMonInfo, enum WildPok
     switch (area)
     {
     case WILD_AREA_LAND:
+        if (IsWorldlyLeadingParty())
+        {
+            wildMonIndex = ChooseWildMonIndex_Land(wildMonInfo->wildPokemon);
+            break;
+        }
         if (TRY_GET_ABILITY_INFLUENCED_WILD_MON_INDEX(wildMonInfo->wildPokemon, TYPE_STEEL, ABILITY_MAGNET_PULL, &wildMonIndex, LAND_WILD_COUNT))
             break;
         if (TRY_GET_ABILITY_INFLUENCED_WILD_MON_INDEX(wildMonInfo->wildPokemon, TYPE_ELECTRIC, ABILITY_STATIC, &wildMonIndex, LAND_WILD_COUNT))
@@ -558,9 +748,14 @@ bool8 TryGenerateWildMon(const struct WildPokemonInfo *wildMonInfo, enum WildPok
         if (OW_STORM_DRAIN >= GEN_8 && TRY_GET_ABILITY_INFLUENCED_WILD_MON_INDEX(wildMonInfo->wildPokemon, TYPE_WATER, ABILITY_STORM_DRAIN, &wildMonIndex, LAND_WILD_COUNT))
             break;
 
-        wildMonIndex = ChooseWildMonIndex_Land();
+        wildMonIndex = ChooseWildMonIndex_Land(wildMonInfo->wildPokemon);
         break;
     case WILD_AREA_WATER:
+        if (IsWorldlyLeadingParty())
+        {
+            wildMonIndex = ChooseWildMonIndex_Water(wildMonInfo->wildPokemon);
+            break;
+        }
         if (TRY_GET_ABILITY_INFLUENCED_WILD_MON_INDEX(wildMonInfo->wildPokemon, TYPE_STEEL, ABILITY_MAGNET_PULL, &wildMonIndex, WATER_WILD_COUNT))
             break;
         if (TRY_GET_ABILITY_INFLUENCED_WILD_MON_INDEX(wildMonInfo->wildPokemon, TYPE_ELECTRIC, ABILITY_STATIC, &wildMonIndex, WATER_WILD_COUNT))
@@ -574,10 +769,10 @@ bool8 TryGenerateWildMon(const struct WildPokemonInfo *wildMonInfo, enum WildPok
         if (OW_STORM_DRAIN >= GEN_8 && TRY_GET_ABILITY_INFLUENCED_WILD_MON_INDEX(wildMonInfo->wildPokemon, TYPE_WATER, ABILITY_STORM_DRAIN, &wildMonIndex, WATER_WILD_COUNT))
             break;
 
-        wildMonIndex = ChooseWildMonIndex_Water();
+        wildMonIndex = ChooseWildMonIndex_Water(wildMonInfo->wildPokemon);
         break;
     case WILD_AREA_ROCKS:
-        wildMonIndex = ChooseWildMonIndex_Rocks();
+        wildMonIndex = ChooseWildMonIndex_Rocks(wildMonInfo->wildPokemon);
         break;
     default:
     case WILD_AREA_FISHING:
@@ -597,7 +792,7 @@ bool8 TryGenerateWildMon(const struct WildPokemonInfo *wildMonInfo, enum WildPok
 
 static u16 GenerateFishingWildMon(const struct WildPokemonInfo *wildMonInfo, u8 rod)
 {
-    u8 wildMonIndex = ChooseWildMonIndex_Fishing(rod);
+    u8 wildMonIndex = ChooseWildMonIndex_Fishing(wildMonInfo->wildPokemon, rod);
     enum Species wildMonSpecies = wildMonInfo->wildPokemon[wildMonIndex].species;
     u8 level = ChooseWildMonLevel(wildMonInfo->wildPokemon, wildMonIndex, WILD_AREA_FISHING);
 
@@ -1033,22 +1228,22 @@ u16 GetLocalWildMon(bool8 *isWaterMon)
         return SPECIES_NONE;
     // Land Pokémon
     else if (landMonsInfo != NULL && waterMonsInfo == NULL)
-        return landMonsInfo->wildPokemon[ChooseWildMonIndex_Land()].species;
+        return landMonsInfo->wildPokemon[ChooseWildMonIndex_Land(landMonsInfo->wildPokemon)].species;
     // Water Pokémon
     else if (landMonsInfo == NULL && waterMonsInfo != NULL)
     {
         *isWaterMon = TRUE;
-        return waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water()].species;
+        return waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water(waterMonsInfo->wildPokemon)].species;
     }
     // Either land or water Pokémon
     if ((Random() % 100) < 80)
     {
-        return landMonsInfo->wildPokemon[ChooseWildMonIndex_Land()].species;
+        return landMonsInfo->wildPokemon[ChooseWildMonIndex_Land(landMonsInfo->wildPokemon)].species;
     }
     else
     {
         *isWaterMon = TRUE;
-        return waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water()].species;
+        return waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water(waterMonsInfo->wildPokemon)].species;
     }
 }
 
@@ -1064,7 +1259,7 @@ u16 GetLocalWaterMon(void)
         const struct WildPokemonInfo *waterMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo;
 
         if (waterMonsInfo)
-            return waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water()].species;
+            return waterMonsInfo->wildPokemon[ChooseWildMonIndex_Water(waterMonsInfo->wildPokemon)].species;
     }
     return SPECIES_NONE;
 }
@@ -1109,13 +1304,6 @@ bool8 UpdateRepelCounter(void)
 bool8 IsWildLevelAllowedByRepel(u8 wildLevel)
 {
     u8 i;
-    bool32 worldlyLeader = GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SPECIES) != SPECIES_NONE
-                        && !GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_IS_EGG)
-                        && GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HIDDEN_NATURE) == NATURE_WORLDLY;
-
-    if (worldlyLeader
-     && wildLevel < GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_LEVEL))
-        return FALSE;
 
     if (!REPEL_STEP_COUNT)
         return TRUE;

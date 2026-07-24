@@ -416,6 +416,52 @@ const u16 gTilesetPalettes_Cave[][16] =
     INCGFX_U16("data/tilesets/secondary/cave/palettes/15.pal", ".gbapal"),
 };
 
+const u16 gTilesetPalettes_Cave2[][16] =
+{
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/00.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/01.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/02.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/03.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/04.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/05.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/16.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/16.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/08.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/09.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/10.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/11.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/12.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/13.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/14.pal", ".gbapal"),
+    INCGFX_U16("data/tilesets/secondary/cave/palettes/15.pal", ".gbapal"),
+};
+
+// const u16 gTilesetPalettes_General2[][16] =
+// {
+//     INCGFX_U16("data/tilesets/primary/general/palettes/00.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/01.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/02.pal", ".gbapal"),
+
+//     // General2 palette slot 3: icy replacement used by the muddy slope
+//     INCGFX_U16("data/tilesets/primary/general/palettes/16.pal", ".gbapal"),
+
+//     INCGFX_U16("data/tilesets/primary/general/palettes/04.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/05.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/06.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/07.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/08.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/09.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/10.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/11.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/12.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/13.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/14.pal", ".gbapal"),
+//     INCGFX_U16("data/tilesets/primary/general/palettes/15.pal", ".gbapal"),
+// };
+
+const u32 gTilesetTiles_General2[] =
+    INCGFX_U32("data/tilesets/primary/general/tiles.png", ".4bpp.smol");
+
 const u32 gTilesetTiles_PokemonSchool[] = INCGFX_U32("data/tilesets/secondary/pokemon_school/tiles.png", ".4bpp.fastSmol", "-num_tiles 278 -Wnum_tiles");
 
 const u16 gTilesetPalettes_PokemonSchool[][16] =

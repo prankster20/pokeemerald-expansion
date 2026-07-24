@@ -58,6 +58,9 @@ void DisableWildEncounters(bool8 disabled);
 bool8 StandardWildEncounter(u16 curMetatileBehavior, u16 prevMetatileBehavior);
 bool8 SweetScentWildEncounter(void);
 bool8 DoesCurrentMapHaveFishingMons(void);
+#if TESTING
+u32 TestChooseWorldlyWildMonIndex(const struct WildPokemon *wildPokemon, u32 firstSlot, u32 slotCount, const u32 *slotWeights);
+#endif
 void FishingWildEncounter(u8 rod);
 u16 GetLocalWildMon(bool8 *isWaterMon);
 u16 GetLocalWaterMon(void);
@@ -74,9 +77,9 @@ bool8 DoMassOutbreakEncounterTest(void);
 bool8 AreLegendariesInSootopolisPreventingEncounters(void);
 u16 GetCurrentMapWildMonHeaderId(void);
 bool8 CheckFeebasAtCoords(s16 x, s16 y);
-u32 ChooseWildMonIndex_Land(void);
-u32 ChooseWildMonIndex_Water(void);
-u32 ChooseWildMonIndex_Rocks(void);
+u32 ChooseWildMonIndex_Land(const struct WildPokemon *wildPokemon);
+u32 ChooseWildMonIndex_Water(const struct WildPokemon *wildPokemon);
+u32 ChooseWildMonIndex_Rocks(const struct WildPokemon *wildPokemon);
 u32 ChooseHiddenMonIndex(void);
 bool32 MapHasNoEncounterData(void);
 enum TimeOfDay GetTimeOfDayForEncounters(u32 headerId, enum WildPokemonArea area);

@@ -54,6 +54,7 @@ EventScript_PkmnCenterNurse_ReturnPkmn_Frlg::
 	applymovement VAR_LAST_TALKED, Movement_Bow
 	waitmovement 0
 	msgbox Text_WeHopeToSeeYouAgain_Frlg
+	call EventScript_PkmnCenterNurse_TryAutosave
 	return
 
 EventScript_PkmnCenterNurse_PlayerWaitingInUnionRoom_Frlg::
@@ -65,6 +66,7 @@ EventScript_PkmnCenterNurse_PlayerWaitingInUnionRoom_Frlg::
 	applymovement VAR_LAST_TALKED, Movement_Bow
 	waitmovement 0
 	msgbox Text_WeHopeToSeeYouAgain_Frlg
+	call EventScript_PkmnCenterNurse_TryAutosave
 	return
 
 EventScript_PkmnCenterNurse_Goodbye_Frlg::

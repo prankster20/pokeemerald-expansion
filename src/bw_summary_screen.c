@@ -3792,7 +3792,9 @@ static void PrintNotEggInfo(void)
     StringAppend(gStringVar1, gStringVar2);
 
     // PrintTextOnWindow(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL, gStringVar1, 5, 13, 0, 0);
-    PrintTextOnWindowWithFont(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL, gStringVar1, 5, 13, 0, 0, FONT_SMALL_NARROW);
+    // This window is 24px tall. At y=13 the font's bottom shadow lands on
+    // the first clipped row, so lift the level by one pixel.
+    PrintTextOnWindowWithFont(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL, gStringVar1, 5, 12, 0, 0, FONT_SMALL_NARROW);
     PutWindowTilemap(PSS_LABEL_WINDOW_PORTRAIT_NICKNAME_GENDER_LEVEL);
 }
 
@@ -4772,7 +4774,7 @@ static void PrintHeldItemName(void)
     }
 
     fontId = GetFontIdToFit(text, FONT_NORMAL, 0, WindowTemplateWidthPx(&sPageSkillsTemplate[PSS_DATA_WINDOW_INFO_OT_OTID_ITEM]) - 8);
-    PrintTextOnWindowWithFont(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_INFO_OT_OTID_ITEM), text, 12, 28, 0, 0, fontId);
+    PrintTextOnWindowWithFont(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_INFO_OT_OTID_ITEM), text, 12, 27, 0, 0, fontId);
 }
 
 static void UNUSED PrintRibbonCount(void)
@@ -4850,14 +4852,6 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
     if (stat == STAT_HP)
         return 0;
 
-    if (gNaturesInfo[nature].statUp != gNaturesInfo[nature].statDown)
-    {
-        if (stat == gNaturesInfo[nature].statUp)
-            boost += 15;
-        if (stat == gNaturesInfo[nature].statDown)
-            boost -= 15;
-    }
-
     switch (nature)
     {
     case NATURE_HUMBLE:
@@ -4924,6 +4918,15 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
     case NATURE_DEVOTED:
         if (partyMon != NULL && (stat == STAT_ATK || stat == STAT_SPATK))
             boost += GetDevotedBondData(partyMon, NULL);
+        break;
+    default:
+         if (gNaturesInfo[nature].statUp != gNaturesInfo[nature].statDown)
+        {
+            if (stat == gNaturesInfo[nature].statUp)
+                boost += 15;
+            if (stat == gNaturesInfo[nature].statDown)
+                boost -= 15;
+        }
         break;
     }
 

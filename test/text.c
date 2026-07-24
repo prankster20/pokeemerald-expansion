@@ -228,7 +228,7 @@ TEST("Item names fit on Shop Screen")
 TEST("Item descriptions fit on Bag and Shop Screen")
 {
     u32 i;
-    const u32 fontId = FONT_NORMAL, widthPx = 102;
+    const u32 fontId = FONT_SMALL, widthPx = 102;
     enum Item item = ITEM_NONE;
     for (i = 1; i < ITEMS_COUNT; i++)
     {

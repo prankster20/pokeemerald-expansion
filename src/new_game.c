@@ -50,7 +50,9 @@
 #include "constants/map_groups.h"
 #include "constants/items.h"
 #include "difficulty.h"
+#include "fake_rtc.h"
 #include "follower_npc.h"
+#include "constants/flags.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 extern const u8 EventScript_ResetAllMapFlagsFrlg[];
@@ -106,6 +108,8 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsBattleSceneOff = FALSE;
     gSaveBlock2Ptr->optionsAnnounceNatures = OPTIONS_ANNOUNCE_NATURES_YES;
     gSaveBlock2Ptr->optionsShinyOdds = OPTIONS_SHINY_ODDS_4096;
+    gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
+    gSaveBlock2Ptr->optionsLevelCaps = OPTIONS_LEVEL_CAPS_SOFT;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
 }
 
@@ -186,6 +190,7 @@ void NewGameInitData(void)
     PlayTimeCounter_Reset();
     ClearPokedexFlags();
     InitEventData();
+    VarSet(VAR_LEVEL_CAP, 15);
     ClearTVShowData();
     ResetGabbyAndTy();
     ClearSecretBases();
@@ -218,6 +223,10 @@ void NewGameInitData(void)
         RunScriptImmediately(EventScript_ResetAllMapFlagsFrlg);
     else
         RunScriptImmediately(EventScript_ResetAllMapFlags);
+    FakeRtc_ManuallySetTime(0, DAY_HOUR_BEGIN, 0, 0);
+    FlagSet(FLAG_SYS_B_DASH);
+    FlagSet(FLAG_RECEIVED_RUNNING_SHOES);
+    FlagSet(OW_FLAG_PAUSE_TIME);
 #if IS_FRLG
         StringCopy(gSaveBlock1Ptr->rivalName, rivalName);
 #endif

@@ -29,6 +29,8 @@
 #define tMenuPage data[8]
 #define tFooterChoice data[9]
 #define tShinyOdds data[10]
+#define tAutosave data[11]
+#define tLevelCaps data[12]
 
 enum
 {
@@ -46,6 +48,15 @@ enum
 {
     OPTION_PAGE_MAIN,
     OPTION_PAGE_MORE,
+};
+
+enum
+{
+    MORE_MENUITEM_ANNOUNCE_NATURES,
+    MORE_MENUITEM_SHINY_ODDS,
+    MORE_MENUITEM_AUTOSAVE,
+    MORE_MENUITEM_LEVEL_CAPS,
+    MORE_MENUITEM_COUNT,
 };
 
 enum
@@ -69,6 +80,8 @@ enum
 #define YPOS_FRAMETYPE       (MENUITEM_FRAMETYPE * OPTION_ROW_HEIGHT)
 #define YPOS_MORE_ANNOUNCENATURES 0
 #define YPOS_MORE_SHINYODDS        OPTION_ROW_HEIGHT
+#define YPOS_MORE_AUTOSAVE         (2 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_LEVELCAPS        (3 * OPTION_ROW_HEIGHT)
 #define YPOS_FOOTER          (MENUITEM_FOOTER * OPTION_ROW_HEIGHT)
 
 static void Task_OptionMenuFadeIn(u8 taskId);
@@ -86,6 +99,10 @@ static u8 AnnounceNatures_ProcessInput(u8 selection);
 static void AnnounceNatures_DrawChoices(u8 selection);
 static u8 ShinyOdds_ProcessInput(u8 selection);
 static void ShinyOdds_DrawChoices(u8 selection);
+static u8 Autosave_ProcessInput(u8 selection);
+static void Autosave_DrawChoices(u8 selection);
+static u8 LevelCaps_ProcessInput(u8 selection);
+static void LevelCaps_DrawChoices(u8 selection);
 static u8 Sound_ProcessInput(u8 selection);
 static void Sound_DrawChoices(u8 selection);
 static u8 FrameType_ProcessInput(u8 selection);
@@ -124,8 +141,13 @@ static const u8 gText_ShinyOdds4096[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN
 static const u8 gText_ShinyOdds1024[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}1024");
 static const u8 gText_ShinyOdds256[]       = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}256");
 static const u8 gText_ShinyOdds64[]        = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}64");
+static const u8 gText_AutosavePC[]         = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}PC");
+static const u8 gText_LevelCapsSoft[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SOFT");
+static const u8 gText_LevelCapsHard[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}HARD");
 static const u8 gText_AnnounceNatures[]    = _("NATURE POPUPS");
 static const u8 gText_ShinyOdds[]          = _("SHINY ODDS");
+static const u8 gText_Autosave[]           = _("AUTOSAVE");
+static const u8 gText_LevelCaps[]          = _("LEVEL CAPS");
 
 static const u16 sOptionMenuText_Pal[] = INCGFX_U16("graphics/interface/option_menu_text.pal", ".gbapal");
 // note: this is only used in the Japanese release
@@ -289,6 +311,8 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tBattleStyle = gSaveBlock2Ptr->optionsBattleStyle;
         gTasks[taskId].tAnnounceNatures = gSaveBlock2Ptr->optionsAnnounceNatures;
         gTasks[taskId].tShinyOdds = gSaveBlock2Ptr->optionsShinyOdds;
+        gTasks[taskId].tAutosave = gSaveBlock2Ptr->optionsAutosave;
+        gTasks[taskId].tLevelCaps = gSaveBlock2Ptr->optionsLevelCaps;
         gTasks[taskId].tSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tButtonMode = gSaveBlock2Ptr->optionsButtonMode;
         gTasks[taskId].tWindowFrameType = gSaveBlock2Ptr->optionsWindowFrameType;
@@ -347,7 +371,7 @@ static void Task_OptionMenuProcessInput(u8 taskId)
             if (gTasks[taskId].tMenuSelection == 0)
                 gTasks[taskId].tMenuSelection = MENUITEM_FOOTER;
             else if (gTasks[taskId].tMenuSelection == MENUITEM_FOOTER)
-                gTasks[taskId].tMenuSelection = 1;
+                gTasks[taskId].tMenuSelection = MORE_MENUITEM_COUNT - 1;
             else
                 gTasks[taskId].tMenuSelection--;
         }
@@ -363,7 +387,7 @@ static void Task_OptionMenuProcessInput(u8 taskId)
         {
             if (gTasks[taskId].tMenuSelection == MENUITEM_FOOTER)
                 gTasks[taskId].tMenuSelection = 0;
-            else if (gTasks[taskId].tMenuSelection == 1)
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_COUNT - 1)
                 gTasks[taskId].tMenuSelection = MENUITEM_FOOTER;
             else
                 gTasks[taskId].tMenuSelection++;
@@ -380,19 +404,33 @@ static void Task_OptionMenuProcessInput(u8 taskId)
 
         if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
         {
-            if (gTasks[taskId].tMenuSelection == 0)
+            if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_ANNOUNCE_NATURES)
             {
                 previousOption = gTasks[taskId].tAnnounceNatures;
                 gTasks[taskId].tAnnounceNatures = AnnounceNatures_ProcessInput(gTasks[taskId].tAnnounceNatures);
                 if (previousOption != gTasks[taskId].tAnnounceNatures)
                     AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
             }
-            else if (gTasks[taskId].tMenuSelection == 1)
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_SHINY_ODDS)
             {
                 previousOption = gTasks[taskId].tShinyOdds;
                 gTasks[taskId].tShinyOdds = ShinyOdds_ProcessInput(gTasks[taskId].tShinyOdds);
                 if (previousOption != gTasks[taskId].tShinyOdds)
                     ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
+            }
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_AUTOSAVE)
+            {
+                previousOption = gTasks[taskId].tAutosave;
+                gTasks[taskId].tAutosave = Autosave_ProcessInput(gTasks[taskId].tAutosave);
+                if (previousOption != gTasks[taskId].tAutosave)
+                    Autosave_DrawChoices(gTasks[taskId].tAutosave);
+            }
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_LEVEL_CAPS)
+            {
+                previousOption = gTasks[taskId].tLevelCaps;
+                gTasks[taskId].tLevelCaps = LevelCaps_ProcessInput(gTasks[taskId].tLevelCaps);
+                if (previousOption != gTasks[taskId].tLevelCaps)
+                    LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);
             }
 
             if (sArrowPressed)
@@ -474,6 +512,8 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsBattleStyle = gTasks[taskId].tBattleStyle;
     gSaveBlock2Ptr->optionsAnnounceNatures = gTasks[taskId].tAnnounceNatures;
     gSaveBlock2Ptr->optionsShinyOdds = gTasks[taskId].tShinyOdds;
+    gSaveBlock2Ptr->optionsAutosave = gTasks[taskId].tAutosave;
+    gSaveBlock2Ptr->optionsLevelCaps = gTasks[taskId].tLevelCaps;
     gSaveBlock2Ptr->optionsSound = gTasks[taskId].tSound;
     gSaveBlock2Ptr->optionsButtonMode = gTasks[taskId].tButtonMode;
     gSaveBlock2Ptr->optionsWindowFrameType = gTasks[taskId].tWindowFrameType;
@@ -657,6 +697,44 @@ static void ShinyOdds_DrawChoices(u8 selection)
                                selection == OPTIONS_SHINY_ODDS_64);
 }
 
+static u8 Autosave_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+    return selection;
+}
+
+static void Autosave_DrawChoices(u8 selection)
+{
+    DrawOptionMenuChoice(gText_AutosavePC, 104, YPOS_MORE_AUTOSAVE, selection == OPTIONS_AUTOSAVE_PC);
+    DrawOptionMenuChoice(gText_OptionOff,
+                         GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionOff, 198),
+                         YPOS_MORE_AUTOSAVE,
+                         selection == OPTIONS_AUTOSAVE_OFF);
+}
+
+static u8 LevelCaps_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+    return selection;
+}
+
+static void LevelCaps_DrawChoices(u8 selection)
+{
+    DrawOptionMenuChoice(gText_LevelCapsSoft, 104, YPOS_MORE_LEVELCAPS, selection == OPTIONS_LEVEL_CAPS_SOFT);
+    DrawOptionMenuChoice(gText_LevelCapsHard,
+                         GetStringRightAlignXOffset(FONT_NORMAL, gText_LevelCapsHard, 198),
+                         YPOS_MORE_LEVELCAPS,
+                         selection == OPTIONS_LEVEL_CAPS_HARD);
+}
+
 static u8 Sound_ProcessInput(u8 selection)
 {
     if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
@@ -838,9 +916,13 @@ static void DrawOptionMenuPage(u8 taskId)
 
         AddTextPrinterParameterized(WIN_OPTIONS, announceFont, gText_AnnounceNatures, 8, YPOS_MORE_ANNOUNCENATURES + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_ShinyOdds, 8, YPOS_MORE_SHINYODDS + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Autosave, 8, YPOS_MORE_AUTOSAVE + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_LevelCaps, 8, YPOS_MORE_LEVELCAPS + 1, TEXT_SKIP_DRAW, NULL);
         DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER, gTasks[taskId].tMenuSelection == MENUITEM_FOOTER);
         AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
         ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
+        Autosave_DrawChoices(gTasks[taskId].tAutosave);
+        LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);
     }
 
     HighlightOptionMenuItem(gTasks[taskId].tMenuSelection);

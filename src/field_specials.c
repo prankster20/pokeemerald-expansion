@@ -86,6 +86,11 @@
 #define GFXTAG_MULTICHOICE_SCROLL_ARROWS 2000
 #define PALTAG_MULTICHOICE_SCROLL_ARROWS 100
 
+bool8 IsPCAutosaveEnabled(void)
+{
+    return gSaveBlock2Ptr->optionsAutosave == OPTIONS_AUTOSAVE_PC;
+}
+
 #define ELEVATOR_WINDOW_WIDTH  3
 #define ELEVATOR_WINDOW_HEIGHT 3
 #define ELEVATOR_LIGHT_STAGES  3

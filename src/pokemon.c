@@ -1433,7 +1433,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("While leading the party, does not trigger fights with lower-level wild Pokémon."),
+        .description = COMPOUND_STRING("Seeks out rare Pokémon while leading the party, making uncommon encounters more likely."),
     },
     [NATURE_YOUTHFUL] =
     {
@@ -5501,7 +5501,7 @@ bool8 PokemonUseItemEffects(struct Pokemon *mon, enum Item item, u8 partyIndex, 
                     enum Species species = GetMonData(mon, MON_DATA_SPECIES);
                     dataUnsigned = sExpCandyExperienceTable[param - 1] + GetMonData(mon, MON_DATA_EXP);
 
-                    if (B_RARE_CANDY_CAP && B_EXP_CAP_TYPE == EXP_CAP_HARD)
+                    if (B_RARE_CANDY_CAP && gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD)
                     {
                         u32 currentLevelCap = GetCurrentLevelCap();
                         if (dataUnsigned > gExperienceTables[gSpeciesInfo[species].growthRate][currentLevelCap])
@@ -6971,6 +6971,11 @@ u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality
     // default a fresh mon starts at. In-battle speed is dynamic (battle_main.c).
     if (nature == NATURE_ANXIOUS && statIndex == STAT_SPEED)
         return stat * 80 / 100;
+
+    // --- Custom Archetype nature: Soft-Hearted ---
+    // Its SpDef bonus is 10%, not the global 15% used by classic Natures.
+    if (nature == NATURE_SOFT_HEARTED && statIndex == STAT_SPDEF)
+        return stat * 110 / 100;
 
     if (gNaturesInfo[nature].statUp == gNaturesInfo[nature].statDown)
         return stat;

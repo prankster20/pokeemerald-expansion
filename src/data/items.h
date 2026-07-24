@@ -2779,6 +2779,22 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_BottleCap,
     },
 
+    [ITEM_DAYLIGHT_SAVER] =
+    {
+        .name = ITEM_NAME("Daylight Saver"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "A curious device that\n"
+            "switches the world\n"
+            "between day and night."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_DaylightSaver,
+        .iconPic = gItemIcon_NecrozmaFuser,
+        .iconPalette = gItemIconPalette_NSolarizer,
+    },
+
     [ITEM_NUGGET] =
     {
         .name = ITEM_NAME("Nugget"),
@@ -13971,11 +13987,11 @@ const struct ItemInfo gItemsInfo[] =
 
     [ITEM_SUPER_ROD] =
     {
-        .name = ITEM_NAME("Super Rod"),
+        .name = ITEM_NAME("Fishing Rod"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "The best fishing\n"
-            "rod for catching\n"
+            "Use by any body of\n"
+            "water to fish for\n"
             "wild Pokémon."),
         .importance = 1,
         .pocket = POCKET_KEY_ITEMS,

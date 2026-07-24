@@ -209,6 +209,12 @@ enum Gender
 #define OPTIONS_SHINY_ODDS_256  2
 #define OPTIONS_SHINY_ODDS_64   3
 
+#define OPTIONS_AUTOSAVE_OFF 0
+#define OPTIONS_AUTOSAVE_PC  1
+
+#define OPTIONS_LEVEL_CAPS_SOFT 0
+#define OPTIONS_LEVEL_CAPS_HARD 1
+
 enum __attribute__((packed)) Direction
 {
     DIR_NONE,

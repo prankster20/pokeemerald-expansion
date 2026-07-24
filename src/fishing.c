@@ -50,7 +50,7 @@ static u32 CalculateFishingTimeOfDayBoost(void);
 #if I_FISHING_BITE_ODDS >= GEN_4
     #define FISHING_OLD_ROD_ODDS 25
     #define FISHING_GOOD_ROD_ODDS 50
-    #define FISHING_SUPER_ROD_ODDS 75
+    #define FISHING_SUPER_ROD_ODDS 100
 #elif I_FISHING_BITE_ODDS >= GEN_3
     #define FISHING_OLD_ROD_ODDS 50
     #define FISHING_GOOD_ROD_ODDS 50
@@ -478,7 +478,7 @@ static bool32 DoesFishingMinigameAllowCancel(void)
         return FALSE;
     case GEN_3:
     default:
-            return TRUE;
+        return TRUE;
     }
 }
 

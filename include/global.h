@@ -603,7 +603,8 @@ struct SaveBlock2
              u16 regionMapZoom:1; // whether the map is zoomed in
              u16 optionsAnnounceNatures:1; // OPTIONS_ANNOUNCE_NATURES_[NO/YES]
              u16 optionsShinyOdds:2; // OPTIONS_SHINY_ODDS_[4096/1024/256/64]
-             //u16 padding1:1;
+             u16 optionsAutosave:1; // OPTIONS_AUTOSAVE_[PC/OFF]
+             u16 optionsLevelCaps:1; // OPTIONS_LEVEL_CAPS_[SOFT/HARD]
              //u16 padding2;
     /*0x18*/ struct Pokedex pokedex;
     /*0x90*/ u8 filler_90[0x8];
