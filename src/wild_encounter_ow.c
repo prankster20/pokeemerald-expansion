@@ -27,6 +27,7 @@
 #include "constants/layouts.h"
 #include "constants/item.h"
 #include "constants/map_types.h"
+#include "constants/metatile_behaviors.h"
 #include "constants/trainer_types.h"
 #include "constants/songs.h"
 #include "constants/vars.h"
@@ -175,6 +176,11 @@ static void Task_OWEApproachForBattle(u8 taskId);
 static bool32 CheckValidOWESpecies(enum Species speciesId);
 
 static EWRAM_DATA u8 sOWESpawnCountdown = 0;
+
+static inline bool32 IsSandEncounterTile(u32 metatileBehavior)
+{
+    return metatileBehavior == MB_SAND;
+}
 
 struct AgeSort
 {
@@ -848,6 +854,12 @@ static bool32 CreateEnemyPartyOWE(struct InfoOWE *info, s32 x, s32 y)
         timeOfDay = GetTimeOfDayForEncounters(headerId, wildArea);
         wildMonInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo;
     }
+    else if (IsSandEncounterTile(metatileBehavior))
+    {
+        wildArea = WILD_AREA_SAND;
+        timeOfDay = GetTimeOfDayForEncounters(headerId, wildArea);
+        wildMonInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].sandMonsInfo;
+    }
     else
     {
         wildArea = WILD_AREA_LAND;
@@ -886,7 +898,9 @@ static bool32 CreateEnemyPartyOWE(struct InfoOWE *info, s32 x, s32 y)
 
             return TRUE;
         }
-        else if (DoMassOutbreakEncounterTest() && MetatileBehavior_IsLandWildEncounter(metatileBehavior))
+        else if (DoMassOutbreakEncounterTest()
+              && MetatileBehavior_IsLandWildEncounter(metatileBehavior)
+              && !IsSandEncounterTile(metatileBehavior))
         {
             SetUpMassOutbreakEncounter(0);
             info->category = OWE_CATEGORY_MASS_OUTBREAK;
@@ -984,6 +998,12 @@ static bool32 StartWildBattleWithOWE_CheckDoubleBattle(struct ObjectEvent *owe, 
             timeOfDay = GetTimeOfDayForEncounters(headerId, wildArea);
             wildMonInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo;
         }
+        else if (IsSandEncounterTile(metatileBehavior))
+        {
+            wildArea = WILD_AREA_SAND;
+            timeOfDay = GetTimeOfDayForEncounters(headerId, wildArea);
+            wildMonInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].sandMonsInfo;
+        }
         else
         {
             wildArea = WILD_AREA_LAND;
@@ -1022,7 +1042,7 @@ void SetMinimumOWESpawnTimer(void)
 
 void TryTriggerOverworldWildEncounter(struct ObjectEvent *obstacle, struct ObjectEvent *collider)
 {
-    if (WE_OWE_NO_REPEL_DEXNAV_COLLISION && (FlagGet(DN_FLAG_SEARCHING) || REPEL_STEP_COUNT))
+    if (WE_OWE_NO_REPEL_DEXNAV_COLLISION && (FlagGet(DN_FLAG_SEARCHING) || IsRepelActive()))
         return;
 
     bool32 playerFollowerIsColliderOWE = ((collider->isPlayer || collider->localId == OBJ_EVENT_ID_FOLLOWER)
@@ -1091,7 +1111,11 @@ static bool32 CheckCurrentWildMonHeaderForOWE(bool32 shouldSpawnWaterMons)
     }
 
     timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_LAND);
-    return gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo != NULL;
+    if (gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo != NULL)
+        return TRUE;
+
+    timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_SAND);
+    return gWildMonHeaders[headerId].encounterTypes[timeOfDay].sandMonsInfo != NULL;
 }
 
 static u32 GetOldestActiveOWESlot(bool32 forceRemove)
@@ -1463,7 +1487,7 @@ void DespawnAllOverworldWildEncounters(enum TypeOWE oweType, u32 flags)
 
         if (flags & WILD_CHECK_REPEL)
         {
-            if (!REPEL_STEP_COUNT)
+            if (!IsRepelActive())
                 continue;
 
             if (HasOWENoDespawnFlag(owe))
@@ -1722,7 +1746,11 @@ static bool32 CheckRestrictedOWEMovementMetatile(s32 xCurrent, s32 yCurrent, s32
 
     if (MetatileBehavior_IsLandWildEncounter(metatileBehaviourCurrent)
      && MetatileBehavior_IsLandWildEncounter(metatileBehaviourNew))
-        return FALSE;
+    {
+        // Sand and normal land use different encounter tables, so keep an
+        // overworld encounter within the terrain type it spawned from.
+        return IsSandEncounterTile(metatileBehaviourCurrent) != IsSandEncounterTile(metatileBehaviourNew);
+    }
 
     if (MetatileBehavior_IsWaterWildEncounter(metatileBehaviourCurrent)
      && MetatileBehavior_IsWaterWildEncounter(metatileBehaviourNew))

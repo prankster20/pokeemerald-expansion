@@ -297,6 +297,7 @@ static void PrintMonOTID(void);
 static void PrintMonDexNumberSpecies(void);
 static void PrintMonAbilityName(void);
 static void PrintMonAbilityDescription(void);
+static void CycleMonAbility(void);
 static void AppendWrappedNatureDescription(u8 *, const u8 *, u32, u32);
 static void BufferMonTrainerMemo(void);
 static void PrintMonTrainerMemo(void);
@@ -391,6 +392,7 @@ static const u8 sMemoNatureTextColor[]                      = _("{COLOR DYNAMIC_
 static u8 sMemoEffectBuffer[300];
 static u8 sDynamicNatureDescriptionBuffer[300]; // Holds dynamic Nature descriptions and current boost percentages.
 static const u8 sMemoMiscTextColor[]                        = _("{COLOR WHITE}{SHADOW DARK_GRAY}");
+static const u8 sText_ChangeAbility[]                       = _("{START_BUTTON} CHANGE");
 static const u8 sStatsNonHPLayout[]                         = _("{DYNAMIC 0}\n{DYNAMIC 1}\n{DYNAMIC 2}\n{DYNAMIC 3}\n{DYNAMIC 4}");
 static const u8 sMovesPPLayout[]                            = _("{PP}{CLEAR_TO 31}{DYNAMIC 0}/{DYNAMIC 1}");
 
@@ -2614,7 +2616,15 @@ static void Task_HandleInput(u8 taskId)
             StopPokemonAnimations();
             PlaySE(SE_SELECT);
             BeginCloseSummaryScreen(taskId);
-        }  
+        }
+        else if (JOY_NEW(START_BUTTON)
+                && sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS
+                && !gMain.inBattle
+                && !sMonSummaryScreen->summary.isEgg)
+        {
+            CycleMonAbility();
+            PlaySE(SE_SELECT);
+        }
         else if (JOY_NEW(START_BUTTON)
                 && ShouldShowMoveRelearner()
                 && (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES
@@ -3675,7 +3685,7 @@ static void OverrideHPBarPalette(void)
     }
 }
 
-#define EXP_BAR_TILEMAP_START 0x1F4
+#define EXP_BAR_TILEMAP_START 0x18A
 #define EXP_BAR_TILE_EMPTY    0x2100
 #define EXP_BAR_TILE_FULL     0x2108
 
@@ -4173,7 +4183,14 @@ static void PrintMonOTID(void)
 static void PrintMonAbilityName(void)
 {
     u16 ability = GetAbilityBySpecies(sMonSummaryScreen->summary.species, sMonSummaryScreen->summary.abilityNum);
-    PrintTextOnWindow(AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_ABILITY), gAbilitiesInfo[ability].name, 4, 2, 0, 0);
+    u8 windowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_ABILITY);
+
+    PrintTextOnWindow(windowId, gAbilitiesInfo[ability].name, 4, 2, 0, 0);
+    if (!gMain.inBattle)
+    {
+        u8 x = GetStringRightAlignXOffset(FONT_SHORT, sText_ChangeAbility, WindowWidthPx(windowId) - 4);
+        PrintTextOnWindowWithFont(windowId, sText_ChangeAbility, x, 0, 0, 1, FONT_SMALL_NARROW);
+    }
 }
 
 static void PrintMonAbilityDescription(void)
@@ -4189,6 +4206,30 @@ static void PrintMonAbilityDescription(void)
     sAbilityDescBuffer[0] = EOS;
     AppendWrappedNatureDescription(sAbilityDescBuffer, abilityDesc, FONT_SMALL_NARROW, 188);
     PrintTextOnWindowWithFont(windowId, sAbilityDescBuffer, 4, 15, 1, 0, FONT_SMALL_NARROW);
+}
+
+static void CycleMonAbility(void)
+{
+    struct BoxPokemon *boxMon = GetCurrentSummaryBoxMon();
+    u16 species = sMonSummaryScreen->summary.species;
+    u8 abilityNum = sMonSummaryScreen->summary.abilityNum;
+    u8 windowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_ABILITY);
+
+    for (u32 i = 0; i < NUM_ABILITY_SLOTS; i++)
+    {
+        abilityNum = (abilityNum + 1) % NUM_ABILITY_SLOTS;
+        if (GetSpeciesAbility(species, abilityNum) != ABILITY_NONE)
+            break;
+    }
+
+    SetBoxMonData(boxMon, MON_DATA_ABILITY_NUM, &abilityNum);
+    SetMonData(&sMonSummaryScreen->currentMon, MON_DATA_ABILITY_NUM, &abilityNum);
+    sMonSummaryScreen->summary.abilityNum = abilityNum;
+
+    FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
+    PrintMonAbilityName();
+    PrintMonAbilityDescription();
+    CopyWindowToVram(windowId, COPYWIN_GFX);
 }
 
 static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 fontId, u32 maxWidthPx)

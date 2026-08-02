@@ -9,10 +9,18 @@
 
 enum WildPokemonArea {
     WILD_AREA_LAND,
+    WILD_AREA_SAND,
     WILD_AREA_WATER,
     WILD_AREA_ROCKS,
     WILD_AREA_FISHING,
     WILD_AREA_HIDDEN
+};
+
+enum WildEncounterSubarea
+{
+    ENCOUNTER_SUBAREA_DEFAULT,
+    ENCOUNTER_SUBAREA_NORTH,
+    ENCOUNTER_SUBAREA_SOUTH,
 };
 
 struct WildPokemon
@@ -31,6 +39,7 @@ struct WildPokemonInfo
 struct WildEncounterTypes
 {
     const struct WildPokemonInfo *landMonsInfo;
+    const struct WildPokemonInfo *sandMonsInfo;
     const struct WildPokemonInfo *waterMonsInfo;
     const struct WildPokemonInfo *rockSmashMonsInfo;
     const struct WildPokemonInfo *fishingMonsInfo;
@@ -41,6 +50,7 @@ struct WildPokemonHeader
 {
     u8 mapGroup;
     u8 mapNum;
+    u8 subarea;
     const struct WildEncounterTypes encounterTypes[TIMES_OF_DAY_COUNT];
 };
 
@@ -60,11 +70,13 @@ bool8 SweetScentWildEncounter(void);
 bool8 DoesCurrentMapHaveFishingMons(void);
 #if TESTING
 u32 TestChooseWorldlyWildMonIndex(const struct WildPokemon *wildPokemon, u32 firstSlot, u32 slotCount, const u32 *slotWeights);
+bool32 TestIsWorldlyLeadingParty(void);
 #endif
 void FishingWildEncounter(u8 rod);
 u16 GetLocalWildMon(bool8 *isWaterMon);
 u16 GetLocalWaterMon(void);
 bool8 UpdateRepelCounter(void);
+bool8 IsRepelActive(void);
 bool8 IsWildLevelAllowedByRepel(u8 wildLevel);
 bool8 IsAbilityAllowingEncounter(u8 level);
 bool8 TryDoDoubleWildBattle(void);

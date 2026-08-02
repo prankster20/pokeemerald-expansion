@@ -218,7 +218,7 @@ Music: Aqua
 Double Battle: No
 AI: Check Bad Move
 
-Poochyena
+Skorupi
 Level: 9
 
 === TRAINER_MARCEL ===
@@ -300,7 +300,7 @@ Music: Aqua
 Double Battle: No
 AI: Check Bad Move
 
-Poochyena
+Inkay
 Level: 11
 
 === TRAINER_GRUNT_WEATHER_INST_1 ===
@@ -1911,7 +1911,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon @ Nugget
+Buneary @ Nugget
 Level: 7
 
 === TRAINER_DAPHNE ===
@@ -1966,7 +1966,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon @ Nugget
+Buneary @ Nugget
 Level: 11
 - Tackle
 - Tail Whip
@@ -2007,7 +2007,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Lopunny @ Nugget
 Level: 27
 
 === TRAINER_CINDY_4 ===
@@ -2020,7 +2020,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Lopunny @ Nugget
 Level: 30
 
 === TRAINER_CINDY_5 ===
@@ -2033,7 +2033,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Lopunny @ Nugget
 Level: 33
 
 === TRAINER_CINDY_6 ===
@@ -2046,12 +2046,12 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Lopunny @ Nugget
 Level: 36
-- Fury Swipes
-- Mud Sport
-- Odor Sleuth
-- Sand Attack
+- Return
+- Quick Attack
+- Jump Kick
+- Baby-Doll Eyes
 
 === TRAINER_MELISSA ===
 Name: MELISSA
@@ -2282,7 +2282,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon @ Nugget
+Minccino @ Nugget
 Level: 7
 
 === TRAINER_MOLLIE ===
@@ -2323,7 +2323,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Cinccino @ Nugget
 Level: 27
 
 === TRAINER_WINSTON_3 ===
@@ -2336,7 +2336,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Cinccino @ Nugget
 Level: 30
 
 === TRAINER_WINSTON_4 ===
@@ -2349,7 +2349,7 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Cinccino @ Nugget
 Level: 33
 
 === TRAINER_WINSTON_5 ===
@@ -2362,12 +2362,12 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Linoone @ Nugget
+Cinccino @ Nugget
 Level: 36
-- Fury Swipes
-- Mud Sport
-- Odor Sleuth
-- Sand Attack
+- Tail Slap
+- Bullet Seed
+- Rock Blast
+- Sing
 
 === TRAINER_STEVE_1 ===
 Name: STEVE
@@ -4721,7 +4721,7 @@ Music: Girl
 Double Battle: No
 AI: Check Bad Move
 
-Shroomish
+Petilil
 Level: 9
 
 === TRAINER_GEORGIA ===
@@ -4748,10 +4748,10 @@ Music: Girl
 Double Battle: No
 AI: Check Bad Move
 
-Shroomish
+Petilil
 Level: 26
 
-Whismur
+Drifloon
 Level: 26
 
 === TRAINER_KAREN_3 ===
@@ -4763,10 +4763,10 @@ Music: Girl
 Double Battle: No
 AI: Check Bad Move
 
-Shroomish
+Lilligant
 Level: 29
 
-Loudred
+Drifloon
 Level: 29
 
 === TRAINER_KAREN_4 ===
@@ -4778,10 +4778,10 @@ Music: Girl
 Double Battle: No
 AI: Check Bad Move
 
-Breloom
+Lilligant
 Level: 32
 
-Loudred
+Drifblim
 Level: 32
 
 === TRAINER_KAREN_5 ===
@@ -4793,10 +4793,10 @@ Music: Girl
 Double Battle: No
 AI: Check Bad Move
 
-Breloom
+Lilligant
 Level: 35
 
-Exploud
+Drifblim
 Level: 35
 
 === TRAINER_KATE_AND_JOY ===
@@ -5351,7 +5351,7 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Poochyena
+Sentret
 Level: 5
 
 === TRAINER_BILLY ===
@@ -5363,10 +5363,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon
+Buneary
 Level: 5
 
-Seedot
+Litleo
 Level: 7
 
 === TRAINER_JOSH ===
@@ -5406,7 +5406,7 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Machop
+Stufful
 Level: 9
 
 === TRAINER_BEN ===
@@ -5513,7 +5513,7 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Mightyena
+Furret
 Level: 27
 
 === TRAINER_CALVIN_3 ===
@@ -5525,10 +5525,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Swellow
+Fletchinder
 Level: 28
 
-Mightyena
+Furret
 Level: 30
 
 === TRAINER_CALVIN_4 ===
@@ -5540,13 +5540,13 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Swellow
+Talonflame
 Level: 31
 
-Linoone
+Furret
 Level: 29
 
-Mightyena
+Pyroar
 Level: 33
 
 === TRAINER_CALVIN_5 ===
@@ -5558,13 +5558,13 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Swellow
+Talonflame
 Level: 34
 
-Linoone
+Furret
 Level: 32
 
-Mightyena
+Pyroar
 Level: 36
 
 === TRAINER_EDDIE ===
@@ -5591,10 +5591,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon
+Mareep
 Level: 4
 
-Taillow
+Fletchling
 Level: 3
 
 === TRAINER_TIMMY ===
@@ -5692,10 +5692,10 @@ Music: Hiker
 Double Battle: No
 AI: Check Bad Move
 
-Magikarp
+Finneon
 Level: 5
 
-Magikarp
+Dewpider
 Level: 6
 
 Magikarp
@@ -7907,10 +7907,10 @@ Music: Twins
 Double Battle: Yes
 AI: Check Bad Move
 
-Seedot
+Tandemaus
 Level: 6
 
-Lotad
+Tandemaus
 Level: 6
 
 === TRAINER_MIU_AND_YUKI ===
@@ -9728,7 +9728,7 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Lotad
+Ducklett
 Level: 13
 
 Torchic
@@ -9743,7 +9743,7 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Wingull
+Litleo
 Level: 13
 
 Treecko
@@ -9837,7 +9837,7 @@ Music: Male
 Double Battle: No
 AI: Basic Trainer
 
-Slugma
+Petilil
 Level: 13
 
 Mudkip
@@ -9852,7 +9852,7 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move / Try To Faint / Force Setup First Turn
 
-Wingull
+Litleo
 Level: 13
 
 Treecko
@@ -9905,10 +9905,10 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon
+Minccino
 Level: 4
 
-Shroomish
+Cutiefly
 Level: 4
 
 === TRAINER_HALEY_1 ===
@@ -9920,10 +9920,10 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Lotad
+Ducklett
 Level: 6
 
-Shroomish
+Wattrel
 Level: 6
 
 === TRAINER_JANICE ===
@@ -9935,7 +9935,7 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Marill
+Tinkatink
 Level: 9
 
 === TRAINER_VIVI ===
@@ -9965,10 +9965,10 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Lombre
+Swanna
 Level: 26
 
-Shroomish
+Kilowattrel
 Level: 26
 
 === TRAINER_HALEY_3 ===
@@ -9980,10 +9980,10 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Lombre
+Swanna
 Level: 29
 
-Breloom
+Kilowattrel
 Level: 29
 
 === TRAINER_HALEY_4 ===
@@ -9995,10 +9995,10 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Lombre
+Swanna
 Level: 32
 
-Breloom
+Kilowattrel
 Level: 32
 
 === TRAINER_HALEY_5 ===
@@ -10010,13 +10010,13 @@ Music: Female
 Double Battle: No
 AI: Check Bad Move
 
-Swellow
+Lumineon
 Level: 34
 
-Lombre
+Swanna
 Level: 34
 
-Breloom
+Kilowattrel
 Level: 34
 
 === TRAINER_SALLY ===
@@ -10085,10 +10085,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Wurmple
+Blipbug
 Level: 4
 
-Wurmple
+Nymble
 Level: 4
 
 === TRAINER_LYLE ===
@@ -10100,16 +10100,16 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Wurmple
+Sewaddle
 Level: 3
 
-Wurmple
+Cutiefly
 Level: 3
 
-Wurmple
+Combee
 Level: 3
 
-Wurmple
+Paras
 Level: 3
 
 === TRAINER_JOSE ===
@@ -10121,10 +10121,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Wurmple
+Nymble
 Level: 8
 
-Nincada
+Blipbug
 Level: 8
 
 === TRAINER_DOUG ===
@@ -10178,10 +10178,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Nincada
+Nymble
 Level: 6
 
-Nincada
+Blipbug
 Level: 6
 
 === TRAINER_JAMES_2 ===
@@ -10193,7 +10193,7 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Ninjask
+Lokix
 Level: 27
 
 === TRAINER_JAMES_3 ===
@@ -10205,10 +10205,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Dustox
+Orbeetle
 Level: 29
 
-Ninjask
+Lokix
 Level: 29
 
 === TRAINER_JAMES_4 ===
@@ -10220,13 +10220,13 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Surskit
+Dewpider
 Level: 31
 
-Dustox
+Orbeetle
 Level: 31
 
-Ninjask
+Lokix
 Level: 31
 
 === TRAINER_JAMES_5 ===
@@ -10238,16 +10238,16 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Surskit
+Dewpider
 Level: 33
 
-Ninjask
+Lokix
 Level: 33
 
-Dustox
+Orbeetle
 Level: 33
 
-Ninjask
+Araquanid
 Level: 33
 
 === TRAINER_BRICE ===
@@ -10340,7 +10340,7 @@ Music: Hiker
 Double Battle: No
 AI: Check Bad Move
 
-Geodude
+Roggenrola
 Level: 8
 
 === TRAINER_ERIC ===
@@ -10400,13 +10400,13 @@ Music: Hiker
 Double Battle: No
 AI: Check Bad Move
 
-Geodude
+Roggenrola
 Level: 16
 
-Geodude
+Carbink
 Level: 16
 
-Machop
+Mankey
 Level: 16
 
 === TRAINER_TRENT_2 ===
@@ -11575,10 +11575,10 @@ Music: Rich
 Double Battle: No
 AI: Check Bad Move
 
-Zigzagoon @ Nugget
+Litleo @ Nugget
 Level: 8
 
-Poochyena
+Pancham
 Level: 8
 
 === TRAINER_SARAH ===
@@ -11591,10 +11591,10 @@ Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
-Lotad
+Buneary
 Level: 8
 
-Zigzagoon @ Nugget
+Minccino @ Nugget
 Level: 8
 
 === TRAINER_DARIAN ===
@@ -11606,7 +11606,7 @@ Music: Hiker
 Double Battle: No
 AI: Check Bad Move
 
-Magikarp
+Dewpider
 Level: 9
 
 === TRAINER_HAILEY ===
@@ -12398,10 +12398,10 @@ Music: Hiker
 Double Battle: No
 AI: Check Bad Move
 
-Geodude
+Roggenrola
 Level: 8
 
-Geodude
+Carbink
 Level: 8
 
 === TRAINER_JOHNSON ===
@@ -12413,10 +12413,10 @@ Music: Male
 Double Battle: No
 AI: Check Bad Move
 
-Shroomish
+Toxel
 Level: 8
 
-Lotad
+Stufful
 Level: 8
 
 === TRAINER_MELINA ===
@@ -12635,7 +12635,7 @@ Music: Female
 Double Battle: No
 AI: Basic Trainer
 
-Lotad
+Ducklett
 Level: 13
 
 Torchic
@@ -12650,7 +12650,7 @@ Music: Female
 Double Battle: No
 AI: Basic Trainer
 
-Torkoal
+Petilil
 Level: 13
 
 Mudkip

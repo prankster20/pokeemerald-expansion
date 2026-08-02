@@ -819,7 +819,127 @@ const u8 *GetItemName(enum Item itemId)
 
 u32 GetItemPrice(enum Item itemId)
 {
-    return gItemsInfo[SanitizeItemId(itemId)].price;
+    itemId = SanitizeItemId(itemId);
+
+    // Second Nature's compact held-item economy. Keeping the balancing table
+    // here makes later playtest adjustments independent of generation-price
+    // compatibility branches in data/items.h.
+    switch (itemId)
+    {
+    case ITEM_ABSORB_BULB:
+    case ITEM_ADRENALINE_ORB:
+    case ITEM_ASSAULT_VEST:
+    case ITEM_CELL_BATTERY:
+    case ITEM_LUMINOUS_MOSS:
+    case ITEM_SNOWBALL:
+    case ITEM_WEAKNESS_POLICY:
+    case ITEM_BLACK_BELT:
+    case ITEM_BLACK_GLASSES:
+    case ITEM_CHARCOAL:
+    case ITEM_DRAGON_FANG:
+    case ITEM_FAIRY_FEATHER:
+    case ITEM_HARD_STONE:
+    case ITEM_MAGNET:
+    case ITEM_METAL_COAT:
+    case ITEM_MIRACLE_SEED:
+    case ITEM_MYSTIC_WATER:
+    case ITEM_NEVER_MELT_ICE:
+    case ITEM_POISON_BARB:
+    case ITEM_SHARP_BEAK:
+    case ITEM_SILK_SCARF:
+    case ITEM_SILVER_POWDER:
+    case ITEM_SOFT_SAND:
+    case ITEM_SPELL_TAG:
+    case ITEM_TWISTED_SPOON:
+        return 1000;
+    case ITEM_BRIGHT_POWDER:
+    case ITEM_FOCUS_BAND:
+    case ITEM_FULL_INCENSE:
+    case ITEM_KINGS_ROCK:
+    case ITEM_LAX_INCENSE:
+    case ITEM_MENTAL_HERB:
+    case ITEM_QUICK_CLAW:
+    case ITEM_RED_CARD:
+    case ITEM_WHITE_HERB:
+        return 2000;
+    case ITEM_BLUNDER_POLICY:
+    case ITEM_EJECT_PACK:
+    case ITEM_HEAVY_DUTY_BOOTS:
+    case ITEM_PROTECTIVE_PADS:
+    case ITEM_ROOM_SERVICE:
+    case ITEM_TERRAIN_EXTENDER:
+    case ITEM_ELECTRIC_SEED:
+    case ITEM_GRASSY_SEED:
+    case ITEM_MISTY_SEED:
+    case ITEM_PSYCHIC_SEED:
+    case ITEM_THROAT_SPRAY:
+    case ITEM_UTILITY_UMBRELLA:
+    case ITEM_NORMAL_GEM:
+    case ITEM_FIRE_GEM:
+    case ITEM_WATER_GEM:
+    case ITEM_ELECTRIC_GEM:
+    case ITEM_GRASS_GEM:
+    case ITEM_ICE_GEM:
+    case ITEM_FIGHTING_GEM:
+    case ITEM_POISON_GEM:
+    case ITEM_GROUND_GEM:
+    case ITEM_FLYING_GEM:
+    case ITEM_PSYCHIC_GEM:
+    case ITEM_BUG_GEM:
+    case ITEM_ROCK_GEM:
+    case ITEM_GHOST_GEM:
+    case ITEM_DRAGON_GEM:
+    case ITEM_DARK_GEM:
+    case ITEM_STEEL_GEM:
+    case ITEM_FAIRY_GEM:
+        return 4000;
+    case ITEM_AIR_BALLOON:
+    case ITEM_EJECT_BUTTON:
+    case ITEM_FLAME_ORB:
+    case ITEM_TOXIC_ORB:
+    case ITEM_DAMP_ROCK:
+    case ITEM_HEAT_ROCK:
+    case ITEM_ICY_ROCK:
+    case ITEM_SMOOTH_ROCK:
+    case ITEM_MUSCLE_BAND:
+    case ITEM_WISE_GLASSES:
+    case ITEM_SCOPE_LENS:
+    case ITEM_RAZOR_CLAW:
+    case ITEM_RAZOR_FANG:
+    case ITEM_WIDE_LENS:
+    case ITEM_ZOOM_LENS:
+        return 5000;
+    case ITEM_BIG_ROOT:
+    case ITEM_BINDING_BAND:
+    case ITEM_COVERT_CLOAK:
+    case ITEM_EXPERT_BELT:
+    case ITEM_IRON_BALL:
+    case ITEM_LAGGING_TAIL:
+    case ITEM_LIGHT_CLAY:
+    case ITEM_LOADED_DICE:
+    case ITEM_METRONOME:
+    case ITEM_MIRROR_HERB:
+    case ITEM_POWER_HERB:
+    case ITEM_SAFETY_GOGGLES:
+    case ITEM_SHED_SHELL:
+    case ITEM_SHELL_BELL:
+        return 8000;
+    case ITEM_CHOICE_BAND:
+    case ITEM_CHOICE_SCARF:
+    case ITEM_CHOICE_SPECS:
+    case ITEM_CLEAR_AMULET:
+    case ITEM_DESTINY_KNOT:
+    case ITEM_LEFTOVERS:
+    case ITEM_LIFE_ORB:
+    case ITEM_ROCKY_HELMET:
+        return 10000;
+    case ITEM_ABILITY_SHIELD:
+    case ITEM_EVIOLITE:
+    case ITEM_FOCUS_SASH:
+        return 15000;
+    default:
+        return gItemsInfo[itemId].price;
+    }
 }
 
 static bool32 DoesItemHavePluralName(enum Item itemId)

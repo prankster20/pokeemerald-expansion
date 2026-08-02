@@ -1059,6 +1059,17 @@ enum __attribute__((packed)) Item
     ITEM_RUSTED_BOTTLE_CAP = 877,
     ITEM_DAYLIGHT_SAVER = 878,
 
+    // Scrounger junk: functional bootlegs of premium held items.
+    ITEM_RUBBER_BAND = 879,
+    ITEM_READING_GLASSES = 880,
+    ITEM_ROLLER_SKATES = 881,
+    ITEM_CHEWED_ROOT = 882,
+    ITEM_GLASS_MARBLE = 883,
+    ITEM_DENTED_HELMET = 884,
+    ITEM_TRAINING_PEBBLE = 885,
+    ITEM_ODD_BELT = 886,
+    ITEM_INFINITE_REPEL = 887,
+
     ITEMS_COUNT,
     ITEM_FIELD_ARROW = ITEMS_COUNT,
 };

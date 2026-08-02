@@ -27,6 +27,7 @@
 #include "constants/region_map_sections.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#include "constants/wild_encounter.h"
 #include "config/pokedex_plus_hgss.h"
 
 // There are two types of indicators for the area screen to show where a Pokémon can occur:
@@ -440,6 +441,8 @@ static bool8 MapHasSpecies(const struct WildEncounterTypes *info, u32 headerSect
     }
 
     if (MonListHasSpecies(info->landMonsInfo, species, LAND_WILD_COUNT))
+        return TRUE;
+    if (MonListHasSpecies(info->sandMonsInfo, species, SAND_WILD_COUNT))
         return TRUE;
     if (MonListHasSpecies(info->waterMonsInfo, species, WATER_WILD_COUNT))
         return TRUE;

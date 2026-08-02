@@ -2977,9 +2977,19 @@ static void SetPartyMonSelectionActions(struct Pokemon *mons, u8 slotId, u8 acti
     }
 }
 
+static u8 GetNaturePartyMenuAction(u32 nature)
+{
+    if (nature == NATURE_CHARITABLE)
+        return MENU_CARE_PACKAGE;
+    if (nature == NATURE_WAYFARING)
+        return MENU_HEAD_HOME;
+    return 0xFF;
+}
+
 static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
 {
     u8 i, j;
+    u8 natureAction;
 
     sPartyMenuInternal->numActions = 0;
     AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_SUMMARY);
@@ -2999,15 +3009,9 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
 
     // --- Custom Archetype natures: Charitable & Wayfaring ---
     // These grant overworld actions by nature, not by knowing a move.
-    switch (GetMonData(&mons[slotId], MON_DATA_HIDDEN_NATURE))
-    {
-    case NATURE_CHARITABLE:
-        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_CARE_PACKAGE);
-        break;
-    case NATURE_WAYFARING:
-        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_HEAD_HOME);
-        break;
-    }
+    natureAction = GetNaturePartyMenuAction(GetMonData(&mons[slotId], MON_DATA_HIDDEN_NATURE));
+    if (natureAction != 0xFF)
+        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, natureAction);
 
     if (!InBattlePike())
     {
@@ -3027,6 +3031,18 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
     if (sPartyMenuInternal->numActions < 8)
         AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_CANCEL1);
 }
+
+#if TESTING
+bool32 TestNatureHasCarePackageAction(u32 nature)
+{
+    return GetNaturePartyMenuAction(nature) == MENU_CARE_PACKAGE;
+}
+
+bool32 TestNatureHasHeadHomeAction(u32 nature)
+{
+    return GetNaturePartyMenuAction(nature) == MENU_HEAD_HOME;
+}
+#endif
 
 static u8 GetPartyMenuActionsType(struct Pokemon *mon)
 {

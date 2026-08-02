@@ -953,6 +953,13 @@ static u32 GetRelearnerLevelUpMoves(struct BoxPokemon *mon, u16 *moves)
     return numMoves;
 }
 
+#if TESTING
+u32 TestGetRelearnerLevelUpMoves(struct BoxPokemon *mon, u16 *moves)
+{
+    return GetRelearnerLevelUpMoves(mon, moves);
+}
+#endif
+
 static u32 GetRelearnerEggMoves(struct BoxPokemon *mon, u16 *moves)
 {
     enum Species species = GetBoxMonData(mon, MON_DATA_SPECIES);

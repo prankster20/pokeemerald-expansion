@@ -50,6 +50,21 @@ SINGLE_BATTLE_TEST("pranks Anxious moves first at half HP due to +20% Speed")
     }
 }
 
+SINGLE_BATTLE_TEST("pranks Anxious has unmodified Speed between full and half HP")
+{
+    GIVEN {
+        PLAYER(SPECIES_MIENFOO) { Speed(100); MaxHP(100); HP(75); }
+        OPPONENT(SPECIES_WOBBUFFET) { Speed(95); Moves(MOVE_TACKLE); }
+        u32 nature = NATURE_ANXIOUS;
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+    } WHEN {
+        TURN { MOVE(player, MOVE_CELEBRATE); MOVE(opponent, MOVE_TACKLE); }
+    } SCENE {
+        MESSAGE("Mienfoo used Celebrate!");
+        MESSAGE("The opposing Wobbuffet used Tackle!");
+    }
+}
+
 // ===== DIPLOMATIC =====
 // No Pokémon can land critical hits while a Diplomatic mon is on the field.
 // Overrides even always-crit moves like Storm Throw.
@@ -151,5 +166,26 @@ SINGLE_BATTLE_TEST("pranks Old-Fashioned does not change Fire-type moves (Specia
         HP_BAR(opponent, captureDamage: &results[i].damage);
     } FINALLY {
         EXPECT_EQ(results[0].damage, results[1].damage);
+    }
+}
+
+SINGLE_BATTLE_TEST("pranks Old-Fashioned treats every pre-Fairy physical type as physical", s16 damage)
+{
+    enum Move move;
+    PARAMETRIZE { move = MOVE_BITE; }
+    PARAMETRIZE { move = MOVE_SHADOW_PUNCH; }
+    PARAMETRIZE { move = MOVE_SLUDGE; }
+    GIVEN {
+        PLAYER(SPECIES_MIENFOO) { Level(50); Attack(200); SpAttack(1); }
+        OPPONENT(SPECIES_WOBBUFFET) { Level(50); Defense(100); SpDefense(100); MaxHP(999); HP(999); }
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_FASHIONED});
+    } WHEN {
+        TURN { MOVE(player, move); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_GT(results[0].damage, 1);
+        EXPECT_GT(results[1].damage, 1);
+        EXPECT_GT(results[2].damage, 1);
     }
 }

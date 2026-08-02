@@ -7134,7 +7134,7 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
 
     // --- Custom Archetype nature: Shortsighted ---
     // Deals 20% more damage on the user's first turn on the field.
-    if (HasNature(battlerAtk, NATURE_SHORTSIGHTED) && BattlerJustSwitchedIn(battlerAtk))
+    if (HasNature(battlerAtk, NATURE_SHORTSIGHTED) && IsBattlersFirstTurn(battlerAtk))
         modifier = uq4_12_multiply(modifier, UQ_4_12(1.2));
 
     // --- Custom Archetype nature: Bad-Tempered ---
@@ -7491,11 +7491,15 @@ static inline u32 CalcAttackStat(struct DamageContext *ctx)
         break;
     case HOLD_EFFECT_CHOICE_BAND:
         if (IsBattleMovePhysical(move) && GetActiveGimmick(battlerAtk) != GIMMICK_DYNAMAX)
-            modifier = uq4_12_multiply_half_down(modifier, UQ_4_12(1.5));
+            modifier = uq4_12_multiply_half_down(
+                modifier,
+                uq4_12_add(UQ_4_12(1.0), PercentToUQ4_12(GetBattlerHoldEffectParam(battlerAtk))));
         break;
     case HOLD_EFFECT_CHOICE_SPECS:
         if (IsBattleMoveSpecial(move) && GetActiveGimmick(battlerAtk) != GIMMICK_DYNAMAX)
-            modifier = uq4_12_multiply_half_down(modifier, UQ_4_12(1.5));
+            modifier = uq4_12_multiply_half_down(
+                modifier,
+                uq4_12_add(UQ_4_12(1.0), PercentToUQ4_12(GetBattlerHoldEffectParam(battlerAtk))));
         break;
     default:
         break;
@@ -7732,7 +7736,9 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
             if (gBattleMons[battlerDef].volatiles.transformed && gBattleMons[battlerDef].volatiles.transformedMonSpecies != SPECIES_NONE)
                 species = gBattleMons[battlerDef].volatiles.transformedMonSpecies;
             if (CanEvolve(species))
-                modifier = uq4_12_multiply_half_down(modifier, UQ_4_12(1.5));
+                modifier = uq4_12_multiply_half_down(
+                    modifier,
+                    uq4_12_add(UQ_4_12(1.0), PercentToUQ4_12(GetBattlerHoldEffectParam(battlerDef))));
         }
         break;
     case HOLD_EFFECT_ASSAULT_VEST:
@@ -8075,10 +8081,10 @@ static inline uq4_12_t GetAttackerItemsModifier(enum BattlerId battlerAtk, uq4_1
         break;
     case HOLD_EFFECT_EXPERT_BELT:
         if (typeEffectivenessModifier >= UQ_4_12(2.0))
-            return UQ_4_12(1.2);
+            return uq4_12_add(UQ_4_12(1.0), PercentToUQ4_12(GetBattlerHoldEffectParam(battlerAtk)));
         break;
     case HOLD_EFFECT_LIFE_ORB:
-        return UQ_4_12_FLOORED(1.3);
+        return uq4_12_add(UQ_4_12(1.0), PercentToUQ4_12_Floored(GetBattlerHoldEffectParam(battlerAtk)));
         break;
     default:
         break;

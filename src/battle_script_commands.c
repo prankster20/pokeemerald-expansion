@@ -6243,7 +6243,7 @@ static void Cmd_getmoneyreward(void)
             money += GetTrainerMoneyToGive(TRAINER_BATTLE_PARAM.opponentB);
 
         // --- Custom Archetype nature: Greedy ---
-        // +10% more money from battles.
+        // +5% more money from battles.
         for (enum BattlerId i = 0; i < gBattlersCount; i++)
         {
             if (IsOnPlayerSide(i) && IsBattlerAlive(i) && HasNature(i, NATURE_GREEDY))

@@ -8,4 +8,8 @@ void CreateDecorationShop1Menu(const u16 *itemsForSale);
 void CreateDecorationShop2Menu(const u16 *itemsForSale);
 void CB2_ExitSellMenu(void);
 
+#if TESTING
+u32 TestGetFrivolousDiscountPrice(enum Item item);
+#endif
+
 #endif // GUARD_SHOP_H

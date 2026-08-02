@@ -2795,6 +2795,176 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_NSolarizer,
     },
 
+    [ITEM_RUBBER_BAND] =
+    {
+        .name = ITEM_NAME("Rubber Band"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_CHOICE_BAND,
+        .holdEffectParam = 20,
+        .description = COMPOUND_STRING(
+            "A stretched-out band\n"
+            "found with great pride.\n"
+            "Boosts Attack by 20%."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_ChoiceBand,
+        .iconPalette = gItemIconPalette_ChoiceBand,
+    },
+
+    [ITEM_READING_GLASSES] =
+    {
+        .name = ITEM_NAME("Reading Glasses"),
+        .pluralName = ITEM_PLURAL_NAME("Reading Glasses"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_CHOICE_SPECS,
+        .holdEffectParam = 20,
+        .description = COMPOUND_STRING(
+            "The lenses are not the\n"
+            "same strength. Boosts\n"
+            "Sp. Atk by 20%."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_ChoiceSpecs,
+        .iconPalette = gItemIconPalette_ChoiceSpecs,
+    },
+
+    [ITEM_ROLLER_SKATES] =
+    {
+        .name = ITEM_NAME("Roller Skates"),
+        .pluralName = ITEM_PLURAL_NAME("Roller Skates"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_CHOICE_SCARF,
+        .holdEffectParam = 20,
+        .description = COMPOUND_STRING(
+            "Only three wheels are\n"
+            "left. Boosts Speed by\n"
+            "20%, but locks moves."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_ChoiceScarf,
+        .iconPalette = gItemIconPalette_ChoiceScarf,
+    },
+
+    [ITEM_CHEWED_ROOT] =
+    {
+        .name = ITEM_NAME("Chewed Root"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_LEFTOVERS,
+        .holdEffectParam = 32,
+        .description = COMPOUND_STRING(
+            "Something already ate\n"
+            "most of it. Restores\n"
+            "1/32 HP each turn."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Leftovers,
+        .iconPalette = gItemIconPalette_Leftovers,
+    },
+
+    [ITEM_GLASS_MARBLE] =
+    {
+        .name = ITEM_NAME("Glass Marble"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_LIFE_ORB,
+        .holdEffectParam = 10,
+        .description = COMPOUND_STRING(
+            "A suspiciously warm\n"
+            "marble. Boosts damage\n"
+            "10%, but costs 1/20 HP."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_LifeOrb,
+        .iconPalette = gItemIconPalette_LifeOrb,
+    },
+
+    [ITEM_DENTED_HELMET] =
+    {
+        .name = ITEM_NAME("Dented Helmet"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_ROCKY_HELMET,
+        .holdEffectParam = 12,
+        .description = COMPOUND_STRING(
+            "It has already lost a\n"
+            "fight. Contact damages\n"
+            "the attacker by 1/12."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_RockyHelmet,
+        .iconPalette = gItemIconPalette_RockyHelmet,
+    },
+
+    [ITEM_TRAINING_PEBBLE] =
+    {
+        .name = ITEM_NAME("Training Pebble"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_EVIOLITE,
+        .holdEffectParam = 25,
+        .description = COMPOUND_STRING(
+            "A very motivational\n"
+            "rock. Raises defenses\n"
+            "of unevolved Pokémon."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Eviolite,
+        .iconPalette = gItemIconPalette_Eviolite,
+    },
+
+    [ITEM_ODD_BELT] =
+    {
+        .name = ITEM_NAME("Odd Belt"),
+        .price = 500,
+        .holdEffect = HOLD_EFFECT_EXPERT_BELT,
+        .holdEffectParam = 10,
+        .description = COMPOUND_STRING(
+            "Nobody knows what it\n"
+            "fastens. Boosts super\n"
+            "effective moves 10%."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .flingPower = 10,
+        .iconPic = gItemIcon_ExpertBelt,
+        .iconPalette = gItemIconPalette_ExpertBelt,
+    },
+
+    [ITEM_INFINITE_REPEL] =
+    {
+        .name = ITEM_NAME("Infinite Repel"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "A powerful repellant\n"
+            "that keeps weak\n"
+            "wild Pokémon away."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_InfiniteRepel,
+        .iconPic = gItemIcon_Repel,
+        .iconPalette = gItemIconPalette_MaxRepel,
+    },
+
     [ITEM_NUGGET] =
     {
         .name = ITEM_NAME("Nugget"),
@@ -9304,6 +9474,7 @@ const struct ItemInfo gItemsInfo[] =
         .price = 100,
     #endif
         .holdEffect = HOLD_EFFECT_CHOICE_BAND,
+        .holdEffectParam = 50,
         .description = COMPOUND_STRING(
             "Boosts Attack, but\n"
             "allows the use of\n"
@@ -9329,6 +9500,7 @@ const struct ItemInfo gItemsInfo[] =
         .price = 100,
     #endif
         .holdEffect = HOLD_EFFECT_CHOICE_SPECS,
+        .holdEffectParam = 50,
         .description = COMPOUND_STRING(
             "Boosts Sp. Atk, but\n"
             "allows the use of\n"
@@ -9354,6 +9526,7 @@ const struct ItemInfo gItemsInfo[] =
         .price = 100,
     #endif
         .holdEffect = HOLD_EFFECT_CHOICE_SCARF,
+        .holdEffectParam = 50,
         .description = COMPOUND_STRING(
             "Boosts Speed, but\n"
             "allows the use of\n"
@@ -10030,7 +10203,7 @@ const struct ItemInfo gItemsInfo[] =
         .price = 200,
     #endif
         .holdEffect = HOLD_EFFECT_LEFTOVERS,
-        .holdEffectParam = 10,
+        .holdEffectParam = 16,
         .description = COMPOUND_STRING(
             "A hold item that\n"
             "gradually restores\n"
@@ -10206,6 +10379,7 @@ const struct ItemInfo gItemsInfo[] =
         .price = 200,
     #endif
         .holdEffect = HOLD_EFFECT_LIFE_ORB,
+        .holdEffectParam = 30,
         .description = COMPOUND_STRING(
             "Boosts move power\n"
             "but holder loses HP\n"
@@ -10617,7 +10791,7 @@ const struct ItemInfo gItemsInfo[] =
         .price = 200,
     #endif
         .holdEffect = HOLD_EFFECT_ROCKY_HELMET,
-        .holdEffectParam = 0,
+        .holdEffectParam = 6,
         .description = COMPOUND_STRING(
             "Hurts the foe if\n"
             "they touch its\n"

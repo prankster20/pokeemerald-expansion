@@ -153,6 +153,8 @@ bool32 SetUpFieldMove_RockClimb(void);
 
 #if TESTING
 s8 Test_UpdatePartySelectionSingleLayout(s8 slotId, s8 movementDir, bool8 chooseHalf, u8 lastSelectedSlot);
+bool32 TestNatureHasCarePackageAction(u32 nature);
+bool32 TestNatureHasHeadHomeAction(u32 nature);
 #endif
 
 #endif // GUARD_PARTY_MENU_H

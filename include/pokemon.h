@@ -762,6 +762,9 @@ u32 GetMonPersonality(enum Species species, u8 gender, u8 nature, u8 unownLetter
 bool32 ComputePlayerShinyOdds(u32 personality, u32 value);
 u32 GetConfiguredShinyOdds(void);
 u32 GetObservantRerolls(u32 observantCount, u32 roll);
+#if TESTING
+u32 TestCountPlayerPartyMonsWithNature(u32 nature);
+#endif
 void CreateMon(struct Pokemon *mon, enum Species species, u8 level, u32 personality, struct OriginalTrainerId);
 void CreateRandomMon(struct Pokemon *mon, enum Species species, u8 level);
 void CreateRandomMonWithIVs(struct Pokemon *mon, enum Species species, u8 level, u8 fixedIv);
@@ -926,6 +929,7 @@ s32 GetPompousWeightPercent(const struct Pokemon *mon); // pranks / jimh
 // pranks / jimh - Custom Archetype nature: Devoted
 u32 GetDevotedBondData(const struct Pokemon *devotedMon, s32 *outBondIndex);
 u32 GetLoyalBoostPercent(u32 level, u32 metLevel);
+s32 ApplyHealingNatureBoostsOverworld(struct Pokemon *mon, s32 healAmount);
 void AdjustFriendship(struct Pokemon *mon, u8 event);
 s32 CalculateFriendshipBonuses(struct Pokemon *mon, s32 modifier, enum HoldEffect itemHoldEffect);
 void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies);

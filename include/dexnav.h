@@ -27,7 +27,8 @@ enum EncounterType
 {
     ENCOUNTER_TYPE_LAND,
     ENCOUNTER_TYPE_WATER,
-    ENCOUNTER_TYPE_HIDDEN // Get from species
+    ENCOUNTER_TYPE_HIDDEN, // Get from species
+    ENCOUNTER_TYPE_SAND,
 };
 
 #define COL_WATER_COUNT         5

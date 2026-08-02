@@ -4857,6 +4857,7 @@ BattleScript_BadDreamsIncrement:
 	jumpifbyteequal sFIXED_ABILITY_POPUP, sZero, BattleScript_BadDreamsEnd
 	destroyabilitypopup
 	pause 15
+	setbyte sFIXED_ABILITY_POPUP, FALSE
 BattleScript_BadDreamsEnd:
 	return
 
@@ -5537,6 +5538,7 @@ BattleScript_CantankerousIncrement:
 	jumpifbyteequal sFIXED_ABILITY_POPUP, sZero, BattleScript_CantankerousEnd
 	destroyabilitypopup
 	pause 15
+	setbyte sFIXED_ABILITY_POPUP, FALSE
 BattleScript_CantankerousEnd:
 	return
 

@@ -7,6 +7,19 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_TACKLE) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
+SINGLE_BATTLE_TEST("pranks Delicate suffers fifty percent more poison damage")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { MaxHP(160); HP(160); Status1(STATUS1_POISON); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_DELICATE});
+    } WHEN {
+        TURN { }
+    } SCENE {
+        HP_BAR(player, damage: 30);
+    }
+}
+
 // --- BENEVOLENT: boosts healing for ALL mons while on field ---
 
 SINGLE_BATTLE_TEST("pranks Benevolent boosts Recover healing by 20% for its user", u16 healAmt)

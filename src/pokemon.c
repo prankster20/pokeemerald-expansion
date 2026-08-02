@@ -3077,8 +3077,15 @@ bool32 DoesBoxMonNatureRefuseHeldItem(struct BoxPokemon *boxMon, enum Item item)
     if (item == ITEM_NONE)
         return FALSE;
 
-    if (nature == NATURE_FRUGAL && GetItemPrice(item) > 5000)
-        return TRUE;
+    if (nature == NATURE_FRUGAL)
+    {
+        u32 price = GetItemPrice(item);
+
+        // Priceless/special items use a catalogue price of zero. Treat them as
+        // outside Frugal's budget rather than accidentally cheaper than junk.
+        if (price == 0 || price > 5000)
+            return TRUE;
+    }
 
     if (nature == NATURE_FASTIDIOUS && IsDirtyHeldItem(item))
         return TRUE;
@@ -7743,6 +7750,13 @@ static u32 CountPlayerPartyMonsWithNature(u32 nature)
 
     return count;
 }
+
+#if TESTING
+u32 TestCountPlayerPartyMonsWithNature(u32 nature)
+{
+    return CountPlayerPartyMonsWithNature(nature);
+}
+#endif
 
 void SetWildMonHeldItem(void)
 {

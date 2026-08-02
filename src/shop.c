@@ -1231,6 +1231,13 @@ static u32 GetFrivolousDiscountPrice(enum Item item)
     return max(1, (price * 2) / 3);
 }
 
+#if TESTING
+u32 TestGetFrivolousDiscountPrice(enum Item item)
+{
+    return GetFrivolousDiscountPrice(item);
+}
+#endif
+
 static void TryDoFrivolousPurchases(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;

@@ -244,7 +244,9 @@ static enum ItemEffect TryRockyHelmet(enum BattlerId battlerDef, enum BattlerId 
      && !CanBattlerAvoidContactEffects(battlerAtk, battlerDef, ability, GetBattlerHoldEffect(battlerAtk), gCurrentMove)
      && !IsAbilityAndRecord(battlerAtk, ability, ABILITY_MAGIC_GUARD))
     {
-        SetPassiveDamageAmount(battlerAtk, GetNonDynamaxMaxHP(battlerAtk) / 6);
+        SetPassiveDamageAmount(
+            battlerAtk,
+            GetNonDynamaxMaxHP(battlerAtk) / max(1, GetItemHoldEffectParam(item)));
         PREPARE_ITEM_BUFFER(gBattleTextBuff1, item);
         gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_HURT_BY_ITEM;
         BattleScriptCall(BattleScript_RockyHelmetActivates);
@@ -555,7 +557,10 @@ static enum ItemEffect TryLifeOrb(enum BattlerId battlerAtk)
      && (IsAnyTargetTurnDamaged(battlerAtk, INCLUDING_SUBSTITUTES) || gBattleScripting.savedDmg > 0)
      && !IsAbilityAndRecord(battlerAtk, GetBattlerAbility(battlerAtk), ABILITY_MAGIC_GUARD))
     {
-        SetPassiveDamageAmount(battlerAtk, GetNonDynamaxMaxHP(battlerAtk) / 10);
+        if (gBattleMons[battlerAtk].item == ITEM_GLASS_MARBLE)
+            SetPassiveDamageAmount(battlerAtk, GetNonDynamaxMaxHP(battlerAtk) / 20);
+        else
+            SetPassiveDamageAmount(battlerAtk, GetNonDynamaxMaxHP(battlerAtk) / 10);
         BattleScriptCall(BattleScript_ItemHurtRet);
         effect = ITEM_HP_CHANGE;
     }
@@ -640,7 +645,7 @@ static enum ItemEffect TryLeftovers(enum BattlerId battler, enum HoldEffect hold
     if (gBattleMons[battler].hp < gBattleMons[battler].maxHP
      && !(B_HEAL_BLOCKING >= GEN_5 && gBattleMons[battler].volatiles.healBlock))
     {
-        s32 healAmount = GetNonDynamaxMaxHP(battler) / 16;
+        s32 healAmount = GetNonDynamaxMaxHP(battler) / max(1, GetBattlerHoldEffectParam(battler));
 
         // --- Custom Archetype nature: Voracious ---
         // Boosts Leftovers by 1.5x (not Black Sludge, which shares this function).

@@ -45,8 +45,10 @@
 #include "task.h"
 #include "text.h"
 #include "vs_seeker.h"
+#include "wild_encounter.h"
 #include "constants/event_bg.h"
 #include "constants/event_objects.h"
+#include "constants/flags.h"
 #include "constants/item_effects.h"
 #include "constants/items.h"
 #include "constants/rtc.h"
@@ -94,6 +96,8 @@ static const u8 sText_ItemFinderNothing[] = _("… … … …Nope!\nThere's no 
 static const u8 sText_CoinCase[] = _("Your COINS:\n{STR_VAR_1}{PAUSE_UNTIL_PRESS}");
 static const u8 sText_DaylightSaverDay[] = _("The DAYLIGHT SAVER turned!\pDaylight returned to HOENN!{PAUSE_UNTIL_PRESS}");
 static const u8 sText_DaylightSaverNight[] = _("The DAYLIGHT SAVER turned!\pNight settled over HOENN!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_RepelCharmOn[] = _("The REPEL CHARM was switched on!\pWeaker wild POKéMON will stay away.{PAUSE_UNTIL_PRESS}");
+static const u8 sText_RepelCharmOff[] = _("The REPEL CHARM was switched off.{PAUSE_UNTIL_PRESS}");
 static const u8 sText_PowderQty[] = _("POWDER QTY: {STR_VAR_1}{PAUSE_UNTIL_PRESS}");
 static const u8 sText_BootedUpTM[] = _("Booted up a TM.");
 static const u8 sText_BootedUpHM[] = _("Booted up an HM.");
@@ -821,6 +825,28 @@ void ItemUseOutOfBattle_DaylightSaver(u8 taskId)
         DisplayItemMessageOnField(taskId, message, Task_CloseDaylightSaverMessage);
 }
 
+void ItemUseOutOfBattle_InfiniteRepel(u8 taskId)
+{
+    const u8 *message;
+
+    if (FlagGet(FLAG_UNUSED_0x8E5))
+    {
+        FlagClear(FLAG_UNUSED_0x8E5);
+        message = sText_RepelCharmOff;
+    }
+    else
+    {
+        FlagSet(FLAG_UNUSED_0x8E5);
+        VarSet(VAR_REPEL_STEP_COUNT, 0);
+        message = sText_RepelCharmOn;
+    }
+
+    if (!gTasks[taskId].tUsingRegisteredKeyItem)
+        DisplayItemMessage(taskId, FONT_NORMAL, message, CloseItemMessage);
+    else
+        DisplayItemMessageOnField(taskId, message, Task_CloseCantUseKeyItemMessage);
+}
+
 void ItemUseOutOfBattle_PowderJar(u8 taskId)
 {
     ConvertIntToDecimalStringN(gStringVar1, GetBerryPowder(), STR_CONV_MODE_LEFT_ALIGN, 5);
@@ -1049,7 +1075,7 @@ static void RemoveUsedItem(void)
 
 void ItemUseOutOfBattle_Repel(u8 taskId)
 {
-    if (REPEL_STEP_COUNT == 0)
+    if (!IsRepelActive())
         gTasks[taskId].func = Task_StartUseRepel;
     else if (CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE)
         DisplayItemMessage(taskId, FONT_NORMAL, gText_RepelEffectsLingered, CloseItemMessage);

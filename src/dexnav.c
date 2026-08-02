@@ -54,7 +54,9 @@
 #include "constants/maps.h"
 #include "constants/field_effects.h"
 #include "constants/items.h"
+#include "constants/metatile_behaviors.h"
 #include "constants/songs.h"
+#include "constants/wild_encounter.h"
 #include "constants/abilities.h"
 #include "constants/rgb.h"
 #include "constants/region_map_sections.h"
@@ -120,6 +122,7 @@ struct DexNavGUI
     u8 state;
     u8 cursorSpriteId;
     enum Species landSpecies[LAND_WILD_COUNT];
+    u8 landSpeciesAreas[LAND_WILD_COUNT];
     enum Species waterSpecies[WATER_WILD_COUNT];
     enum Species hiddenSpecies[HIDDEN_WILD_COUNT];
     u8 cursorRow;
@@ -136,6 +139,11 @@ EWRAM_DATA static struct DexNavSearch *sDexNavSearchDataPtr = NULL;
 EWRAM_DATA static struct DexNavGUI *sDexNavUiDataPtr = NULL;
 EWRAM_DATA static u8 *sBg1TilemapBuffer = NULL;
 EWRAM_DATA enum Species gDexNavSpecies = SPECIES_NONE;
+
+static inline bool32 IsSandEncounterTile(u32 metatileBehavior)
+{
+    return metatileBehavior == MB_SAND;
+}
 
 //// Function Declarations
 //GUI
@@ -631,7 +639,11 @@ static bool8 DexNavPickTile(enum EncounterType environment, u8 areaX, u8 areaY, 
             switch (environment)
             {
             case ENCOUNTER_TYPE_LAND:
-                if (MetatileBehavior_IsLandWildEncounter(tileBehaviour))
+            case ENCOUNTER_TYPE_SAND:
+                if ((environment == ENCOUNTER_TYPE_SAND && IsSandEncounterTile(tileBehaviour))
+                 || (environment == ENCOUNTER_TYPE_LAND
+                  && MetatileBehavior_IsLandWildEncounter(tileBehaviour)
+                  && !IsSandEncounterTile(tileBehaviour)))
                 {
                     if (currMapType == MAP_TYPE_UNDERGROUND)
                     {
@@ -705,6 +717,7 @@ static bool8 TryStartHiddenMonFieldEffect(enum EncounterType environment, u8 xSi
         switch (environment)
         {
         case ENCOUNTER_TYPE_LAND:
+        case ENCOUNTER_TYPE_SAND:
             if (currMapType == MAP_TYPE_UNDERGROUND)
             {
                 fldEffId = FLDEFF_CAVE_DUST;
@@ -1490,6 +1503,22 @@ static u8 GetEncounterLevelFromMapData(enum Species species, enum EncounterType 
             }
         }
         break;
+    case ENCOUNTER_TYPE_SAND:
+        timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_SAND);
+        const struct WildPokemonInfo *sandMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].sandMonsInfo;
+
+        if (sandMonsInfo == NULL)
+            return MON_LEVEL_NONEXISTENT;
+
+        for (i = 0; i < SAND_WILD_COUNT; i++)
+        {
+            if (sandMonsInfo->wildPokemon[i].species == species)
+            {
+                min = (min < sandMonsInfo->wildPokemon[i].minLevel) ? min : sandMonsInfo->wildPokemon[i].minLevel;
+                max = (max > sandMonsInfo->wildPokemon[i].maxLevel) ? max : sandMonsInfo->wildPokemon[i].maxLevel;
+            }
+        }
+        break;
     case ENCOUNTER_TYPE_WATER:    //water
         timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_WATER);
         const struct WildPokemonInfo *waterMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo;
@@ -1636,12 +1665,12 @@ static void UpdateCursorPosition(void)
     case ROW_LAND_TOP: //land 1
         x = ROW_LAND_ICON_X + (24 * sDexNavUiDataPtr->cursorCol);
         y = ROW_LAND_TOP_ICON_Y;
-        sDexNavUiDataPtr->environment = ENCOUNTER_TYPE_LAND;
+        sDexNavUiDataPtr->environment = sDexNavUiDataPtr->landSpeciesAreas[sDexNavUiDataPtr->cursorCol];
         break;
     case ROW_LAND_BOT: //land 2
         x = ROW_LAND_ICON_X + (24 * sDexNavUiDataPtr->cursorCol);
         y = ROW_LAND_BOT_ICON_Y;
-        sDexNavUiDataPtr->environment = ENCOUNTER_TYPE_LAND;
+        sDexNavUiDataPtr->environment = sDexNavUiDataPtr->landSpeciesAreas[sDexNavUiDataPtr->cursorCol + COL_LAND_COUNT];
         break;
     case ROW_HIDDEN:
         x = ROW_HIDDEN_ICON_X + (24 * sDexNavUiDataPtr->cursorCol);
@@ -1684,11 +1713,13 @@ static void CreateNoDataIcon(s16 x, s16 y)
 
 static bool8 CapturedAllLandMons(u32 headerId)
 {
-    u16 i, species;
-    int count = 0;
+    u32 i;
+    enum Species species;
+    bool32 foundSpecies = FALSE;
     enum TimeOfDay timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_LAND);
-
     const struct WildPokemonInfo *landMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo;
+    timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_SAND);
+    const struct WildPokemonInfo *sandMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].sandMonsInfo;
 
     if (landMonsInfo != NULL)
     {
@@ -1697,22 +1728,32 @@ static bool8 CapturedAllLandMons(u32 headerId)
             species = landMonsInfo->wildPokemon[i].species;
             if (species != SPECIES_NONE)
             {
+                foundSpecies = TRUE;
                 if (!GetSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_GET_CAUGHT))
-                    break;
-
-                count++;
+                    return FALSE;
             }
         }
-
-        if (i >= LAND_WILD_COUNT && count > 0) //All land mons caught
-            return TRUE;
     }
-    else
+
+    if (sandMonsInfo != NULL)
     {
-        return TRUE;    //technically, no mon data means you caught them all
+        for (i = 0; i < SAND_WILD_COUNT; ++i)
+        {
+            species = sandMonsInfo->wildPokemon[i].species;
+            if (species != SPECIES_NONE)
+            {
+                foundSpecies = TRUE;
+                if (!GetSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_GET_CAUGHT))
+                    return FALSE;
+            }
+        }
     }
 
-    return FALSE;
+    // As before, maps with no land-like encounter tables count as completed.
+    if (landMonsInfo == NULL && sandMonsInfo == NULL)
+        return TRUE;
+
+    return foundSpecies;
 }
 
 //Checks if all Pokemon that can be encountered while surfing have been capture
@@ -1907,6 +1948,8 @@ static void DexNavLoadEncounterData(void)
 
     timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_LAND);
     const struct WildPokemonInfo *landMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].landMonsInfo;
+    timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_SAND);
+    const struct WildPokemonInfo *sandMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].sandMonsInfo;
     timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_WATER);
     const struct WildPokemonInfo *waterMonsInfo = gWildMonHeaders[headerId].encounterTypes[timeOfDay].waterMonsInfo;
     timeOfDay = GetTimeOfDayForEncounters(headerId, WILD_AREA_HIDDEN);
@@ -1914,6 +1957,7 @@ static void DexNavLoadEncounterData(void)
 
     // nop struct data
     memset(sDexNavUiDataPtr->landSpecies, 0, sizeof(sDexNavUiDataPtr->landSpecies));
+    memset(sDexNavUiDataPtr->landSpeciesAreas, ENCOUNTER_TYPE_LAND, sizeof(sDexNavUiDataPtr->landSpeciesAreas));
     memset(sDexNavUiDataPtr->waterSpecies, 0, sizeof(sDexNavUiDataPtr->waterSpecies));
     memset(sDexNavUiDataPtr->hiddenSpecies, 0, sizeof(sDexNavUiDataPtr->hiddenSpecies));
 
@@ -1924,7 +1968,24 @@ static void DexNavLoadEncounterData(void)
         {
             species = landMonsInfo->wildPokemon[i].species;
             if (species != SPECIES_NONE && !SpeciesInArray(species, 0))
+            {
                 sDexNavUiDataPtr->landSpecies[grassIndex++] = landMonsInfo->wildPokemon[i].species;
+            }
+        }
+    }
+
+    // Sand mons share the land rows in the UI, but retain their terrain type
+    // so searches are placed only on MB_SAND tiles.
+    if (sandMonsInfo != NULL && sandMonsInfo->encounterRate != 0)
+    {
+        for (i = 0; i < SAND_WILD_COUNT && grassIndex < LAND_WILD_COUNT; i++)
+        {
+            species = sandMonsInfo->wildPokemon[i].species;
+            if (species != SPECIES_NONE && !SpeciesInArray(species, 0))
+            {
+                sDexNavUiDataPtr->landSpecies[grassIndex] = species;
+                sDexNavUiDataPtr->landSpeciesAreas[grassIndex++] = ENCOUNTER_TYPE_SAND;
+            }
         }
     }
 

@@ -138,6 +138,7 @@ class WildEncounterAssembler:
         self.WriteLine("{", 1)
         self.WriteLine(".mapGroup = MAP_GROUP(MAP_UNDEFINED),", 2)
         self.WriteLine(".mapNum = MAP_NUM(MAP_UNDEFINED),", 2)
+        self.WriteLine(".subarea = ENCOUNTER_SUBAREA_DEFAULT,", 2)
         self.WriteLine(".encounterTypes =", 2)
         self.WriteLine("{", 2)
         for time in self.config.times_of_day:
@@ -174,6 +175,7 @@ class WildEncounterAssembler:
             self.WriteLine("{", 1)
             self.WriteLine(f".mapGroup = {map_group},", 2)
             self.WriteLine(f".mapNum = {map_num},", 2)
+            self.WriteLine(f".subarea = {map_data['subarea']},", 2)
             self.WriteLine(".encounterTypes =", 2)
             self.WriteLine("{", 2)
             for time in self.config.times_of_day:
@@ -235,6 +237,7 @@ class WildEncounterAssembler:
                     headers["data"][shared_label][time] = {}
                 headers["data"][shared_label]["mapGroup"] = map_group
                 headers["data"][shared_label]["mapNum"] = map_num
+                headers["data"][shared_label]["subarea"] = map_encounters.get("subarea", "ENCOUNTER_SUBAREA_DEFAULT")
 
                 version = "EMERALD"
                 if "FireRed" in shared_label:

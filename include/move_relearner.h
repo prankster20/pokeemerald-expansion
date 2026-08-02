@@ -11,6 +11,10 @@ bool32 CanBoxMonRelearnAnyMove(struct BoxPokemon *boxMon);
 bool32 CanBoxMonRelearnMoves(struct BoxPokemon *boxMon, enum MoveRelearnerStates state);
 bool32 HasMoveToRelearn(struct BoxPokemon *boxMon, enum MoveRelearnerStates state);
 
+#if TESTING
+u32 TestGetRelearnerLevelUpMoves(struct BoxPokemon *boxMon, u16 *moves);
+#endif
+
 extern enum MoveRelearnerStates gMoveRelearnerState;
 extern enum RelearnMode gRelearnMode;
 

@@ -34,12 +34,60 @@ WILD_BATTLE_TEST("pranks Ambitious receives Badge Boosts when modern configurati
     }
 }
 
+WILD_BATTLE_TEST("pranks Ambitious receives the Special Attack Badge Boost", s16 damage)
+{
+    u32 nature;
+    PARAMETRIZE { nature = NATURE_HARDY; }
+    PARAMETRIZE { nature = NATURE_AMBITIOUS; }
+    GIVEN {
+        WITH_CONFIG(B_BADGE_BOOST, GEN_LATEST);
+        FlagSet(B_FLAG_BADGE_BOOST_SPATK);
+        PLAYER(SPECIES_MIENFOO) { SpAttack(100); Defense(100); MaxHP(999); HP(999); }
+        OPPONENT(SPECIES_WOBBUFFET) { Attack(100); SpDefense(100); MaxHP(999); HP(999); }
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+    } WHEN {
+        TURN { MOVE(player, MOVE_WATER_GUN); MOVE(opponent, MOVE_TACKLE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+        HP_BAR(player);
+    } FINALLY {
+        EXPECT_MUL_EQ(results[0].damage, Q_4_12(1.1), results[1].damage);
+    }
+}
+
+WILD_BATTLE_TEST("pranks Ambitious receives the Defense Badge Boost", s16 damage)
+{
+    u32 nature;
+    PARAMETRIZE { nature = NATURE_HARDY; }
+    PARAMETRIZE { nature = NATURE_AMBITIOUS; }
+    GIVEN {
+        WITH_CONFIG(B_BADGE_BOOST, GEN_LATEST);
+        FlagSet(B_FLAG_BADGE_BOOST_DEFENSE);
+        PLAYER(SPECIES_MIENFOO) { Defense(100); MaxHP(999); HP(999); }
+        OPPONENT(SPECIES_WOBBUFFET) { Attack(100); }
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_TACKLE); }
+    } SCENE {
+        HP_BAR(player, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_MUL_EQ(results[1].damage, Q_4_12(1.1), results[0].damage);
+    }
+}
+
 TEST("pranks Communal counts shared traits once each and caps its boost at ten percent")
 {
     struct Pokemon party[2] = {0};
 
     CreateNatureMon(&party[0], SPECIES_BULBASAUR, 50, NATURE_COMMUNAL);
     CreateNatureMon(&party[1], SPECIES_BULBASAUR, 50, NATURE_COMMUNAL);
+    for (u32 i = 0; i < ARRAY_COUNT(party); i++)
+    {
+        SetMonMoveSlot(&party[i], MOVE_TACKLE, 0);
+        SetMonMoveSlot(&party[i], MOVE_GROWL, 1);
+        SetMonMoveSlot(&party[i], MOVE_VINE_WHIP, 2);
+        SetMonMoveSlot(&party[i], MOVE_POISON_POWDER, 3);
+    }
 
     EXPECT_EQ(GetCommunalBoostPercent(party, ARRAY_COUNT(party), 0), 10);
     EXPECT_EQ(GetCommunalBoostPercent(NULL, ARRAY_COUNT(party), 0), 0);

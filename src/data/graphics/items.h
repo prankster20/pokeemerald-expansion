@@ -1778,6 +1778,9 @@ const u16 gItemIconPalette_ExpCharm[] = INCGFX_U16("graphics/items/icon_palettes
 const u32 gItemIcon_GlimmeringCharm[] = INCGFX_U32("graphics/items/icons/glimmering_charm.png", ".4bpp.smol");
 const u16 gItemIconPalette_GlimmeringCharm[] = INCGFX_U16("graphics/items/icon_palettes/glimmering_charm.pal", ".gbapal");
 
+const u32 gItemIcon_RepelCharm[] = INCGFX_U32("graphics/items/icons/repel_charm.png", ".4bpp.smol");
+const u16 gItemIconPalette_RepelCharm[] = INCGFX_U16("graphics/items/icon_palettes/repel_charm.pal", ".gbapal");
+
 // Form-changing Key Items
 
 const u32 gItemIcon_RotomCatalog[] = INCGFX_U32("graphics/items/icons/rotom_catalog.png", ".4bpp.smol");
