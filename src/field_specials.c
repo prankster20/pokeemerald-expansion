@@ -88,7 +88,8 @@
 
 bool8 IsPCAutosaveEnabled(void)
 {
-    return gSaveBlock2Ptr->optionsAutosave == OPTIONS_AUTOSAVE_PC;
+    // Keep the old save-field and script hook dormant so autosave can be restored later.
+    return FALSE;
 }
 
 #define ELEVATOR_WINDOW_WIDTH  3

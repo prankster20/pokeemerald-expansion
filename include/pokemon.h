@@ -921,6 +921,7 @@ u16 GetLinkTrainerFlankId(u8 linkPlayerId);
 s32 GetBattlerMultiplayerId(u16 id);
 u8 GetTrainerEncounterMusicId(u16 trainerOpponentId);
 u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality);
+s32 GetNatureStatModifierPercent(u8 nature, enum Stat statIndex, u32 personality);
 ///< Returns Impressionable's party-order stat modifier for this stat, or 0 if inactive.
 s32 GetImpressionableStatBoostPercent(const struct Pokemon *mon, enum Stat stat);
 u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex);

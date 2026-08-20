@@ -16,6 +16,7 @@
 #include "link.h"
 #include "menu.h"
 #include "palette.h"
+#include "pokemon.h"
 #include "recorded_battle.h"
 #include "string_util.h"
 #include "strings.h"
@@ -64,6 +65,28 @@ EWRAM_DATA u16 sBattlerAbilities[MAX_BATTLERS_COUNT] = {0};
 static EWRAM_DATA u16 sBattlerAbilities[MAX_BATTLERS_COUNT] = {0};
 #endif
 EWRAM_DATA struct BattleMsgData *gBattleMsgDataPtr = NULL;
+
+static void GetBattlerNick(enum BattlerId battler, u8 *dst);
+static EWRAM_DATA enum StringID sNatureTitleStringId = 0;
+static const u8 sText_NatureTitleSeparator[] = _(" the ");
+
+static void GetBattlerNickWithNatureTitle(enum BattlerId battler, u8 *dst)
+{
+    u32 nature;
+
+    GetBattlerNick(battler, dst);
+    if (gSaveBlock2Ptr->optionsNatureTitles != OPTIONS_NATURE_TITLES_ON
+     || !BattlerIsPlayer(battler)
+     || (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK)))
+        return;
+
+    nature = GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE);
+    if (nature >= NUM_NATURES || gNaturesInfo[nature].name == NULL)
+        return;
+
+    StringAppend(dst, sText_NatureTitleSeparator);
+    StringAppend(dst, gNaturesInfo[nature].name);
+}
 
 // todo: make some of those names less vague: attacker/target vs pkmn, etc.
 
@@ -2791,7 +2814,9 @@ void BufferStringBattle(enum StringID stringID, enum BattlerId battler)
         break;
     }
 
+    sNatureTitleStringId = stringID;
     BattleStringExpandPlaceholdersToDisplayedString(stringPtr);
+    sNatureTitleStringId = STRINGID_COUNT;
 }
 
 u32 BattleStringExpandPlaceholdersToDisplayedString(const u8 *src)
@@ -3056,7 +3081,7 @@ u32 BattleStringExpandPlaceholders(const u8 *src, u8 *dst, u32 dstSize)
 {
     u32 dstID = 0; // if they used dstID, why not use srcID as well?
     const u8 *toCpy = NULL;
-    u8 text[max(max(max(32, TRAINER_NAME_LENGTH + 1), POKEMON_NAME_LENGTH + 1), ITEM_NAME_LENGTH)];
+    u8 text[max(max(max(40, TRAINER_NAME_LENGTH + 1), POKEMON_NAME_LENGTH + 1), ITEM_NAME_LENGTH)];
     u8 *textStart = &text[0];
     u8 multiplayerId;
     u8 fontId = FONT_NORMAL;
@@ -3099,6 +3124,11 @@ u32 BattleStringExpandPlaceholders(const u8 *src, u8 *dst, u32 dstSize)
                     if (toCpy == NULL)
                         toCpy = gBattleTextBuff1;
                 }
+                if (sNatureTitleStringId == STRINGID_SWITCHINMON && BattlerIsPlayer(gBattleScripting.battler))
+                {
+                    GetBattlerNickWithNatureTitle(gBattleScripting.battler, text);
+                    toCpy = text;
+                }
                 break;
             case B_TXT_BUFF2:
                 if (gBattleTextBuff2[0] == B_BUFF_PLACEHOLDER_BEGIN)
@@ -3132,7 +3162,10 @@ u32 BattleStringExpandPlaceholders(const u8 *src, u8 *dst, u32 dstSize)
                 toCpy = gStringVar3;
                 break;
             case B_TXT_PLAYER_MON1_NAME: // first player poke name
-                GetBattlerNick(GetBattlerAtPosition(B_POSITION_PLAYER_LEFT), text);
+                if (sNatureTitleStringId == STRINGID_INTROSENDOUT)
+                    GetBattlerNickWithNatureTitle(GetBattlerAtPosition(B_POSITION_PLAYER_LEFT), text);
+                else
+                    GetBattlerNick(GetBattlerAtPosition(B_POSITION_PLAYER_LEFT), text);
                 toCpy = text;
                 break;
             case B_TXT_OPPONENT_MON1_NAME: // first enemy poke name
@@ -3140,7 +3173,10 @@ u32 BattleStringExpandPlaceholders(const u8 *src, u8 *dst, u32 dstSize)
                 toCpy = text;
                 break;
             case B_TXT_PLAYER_MON2_NAME: // second player poke name
-                GetBattlerNick(GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT), text);
+                if (sNatureTitleStringId == STRINGID_INTROSENDOUT)
+                    GetBattlerNickWithNatureTitle(GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT), text);
+                else
+                    GetBattlerNick(GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT), text);
                 toCpy = text;
                 break;
             case B_TXT_OPPONENT_MON2_NAME: // second enemy poke name

@@ -545,6 +545,15 @@ bool32 TryRunFromBattle(enum BattlerId battler)
     u8 pyramidMultiplier;
     u8 speedVar;
 
+    // Ordinary wild encounters should never hold the player hostage, regardless
+    // of Speed, trapping effects, or the scripted no-running flag.
+    if (!(gBattleTypeFlags & BATTLE_TYPE_TRAINER))
+    {
+        gCurrentTurnActionNumber = gBattlersCount;
+        gBattleOutcome = B_OUTCOME_RAN;
+        return TRUE;
+    }
+
     // If this flag is set, running will never be successful under any circumstances.
     if (FlagGet(WE_FLAG_NO_RUNNING))
         return effect;

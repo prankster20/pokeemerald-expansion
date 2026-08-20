@@ -532,7 +532,7 @@ static u32 GetWildTableSize(enum WildPokemonArea area)
     return 0;
 }
 
-static u32 GetAveragePlayerPartyLevel(void)
+u32 GetAveragePlayerPartyLevel(void)
 {
     u32 totalLevel = 0;
     u32 monCount = 0;
@@ -550,30 +550,12 @@ static u32 GetAveragePlayerPartyLevel(void)
     return monCount == 0 ? MIN_LEVEL : totalLevel / monCount;
 }
 
-static u32 GetLowestPlayerPartyLevel(void)
-{
-    u32 lowestLevel = MAX_LEVEL;
-    bool32 foundMon = FALSE;
-
-    for (u32 i = 0; i < PARTY_SIZE; i++)
-    {
-        if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) == SPECIES_NONE
-         || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG))
-            continue;
-
-        lowestLevel = min(lowestLevel, GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_LEVEL));
-        foundMon = TRUE;
-    }
-
-    return foundMon ? lowestLevel : MIN_LEVEL;
-}
-
 static s32 GetWildLevelShift(const struct WildPokemon *wildPokemon, u32 wildMonIndex, enum WildPokemonArea area)
 {
-    u32 tableMaxLevel = MIN_LEVEL;
+    u32 tableMinLevel = MAX_LEVEL;
     u32 firstSlot = 0;
     u32 tableSize = GetWildTableSize(area);
-    u32 targetMaxLevel = max(GetAveragePlayerPartyLevel(), 3) - 2;
+    u32 targetMinLevel = max(GetAveragePlayerPartyLevel(), 3) - 2;
 
     // Scale fishing levels only against the slots available to the active rod.
     if (area == WILD_AREA_FISHING)
@@ -596,9 +578,12 @@ static s32 GetWildLevelShift(const struct WildPokemon *wildPokemon, u32 wildMonI
     }
 
     for (u32 i = firstSlot; i < firstSlot + tableSize; i++)
-        tableMaxLevel = max(tableMaxLevel, max(wildPokemon[i].minLevel, wildPokemon[i].maxLevel));
+        tableMinLevel = min(tableMinLevel, min(wildPokemon[i].minLevel, wildPokemon[i].maxLevel));
 
-    return (s32)targetMaxLevel - (s32)tableMaxLevel;
+    // Shift every slot by the same amount, preserving all authored differences.
+    // For example, if a table's lowest level is 2 and the party average is 6,
+    // the target minimum is 4: 2-5 becomes 4-7, while 3-6 becomes 5-8.
+    return (s32)targetMinLevel - (s32)tableMinLevel;
 }
 
 u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, enum WildPokemonArea area)
@@ -608,11 +593,6 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
     u8 range;
     u8 rand;
     s32 levelShift = GetWildLevelShift(wildPokemon, wildMonIndex, area);
-    // Keep this signed: levelShift is frequently negative on early routes.
-    // Mixing that negative value with an unsigned floor promotes it to a huge
-    // positive integer before clamping, which can create level 85-100 encounters.
-    s32 partyLevelFloor = GetLowestPlayerPartyLevel();
-
     if (LURE_STEP_COUNT == 0)
     {
         // Make sure minimum level is less than maximum level
@@ -626,8 +606,8 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
             min = wildPokemon[wildMonIndex].maxLevel;
             max = wildPokemon[wildMonIndex].minLevel;
         }
-        min = min(max(min + levelShift, partyLevelFloor), MAX_LEVEL);
-        max = min(max(max + levelShift, partyLevelFloor), MAX_LEVEL);
+        min = min(max(min + levelShift, MIN_LEVEL), MAX_LEVEL);
+        max = min(max(max + levelShift, MIN_LEVEL), MAX_LEVEL);
         range = max - min + 1;
         rand = Random() % range;
 
@@ -651,9 +631,9 @@ u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, en
         // Looks for the max level of all slots that share the same species as the selected slot.
         max = GetMaxLevelOfSpeciesInWildTable(wildPokemon, wildPokemon[wildMonIndex].species, area);
         if (max > 0)
-            return min(max(max + levelShift + 1, partyLevelFloor), MAX_LEVEL);
+            return min(max(max + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
         else // Failsafe
-            return min(max(wildPokemon[wildMonIndex].maxLevel + levelShift + 1, partyLevelFloor), MAX_LEVEL);
+            return min(max(wildPokemon[wildMonIndex].maxLevel + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
     }
 }
 

@@ -167,7 +167,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7), //32% support >= 50% HP, 32% support < 50% HP
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Cannot suffer stat reductions below -1."),
+        .description = COMPOUND_STRING("Accustomed to hardships, this Pokémon cannot suffer stat reductions below -1."),
     },
     [NATURE_LONELY] =
     {
@@ -973,7 +973,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Loss of turn recovers 1/8 max HP. -10% Speed."),
+        .description = COMPOUND_STRING("Loss of turn recovers 1/8 max HP. Lowers Speed by 10%."),
     },
     [NATURE_LOYAL] =
     {
@@ -1341,7 +1341,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Foes leaving its turf lose 1/16 max HP when switching out."),
+        .description = COMPOUND_STRING("Foes leaving its turf lose 1/12 max HP when switching out."),
     },
     [NATURE_DIPLOMATIC] =
     {
@@ -3290,12 +3290,26 @@ u32 ApplyMintedNature(struct Pokemon *mon, u32 nature)
 
 bool32 RerollMercurialNature(struct Pokemon *mon)
 {
-    if (!GetMonData(mon, MON_DATA_MERCURIAL_NATURE)
-     || GetMonData(mon, MON_DATA_SANITY_IS_EGG)
+    if (GetMonData(mon, MON_DATA_SANITY_IS_EGG)
      || GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE)
         return FALSE;
 
     u32 oldNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    bool8 isMercurial = GetMonData(mon, MON_DATA_MERCURIAL_NATURE);
+
+    // Naturally generated Capricious Pokemon do not pass through
+    // ApplyMintedNature, so older code never set their persistent reroll flag.
+    // Detecting the active Nature here both enables new natural Capricious
+    // Pokemon and repairs existing save files after their next battle.
+    if (oldNature == NATURE_CAPRICIOUS && !isMercurial)
+    {
+        isMercurial = TRUE;
+        SetMonData(mon, MON_DATA_MERCURIAL_NATURE, &isMercurial);
+    }
+
+    if (!isMercurial)
+        return FALSE;
+
     u32 newNature = RollMercurialNature(oldNature);
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
     AdjustPPForSeriousNatureChange(mon, oldNature, newNature);
@@ -6926,72 +6940,60 @@ u8 GetTrainerEncounterMusicId(u16 trainerOpponentId)
         return gTrainers[difficulty][sanitizedTrainerId].encounterMusic;
 }
 
-u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality)
+s32 GetNatureStatModifierPercent(u8 nature, enum Stat statIndex, u32 personality)
 {
     // Don't modify HP, Accuracy, or Evasion by nature
     if (statIndex <= STAT_HP || statIndex > NUM_NATURE_STATS)
-        return stat;
+        return 0;
 
-    // --- Custom Archetype nature: Humble ---
-    // Its five non-HP stats receive a flat 5% boost.
     if (nature == NATURE_HUMBLE)
-        return stat * 105 / 100;
+        return 5;
 
-    // --- Custom Archetype nature: Finicky ---
-    // Trades all held-item effects for a flat 20% Speed boost.
     if (nature == NATURE_FINICKY && statIndex == STAT_SPEED)
-        return stat * 120 / 100;
+        return 20;
 
-    // --- Custom Archetype nature: Vain ---
-    // Its five battle stats are boosted until its vanity is broken in battle.
     if (nature == NATURE_VAIN)
-        return stat * 105 / 100;
+        return 5;
 
-    // --- Custom Archetype nature: Noble ---
-    // Its single-stat boost is 5%, rather than the classic 10%.
     if (nature == NATURE_NOBLE && statIndex == STAT_DEF)
-        return stat * 105 / 100;
+        return 5;
 
-    // --- Custom Archetype nature: Quirky ---
-    // Each non-HP stat gets its own personality-derived boost from 1-5%.
     if (nature == NATURE_QUIRKY)
     {
-        // Isolate this stat's three-bit personality slice before mapping it
-        // to 1-5%. Without the mask, higher slices bleed into lower stats.
         u32 personalitySlice = (personality >> ((statIndex - 1) * 3)) & 0x7;
-        s32 boostPercent = 1 + (personalitySlice % 5);
-        return stat * (100 + boostPercent) / 100;
+        return 1 + (personalitySlice % 5);
     }
 
-    // --- Custom Archetype nature: Stoic ---
-    // -4% Speed (a flat, non-standard percentage, unlike the classic
-    // natures' usual 10% - so this needs its own branch, same as Quirky).
     if (nature == NATURE_STOIC && statIndex == STAT_SPEED)
-        return stat * 95 / 100;
+        return -5;
 
-    // --- Custom Archetype nature: Dreamy ---
     if (nature == NATURE_DREAMY && statIndex == STAT_SPEED)
-        return stat * 90 / 100;
+        return -10;
 
-    // --- Custom Archetype nature: Anxious ---
-    // Summary screen shows the full-HP (-20%) state since that's the
-    // default a fresh mon starts at. In-battle speed is dynamic (battle_main.c).
+    if (nature == NATURE_LAZY && statIndex == STAT_SPEED)
+        return -10;
+
     if (nature == NATURE_ANXIOUS && statIndex == STAT_SPEED)
-        return stat * 80 / 100;
+        return -20;
 
-    // --- Custom Archetype nature: Soft-Hearted ---
-    // Its SpDef bonus is 10%, not the global 15% used by classic Natures.
     if (nature == NATURE_SOFT_HEARTED && statIndex == STAT_SPDEF)
-        return stat * 110 / 100;
+        return 10;
 
     if (gNaturesInfo[nature].statUp == gNaturesInfo[nature].statDown)
-        return stat;
+        return 0;
     else if (statIndex == gNaturesInfo[nature].statUp)
-        return stat * 115 / 100;
+        return 15;
     else if (statIndex == gNaturesInfo[nature].statDown)
-        return stat * 85 / 100;
+        return -15;
     else
-        return stat;
+        return 0;
+}
+
+u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality)
+{
+    s32 modifier = GetNatureStatModifierPercent(nature, statIndex, personality);
+
+    return stat * (100 + modifier) / 100;
 }
 
 static bool32 FindMonInBattleParties(const struct Pokemon *mon, u32 *partyId, u32 *partySlot)

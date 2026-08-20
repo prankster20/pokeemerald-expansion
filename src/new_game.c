@@ -1,4 +1,5 @@
 #include "global.h"
+#include "option_menu.h"
 #include "clock.h"
 #include "new_game.h"
 #include "random.h"
@@ -107,9 +108,11 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsBattleStyle = OPTIONS_BATTLE_STYLE_SET;
     gSaveBlock2Ptr->optionsBattleSceneOff = FALSE;
     gSaveBlock2Ptr->optionsAnnounceNatures = OPTIONS_ANNOUNCE_NATURES_YES;
+    gSaveBlock2Ptr->optionsNatureTitles = OPTIONS_NATURE_TITLES_ON;
     gSaveBlock2Ptr->optionsShinyOdds = OPTIONS_SHINY_ODDS_4096;
     gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
     gSaveBlock2Ptr->optionsLevelCaps = OPTIONS_LEVEL_CAPS_SOFT;
+    gSaveBlock2Ptr->optionsEasierCatch = OPTIONS_EASIER_CATCH_1X;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
 }
 
@@ -223,7 +226,7 @@ void NewGameInitData(void)
         RunScriptImmediately(EventScript_ResetAllMapFlagsFrlg);
     else
         RunScriptImmediately(EventScript_ResetAllMapFlags);
-    FakeRtc_ManuallySetTime(0, DAY_HOUR_BEGIN, 0, 0);
+    FakeRtc_ManuallySetTime(0, DAY_HOUR_BEGIN + 3, 0, 0);
     FlagSet(FLAG_SYS_B_DASH);
     FlagSet(FLAG_RECEIVED_RUNNING_SHOES);
     FlagSet(OW_FLAG_PAUSE_TIME);

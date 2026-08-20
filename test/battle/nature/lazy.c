@@ -6,6 +6,12 @@ static void SetTestNature(struct Pokemon *mon, u32 nature)
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
 }
 
+TEST("pranks Lazy lowers Speed by ten percent")
+{
+    EXPECT_EQ(ModifyStatByNature(NATURE_LAZY, 200, STAT_SPEED, 0), 180);
+    EXPECT_EQ(ModifyStatByNature(NATURE_LAZY, 200, STAT_ATK, 0), 200);
+}
+
 SINGLE_BATTLE_TEST("pranks Lazy recovers 1/8 max HP after losing a turn to sleep")
 {
     GIVEN {

@@ -4888,36 +4888,13 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
     struct PokeSummary *sum = &sMonSummaryScreen->summary;
     struct Pokemon *partyMon = GetSummaryPartyMon();
     u32 nature = sum->mintNature;
-    s32 boost = 0;
+    s32 boost = GetNatureStatModifierPercent(nature, stat, sum->pid);
 
     if (stat == STAT_HP)
         return 0;
 
     switch (nature)
     {
-    case NATURE_HUMBLE:
-    case NATURE_VAIN:
-        boost += 5;
-        break;
-    case NATURE_FINICKY:
-        if (stat == STAT_SPEED)
-            boost += 20;
-        break;
-    case NATURE_NOBLE:
-        if (stat == STAT_DEF)
-            boost += 5;
-        break;
-    case NATURE_QUIRKY:
-        boost += 1 + ((sum->pid >> ((stat - 1) * 3)) % 5);
-        break;
-    case NATURE_STOIC:
-        if (stat == STAT_SPEED)
-            boost -= 5;
-        break;
-    case NATURE_DREAMY:
-        if (stat == STAT_SPEED)
-            boost -= 10;
-        break;
     case NATURE_LOYAL:
         if (stat == STAT_ATK || stat == STAT_SPATK)
             boost += GetLoyalBoostPercent(sum->level, sum->metLevel);
@@ -4961,13 +4938,6 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
             boost += GetDevotedBondData(partyMon, NULL);
         break;
     default:
-         if (gNaturesInfo[nature].statUp != gNaturesInfo[nature].statDown)
-        {
-            if (stat == gNaturesInfo[nature].statUp)
-                boost += 15;
-            if (stat == gNaturesInfo[nature].statDown)
-                boost -= 15;
-        }
         break;
     }
 
@@ -5433,7 +5403,7 @@ static void PrintContestMoveDescription(u8 moveSlot)
     if (move != MOVE_NONE)
     {
         windowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_DESCRIPTION);
-        FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
+        FormatTextByWidth(desc, 118, FONT_SMALL_NARROW, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
         PrintMoveDescriptionText(windowId, desc);
     }
 }
@@ -5455,9 +5425,9 @@ static void PrintMoveDetails(u16 move)
             if (BW_SUMMARY_AUTO_FORMAT_MOVE_DESCRIPTIONS)
             {
                 if (gMovesInfo[move].effect != EFFECT_PLACEHOLDER)
-                    FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gMovesInfo[move].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
+                    FormatTextByWidth(desc, 118, FONT_SMALL_NARROW, gMovesInfo[move].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
                 else
-                    FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gNotDoneYetDescription, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
+                    FormatTextByWidth(desc, 118, FONT_SMALL_NARROW, gNotDoneYetDescription, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
 
                 PrintMoveDescriptionText(windowId, desc);
             }
@@ -5475,7 +5445,7 @@ static void PrintMoveDetails(u16 move)
             HandleAppealJamTilemap(move);
             if (BW_SUMMARY_AUTO_FORMAT_MOVE_DESCRIPTIONS)
             {
-                FormatTextByWidth(desc, 119, FONT_SMALL_NARROW, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
+                FormatTextByWidth(desc, 118, FONT_SMALL_NARROW, gContestEffects[gMovesInfo[move].contestEffect].description, GetFontAttribute(FONT_SMALL_NARROW, FONTATTR_LETTER_SPACING));
                 PrintMoveDescriptionText(windowId, desc);
             }
             else

@@ -2965,6 +2965,22 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_MaxRepel,
     },
 
+    [ITEM_CATCH_UP_CANDY] =
+    {
+        .name = ITEM_NAME("Catch-Up Candy"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Raises a Pokémon to\n"
+            "team's average level,\n"
+            "if 5+ levels below."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CatchUpCandy,
+        .iconPic = gItemIcon_RareCandy,
+        .iconPalette = gItemIconPalette_CatchUpCandy,
+    },
+
     [ITEM_NUGGET] =
     {
         .name = ITEM_NAME("Nugget"),

@@ -29,8 +29,9 @@
 #define tMenuPage data[8]
 #define tFooterChoice data[9]
 #define tShinyOdds data[10]
-#define tAutosave data[11]
+#define tEasierCatch data[11]
 #define tLevelCaps data[12]
+#define tNatureTitles data[13]
 
 enum
 {
@@ -53,8 +54,9 @@ enum
 enum
 {
     MORE_MENUITEM_ANNOUNCE_NATURES,
+    MORE_MENUITEM_NATURE_TITLES,
     MORE_MENUITEM_SHINY_ODDS,
-    MORE_MENUITEM_AUTOSAVE,
+    MORE_MENUITEM_EASIER_CATCH,
     MORE_MENUITEM_LEVEL_CAPS,
     MORE_MENUITEM_COUNT,
 };
@@ -79,9 +81,10 @@ enum
 #define YPOS_BUTTONMODE      (MENUITEM_BUTTONMODE * OPTION_ROW_HEIGHT)
 #define YPOS_FRAMETYPE       (MENUITEM_FRAMETYPE * OPTION_ROW_HEIGHT)
 #define YPOS_MORE_ANNOUNCENATURES 0
-#define YPOS_MORE_SHINYODDS        OPTION_ROW_HEIGHT
-#define YPOS_MORE_AUTOSAVE         (2 * OPTION_ROW_HEIGHT)
-#define YPOS_MORE_LEVELCAPS        (3 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_NATURE_TITLES    OPTION_ROW_HEIGHT
+#define YPOS_MORE_SHINYODDS        (2 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_EASIER_CATCH     (3 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_LEVELCAPS        (4 * OPTION_ROW_HEIGHT)
 #define YPOS_FOOTER          (MENUITEM_FOOTER * OPTION_ROW_HEIGHT)
 
 static void Task_OptionMenuFadeIn(u8 taskId);
@@ -97,10 +100,12 @@ static u8 BattleStyle_ProcessInput(u8 selection);
 static void BattleStyle_DrawChoices(u8 selection);
 static u8 AnnounceNatures_ProcessInput(u8 selection);
 static void AnnounceNatures_DrawChoices(u8 selection);
+static u8 NatureTitles_ProcessInput(u8 selection);
+static void NatureTitles_DrawChoices(u8 selection);
 static u8 ShinyOdds_ProcessInput(u8 selection);
 static void ShinyOdds_DrawChoices(u8 selection);
-static u8 Autosave_ProcessInput(u8 selection);
-static void Autosave_DrawChoices(u8 selection);
+static u8 EasierCatch_ProcessInput(u8 selection);
+static void EasierCatch_DrawChoices(u8 selection);
 static u8 LevelCaps_ProcessInput(u8 selection);
 static void LevelCaps_DrawChoices(u8 selection);
 static u8 Sound_ProcessInput(u8 selection);
@@ -109,7 +114,7 @@ static u8 FrameType_ProcessInput(u8 selection);
 static void FrameType_DrawChoices(u8 selection);
 static u8 ButtonMode_ProcessInput(u8 selection);
 static void ButtonMode_DrawChoices(u8 selection);
-static void DrawHeaderText(void);
+static void DrawHeaderText(u8 page);
 static void DrawOptionMenuTexts(void);
 static void DrawOptionMenuPage(u8 taskId);
 static void SetOptionMenuPage(u8 taskId, u8 page);
@@ -119,6 +124,7 @@ static void DrawBgWindowFrames(void);
 EWRAM_DATA static bool8 sArrowPressed = FALSE;
 
 static const u8 gText_Option[]             = _("OPTION");
+static const u8 gText_QualityOfLife[]      = _("QUALITY OF LIFE");
 static const u8 gText_TextSpeedFast[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}FAST");
 static const u8 gText_TextSpeedInstant[]   = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}INSTANT");
 static const u8 gText_BattleSceneOn[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}ON");
@@ -135,18 +141,22 @@ static const u8 gText_ButtonTypeNormal[]   = _("{COLOR GREEN}{SHADOW LIGHT_GREEN
 static const u8 gText_ButtonTypeLR[]       = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}LR");
 static const u8 gText_ButtonTypeLEqualsA[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}L=A");
 static const u8 gText_OptionCancel[]       = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}CANCEL");
-static const u8 gText_OptionMore[]         = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}MORE{RIGHT_ARROW}");
+static const u8 gText_OptionMore[]         = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}QoL{RIGHT_ARROW}");
 static const u8 gText_OptionPrevious[]     = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}{LEFT_ARROW}PREV");
 static const u8 gText_ShinyOdds4096[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}4096");
 static const u8 gText_ShinyOdds1024[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}1024");
 static const u8 gText_ShinyOdds256[]       = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}256");
 static const u8 gText_ShinyOdds64[]        = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}64");
-static const u8 gText_AutosavePC[]         = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}PC");
+static const u8 gText_EasierCatch1x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}1x");
+static const u8 gText_EasierCatch2x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}2x");
+static const u8 gText_EasierCatch3x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}3x");
+static const u8 gText_EasierCatch255x[]    = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}100%");
 static const u8 gText_LevelCapsSoft[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SOFT");
 static const u8 gText_LevelCapsHard[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}HARD");
-static const u8 gText_AnnounceNatures[]    = _("NATURE POPUPS");
+static const u8 gText_AnnounceNatures[]    = _("SHOW FOE NATURE");
+static const u8 gText_NatureTitles[]       = _("NATURE TITLES");
 static const u8 gText_ShinyOdds[]          = _("SHINY ODDS");
-static const u8 gText_Autosave[]           = _("AUTOSAVE");
+static const u8 gText_EasierCatch[]        = _("CATCH RATE");
 static const u8 gText_LevelCaps[]          = _("LEVEL CAPS");
 
 static const u16 sOptionMenuText_Pal[] = INCGFX_U16("graphics/interface/option_menu_text.pal", ".gbapal");
@@ -285,7 +295,7 @@ void CB2_InitOptionMenu(void)
         break;
     case 6:
         PutWindowTilemap(WIN_HEADER);
-        DrawHeaderText();
+        DrawHeaderText(OPTION_PAGE_MAIN);
         gMain.state++;
         break;
     case 7:
@@ -310,8 +320,9 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tBattleSceneOff = gSaveBlock2Ptr->optionsBattleSceneOff;
         gTasks[taskId].tBattleStyle = gSaveBlock2Ptr->optionsBattleStyle;
         gTasks[taskId].tAnnounceNatures = gSaveBlock2Ptr->optionsAnnounceNatures;
+        gTasks[taskId].tNatureTitles = gSaveBlock2Ptr->optionsNatureTitles;
         gTasks[taskId].tShinyOdds = gSaveBlock2Ptr->optionsShinyOdds;
-        gTasks[taskId].tAutosave = gSaveBlock2Ptr->optionsAutosave;
+        gTasks[taskId].tEasierCatch = gSaveBlock2Ptr->optionsEasierCatch;
         gTasks[taskId].tLevelCaps = gSaveBlock2Ptr->optionsLevelCaps;
         gTasks[taskId].tSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tButtonMode = gSaveBlock2Ptr->optionsButtonMode;
@@ -411,6 +422,13 @@ static void Task_OptionMenuProcessInput(u8 taskId)
                 if (previousOption != gTasks[taskId].tAnnounceNatures)
                     AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
             }
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_NATURE_TITLES)
+            {
+                previousOption = gTasks[taskId].tNatureTitles;
+                gTasks[taskId].tNatureTitles = NatureTitles_ProcessInput(gTasks[taskId].tNatureTitles);
+                if (previousOption != gTasks[taskId].tNatureTitles)
+                    NatureTitles_DrawChoices(gTasks[taskId].tNatureTitles);
+            }
             else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_SHINY_ODDS)
             {
                 previousOption = gTasks[taskId].tShinyOdds;
@@ -418,19 +436,19 @@ static void Task_OptionMenuProcessInput(u8 taskId)
                 if (previousOption != gTasks[taskId].tShinyOdds)
                     ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
             }
-            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_AUTOSAVE)
-            {
-                previousOption = gTasks[taskId].tAutosave;
-                gTasks[taskId].tAutosave = Autosave_ProcessInput(gTasks[taskId].tAutosave);
-                if (previousOption != gTasks[taskId].tAutosave)
-                    Autosave_DrawChoices(gTasks[taskId].tAutosave);
-            }
             else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_LEVEL_CAPS)
             {
                 previousOption = gTasks[taskId].tLevelCaps;
                 gTasks[taskId].tLevelCaps = LevelCaps_ProcessInput(gTasks[taskId].tLevelCaps);
                 if (previousOption != gTasks[taskId].tLevelCaps)
                     LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);
+            }
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_EASIER_CATCH)
+            {
+                previousOption = gTasks[taskId].tEasierCatch;
+                gTasks[taskId].tEasierCatch = EasierCatch_ProcessInput(gTasks[taskId].tEasierCatch);
+                if (previousOption != gTasks[taskId].tEasierCatch)
+                    EasierCatch_DrawChoices(gTasks[taskId].tEasierCatch);
             }
 
             if (sArrowPressed)
@@ -511,8 +529,11 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsBattleSceneOff = gTasks[taskId].tBattleSceneOff;
     gSaveBlock2Ptr->optionsBattleStyle = gTasks[taskId].tBattleStyle;
     gSaveBlock2Ptr->optionsAnnounceNatures = gTasks[taskId].tAnnounceNatures;
+    gSaveBlock2Ptr->optionsNatureTitles = gTasks[taskId].tNatureTitles;
     gSaveBlock2Ptr->optionsShinyOdds = gTasks[taskId].tShinyOdds;
-    gSaveBlock2Ptr->optionsAutosave = gTasks[taskId].tAutosave;
+    gSaveBlock2Ptr->optionsEasierCatch = gTasks[taskId].tEasierCatch;
+    // Autosave is currently unavailable. Clear the dormant option for older saves too.
+    gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
     gSaveBlock2Ptr->optionsLevelCaps = gTasks[taskId].tLevelCaps;
     gSaveBlock2Ptr->optionsSound = gTasks[taskId].tSound;
     gSaveBlock2Ptr->optionsButtonMode = gTasks[taskId].tButtonMode;
@@ -556,22 +577,29 @@ static void DrawOptionMenuChoice(const u8 *text, u8 x, u8 y, u8 style)
     AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, dst, x, y + 1, TEXT_SKIP_DRAW, NULL);
 }
 
-static void DrawOptionMenuChoiceNarrow(const u8 *text, u8 x, u8 y, u8 style)
+static void DrawFourOptionChoices(const u8 *const choices[4], u8 y, u8 selection)
 {
-    u8 dst[16];
-    u16 i;
+    s32 widths[4];
+    s32 x = 104;
+    s32 totalWidth = 0;
+    s32 gap;
 
-    for (i = 0; *text != EOS && i < ARRAY_COUNT(dst) - 1; i++)
-        dst[i] = *(text++);
-
-    if (style != 0)
+    for (u32 i = 0; i < 4; i++)
     {
-        dst[2] = TEXT_COLOR_RED;
-        dst[5] = TEXT_COLOR_LIGHT_RED;
+        widths[i] = GetStringWidth(FONT_NORMAL, choices[i], 0);
+        totalWidth += widths[i];
     }
 
-    dst[i] = EOS;
-    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NARROW, dst, x, y + 1, TEXT_SKIP_DRAW, NULL);
+    // The first choice begins at x=104 and the final choice ends at x=198.
+    // Distribute the remaining room evenly between all four choices.
+    gap = (94 - totalWidth) / 3;
+    for (u32 i = 0; i < 4; i++)
+    {
+        if (i == 3)
+            x = 198 - widths[i];
+        DrawOptionMenuChoice(choices[i], x, y, selection == i);
+        x += widths[i] + gap;
+    }
 }
 
 static u8 TextSpeed_ProcessInput(u8 selection)
@@ -670,6 +698,26 @@ static void AnnounceNatures_DrawChoices(u8 selection)
     DrawOptionMenuChoice(gText_OptionOn, GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionOn, 198), YPOS_MORE_ANNOUNCENATURES, styles[1]);
 }
 
+static u8 NatureTitles_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+
+    return selection;
+}
+
+static void NatureTitles_DrawChoices(u8 selection)
+{
+    DrawOptionMenuChoice(gText_OptionOff, 104, YPOS_MORE_NATURE_TITLES, selection == OPTIONS_NATURE_TITLES_OFF);
+    DrawOptionMenuChoice(gText_OptionOn,
+                         GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionOn, 198),
+                         YPOS_MORE_NATURE_TITLES,
+                         selection == OPTIONS_NATURE_TITLES_ON);
+}
+
 static u8 ShinyOdds_ProcessInput(u8 selection)
 {
     if (JOY_NEW(DPAD_RIGHT))
@@ -688,32 +736,32 @@ static u8 ShinyOdds_ProcessInput(u8 selection)
 
 static void ShinyOdds_DrawChoices(u8 selection)
 {
-    DrawOptionMenuChoiceNarrow(gText_ShinyOdds4096, 104, YPOS_MORE_SHINYODDS, selection == OPTIONS_SHINY_ODDS_4096);
-    DrawOptionMenuChoiceNarrow(gText_ShinyOdds1024, 133, YPOS_MORE_SHINYODDS, selection == OPTIONS_SHINY_ODDS_1024);
-    DrawOptionMenuChoiceNarrow(gText_ShinyOdds256, 164, YPOS_MORE_SHINYODDS, selection == OPTIONS_SHINY_ODDS_256);
-    DrawOptionMenuChoiceNarrow(gText_ShinyOdds64,
-                               GetStringRightAlignXOffset(FONT_NARROW, gText_ShinyOdds64, 198),
-                               YPOS_MORE_SHINYODDS,
-                               selection == OPTIONS_SHINY_ODDS_64);
+    const u8 *const choices[] = {gText_ShinyOdds4096, gText_ShinyOdds1024, gText_ShinyOdds256, gText_ShinyOdds64};
+
+    DrawFourOptionChoices(choices, YPOS_MORE_SHINYODDS, selection);
 }
 
-static u8 Autosave_ProcessInput(u8 selection)
+static u8 EasierCatch_ProcessInput(u8 selection)
 {
-    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    if (JOY_NEW(DPAD_RIGHT))
     {
-        selection ^= 1;
+        selection = (selection + 1) % 4;
         sArrowPressed = TRUE;
     }
+    else if (JOY_NEW(DPAD_LEFT))
+    {
+        selection = (selection + 3) % 4;
+        sArrowPressed = TRUE;
+    }
+
     return selection;
 }
 
-static void Autosave_DrawChoices(u8 selection)
+static void EasierCatch_DrawChoices(u8 selection)
 {
-    DrawOptionMenuChoice(gText_AutosavePC, 104, YPOS_MORE_AUTOSAVE, selection == OPTIONS_AUTOSAVE_PC);
-    DrawOptionMenuChoice(gText_OptionOff,
-                         GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionOff, 198),
-                         YPOS_MORE_AUTOSAVE,
-                         selection == OPTIONS_AUTOSAVE_OFF);
+    const u8 *const choices[] = {gText_EasierCatch1x, gText_EasierCatch2x, gText_EasierCatch3x, gText_EasierCatch255x};
+
+    DrawFourOptionChoices(choices, YPOS_MORE_EASIER_CATCH, selection);
 }
 
 static u8 LevelCaps_ProcessInput(u8 selection)
@@ -863,10 +911,12 @@ static void ButtonMode_DrawChoices(u8 selection)
     DrawOptionMenuChoice(gText_ButtonTypeLEqualsA, GetStringRightAlignXOffset(FONT_NORMAL, gText_ButtonTypeLEqualsA, 198), YPOS_BUTTONMODE, styles[2]);
 }
 
-static void DrawHeaderText(void)
+static void DrawHeaderText(u8 page)
 {
+    const u8 *text = page == OPTION_PAGE_MORE ? gText_QualityOfLife : gText_Option;
+
     FillWindowPixelBuffer(WIN_HEADER, PIXEL_FILL(1));
-    AddTextPrinterParameterized(WIN_HEADER, FONT_NORMAL, gText_Option, 8, 1, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_HEADER, FONT_NORMAL, text, 8, 1, TEXT_SKIP_DRAW, NULL);
     CopyWindowToVram(WIN_HEADER, COPYWIN_FULL);
 }
 
@@ -912,16 +962,16 @@ static void DrawOptionMenuPage(u8 taskId)
     }
     else
     {
-        u8 announceFont = GetStringWidth(FONT_NORMAL, gText_AnnounceNatures, 0) <= 88 ? FONT_NORMAL : FONT_NARROW;
-
-        AddTextPrinterParameterized(WIN_OPTIONS, announceFont, gText_AnnounceNatures, 8, YPOS_MORE_ANNOUNCENATURES + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_AnnounceNatures, 8, YPOS_MORE_ANNOUNCENATURES + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_NatureTitles, 8, YPOS_MORE_NATURE_TITLES + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_ShinyOdds, 8, YPOS_MORE_SHINYODDS + 1, TEXT_SKIP_DRAW, NULL);
-        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Autosave, 8, YPOS_MORE_AUTOSAVE + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_EasierCatch, 8, YPOS_MORE_EASIER_CATCH + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_LevelCaps, 8, YPOS_MORE_LEVELCAPS + 1, TEXT_SKIP_DRAW, NULL);
         DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER, gTasks[taskId].tMenuSelection == MENUITEM_FOOTER);
         AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
+        NatureTitles_DrawChoices(gTasks[taskId].tNatureTitles);
         ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
-        Autosave_DrawChoices(gTasks[taskId].tAutosave);
+        EasierCatch_DrawChoices(gTasks[taskId].tEasierCatch);
         LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);
     }
 
@@ -943,6 +993,7 @@ static void SetOptionMenuPage(u8 taskId, u8 page)
     }
 
     PlaySE(SE_SELECT);
+    DrawHeaderText(page);
     DrawOptionMenuPage(taskId);
 }
 

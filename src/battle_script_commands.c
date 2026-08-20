@@ -1,4 +1,5 @@
 #include "global.h"
+#include "option_menu.h"
 #include "battle.h"
 #include "battle_hold_effects.h"
 #include "battle_message.h"
@@ -1629,7 +1630,7 @@ static bool32 TrySetTerritorialSwitchOutDamage(enum BattlerId battler)
          || !HasNature(foe, NATURE_TERRITORIAL))
             continue;
 
-        SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 16);
+        SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 12);
         gBattleScripting.battler = battler;
         return TRUE;
     }
@@ -10460,6 +10461,20 @@ static u32 ComputeCaptureOdds(u32 wildMonBattler, u32 playerBattler)
     // Twice as hard to catch.
     if (HasNature(wildMonBattler, NATURE_FLIGHTY))
         odds /= 2;
+
+    // Apply the player's QoL catch multiplier after every ball, species,
+    // badge, level, status, and Nature modifier has been resolved.
+    switch (gSaveBlock2Ptr->optionsEasierCatch)
+    {
+    case OPTIONS_EASIER_CATCH_2X:
+        odds *= 2;
+        break;
+    case OPTIONS_EASIER_CATCH_3X:
+        odds *= 3;
+        break;
+    case OPTIONS_EASIER_CATCH_255X:
+        return CAPTURE_GUARANTEED;
+    }
 
     return odds;
 }

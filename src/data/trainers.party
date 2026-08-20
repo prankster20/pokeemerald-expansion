@@ -4309,30 +4309,35 @@ Class: Leader
 Pic: Leader Roxanne
 Gender: Female
 Music: Female
-Items: Potion / Potion
 Double Battle: No
-AI: Basic Trainer
+AI: Basic Trainer / AI_FLAG_ACE_POKEMON
 
-Geodude
-Level: 12
-- Tackle
-- Defense Curl
-- Rock Throw
-- Rock Tomb
-
-Geodude
-Level: 12
-- Tackle
-- Defense Curl
-- Rock Throw
-- Rock Tomb
-
-Nosepass @ Oran Berry
+Tirtouga
 Level: 15
-- Block
+Nature: Serious
+EVs: 32 HP / 32 Def
+- Aqua Ring
 - Harden
-- Tackle
 - Rock Tomb
+- Aqua Jet
+
+Anorith
+Level: 15
+Nature: Old-Fashioned
+EVs: 32 HP / 32 Atk
+- Cut
+- Rock Tomb
+- Infestation
+- Bulldoze
+
+Lileep @ Oran Berry
+Level: 15
+Nature: Perfectionist
+EVs: 64 HP / 32 Atk / 64 Def / 32 SpA / 64 SpD
+- Mega Drain
+- Rock Tomb
+- Bind
+- Leech Seed
 
 === TRAINER_BRAWLY_1 ===
 Name: BRAWLY

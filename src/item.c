@@ -12,6 +12,7 @@
 #include "strings.h"
 #include "load_save.h"
 #include "item_use.h"
+#include "wild_encounter.h"
 #include "battle_pyramid.h"
 #include "battle_pyramid_bag.h"
 #include "graphics.h"
@@ -976,6 +977,36 @@ u32 GetItemHoldEffectParam(enum Item itemId)
 
 const u8 *GetItemDescription(enum Item itemId)
 {
+    static const u8 sInfiniteRepelDescriptionOn[] = _(
+        "Repels weaker wild\n"
+        "Pokémon while active.\n"
+        "Team average: Lv.{STR_VAR_1}.\n"
+        "Status: ON");
+    static const u8 sInfiniteRepelDescriptionOff[] = _(
+        "Repels weaker wild\n"
+        "Pokémon while active.\n"
+        "Team average: Lv.{STR_VAR_1}.\n"
+        "Status: OFF");
+    static const u8 sCatchUpCandyDescription[] = _(
+        "Raises a Pokémon to\n"
+        "team's average level,\n"
+        "if 5+ levels below.\n"
+        "Team average: Lv.{STR_VAR_1}.\n");
+    static u8 sInfiniteRepelDescription[128];
+
+    if (itemId == ITEM_INFINITE_REPEL)
+    {
+        ConvertIntToDecimalStringN(gStringVar1, GetAveragePlayerPartyLevel(), STR_CONV_MODE_LEFT_ALIGN, 3);
+        if (FlagGet(FLAG_UNUSED_0x8E5))
+            StringExpandPlaceholders(sInfiniteRepelDescription, sInfiniteRepelDescriptionOn);
+        else
+            StringExpandPlaceholders(sInfiniteRepelDescription, sInfiniteRepelDescriptionOff);
+        return sInfiniteRepelDescription;
+    } else if (itemId == ITEM_CATCH_UP_CANDY) {
+        StringExpandPlaceholders(sInfiniteRepelDescription, sCatchUpCandyDescription);
+        return sInfiniteRepelDescription;
+    }
+
     return gItemsInfo[SanitizeItemId(itemId)].description;
 }
 

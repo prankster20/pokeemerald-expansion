@@ -1,6 +1,11 @@
 #ifndef GUARD_OPTION_MENU_H
 #define GUARD_OPTION_MENU_H
 
+#define OPTIONS_EASIER_CATCH_1X   0
+#define OPTIONS_EASIER_CATCH_2X   1
+#define OPTIONS_EASIER_CATCH_3X   2
+#define OPTIONS_EASIER_CATCH_255X 3
+
 void CB2_InitOptionMenu(void);
 
 #endif // GUARD_OPTION_MENU_H
