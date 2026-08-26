@@ -16,6 +16,7 @@
 #include "item_menu.h"
 #include "link.h"
 #include "main.h"
+#include "move_fusion.h"
 #include "m4a.h"
 #include "palette.h"
 #include "party_menu.h"
@@ -1663,6 +1664,11 @@ static void MoveSelectionDisplayMoveNames(enum BattlerId battler)
         MoveSelectionDestroyCursorAt(i);
         if (IsGimmickSelected(battler, GIMMICK_DYNAMAX) || GetActiveGimmick(battler) == GIMMICK_DYNAMAX)
             StringCopy(gDisplayedStringBattle, GetMoveName(GetMaxMove(battler, moveInfo->moves[i])));
+        else if (GetMonMoveHelper(GetBattlerMon(battler), i) != MOVE_NONE)
+        {
+            StringCopy(gDisplayedStringBattle, GetMoveName(moveInfo->moves[i]));
+            StringAppend(gDisplayedStringBattle, COMPOUND_STRING("+"));
+        }
         else
             StringCopy(gDisplayedStringBattle, GetMoveName(moveInfo->moves[i]));
         // Prints on windows B_WIN_MOVE_NAME_1, B_WIN_MOVE_NAME_2, B_WIN_MOVE_NAME_3, B_WIN_MOVE_NAME_4
@@ -1704,6 +1710,10 @@ static void MoveSelectionDisplayMoveType(enum BattlerId battler)
     enum Move move = moveInfo->moves[gMoveSelectionCursor[battler]];
     enum Type type = GetMoveType(move);
     enum BattleMoveEffects effect = GetMoveEffect(move);
+    struct ResolvedMoveFusion fusion;
+
+    if (ResolveBattlerMoveFusion(battler, move, &fusion) && fusion.overridesType)
+        type = fusion.type;
 
     if (effect == EFFECT_TERA_BLAST)
     {
@@ -1755,6 +1765,11 @@ static void MoveSelectionDisplayMoveDescription(enum BattlerId battler)
     u16 pwr = GetMovePower(move);
     u16 acc = GetMoveAccuracy(move);
     enum DamageCategory cat = GetBattleMoveCategory(move);
+    struct ResolvedMoveFusion fusion;
+    bool32 isFused = ResolveBattlerMoveFusion(battler, move, &fusion);
+
+    if (isFused)
+        pwr = fusion.power;
 
     if (GetActiveGimmick(battler) == GIMMICK_DYNAMAX || IsGimmickSelected(battler, GIMMICK_DYNAMAX))
     {
@@ -1789,7 +1804,14 @@ static void MoveSelectionDisplayMoveDescription(enum BattlerId battler)
     StringAppend(gDisplayedStringBattle, acc_desc);
     StringAppend(gDisplayedStringBattle, acc_num);
     StringAppend(gDisplayedStringBattle, gText_NewLine);
-    StringAppend(gDisplayedStringBattle, GetMoveDescription(move));
+    if (isFused)
+    {
+        u8 fusedDescription[256];
+        GetFusedMoveDescription(move, &fusion, fusedDescription);
+        StringAppend(gDisplayedStringBattle, fusedDescription);
+    }
+    else
+        StringAppend(gDisplayedStringBattle, GetMoveDescription(move));
     BattlePutTextOnWindow(gDisplayedStringBattle, B_WIN_MOVE_DESCRIPTION);
 
     if (gCategoryIconSpriteId == 0xFF)

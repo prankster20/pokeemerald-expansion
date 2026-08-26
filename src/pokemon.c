@@ -11,6 +11,7 @@
 #include "battle_setup.h"
 #include "battle_tower.h"
 #include "battle_z_move.h"
+#include "bw_summary_screen.h"
 #include "caps.h"
 #include "data.h"
 #include "daycare.h"
@@ -27,6 +28,7 @@
 #include "graphics.h"
 #include "item.h"
 #include "link.h"
+#include "move_fusion.h"
 #include "m4a.h"
 #include "main.h"
 #include "move_relearner.h"
@@ -1495,6 +1497,10 @@ u16 GiveMoveToMon(struct Pokemon *mon, enum Move move)
 u16 GiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move)
 {
     s32 i;
+    if (!CanMoveBeFusionMain(move))
+        return MON_ALREADY_KNOWS_MOVE;
+    if (BoxMonHasMoveOrHelper(boxMon, move))
+        return MON_ALREADY_KNOWS_MOVE;
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         enum Move existingMove = GetBoxMonData(boxMon, MON_DATA_MOVE1 + i);
@@ -1505,8 +1511,6 @@ u16 GiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move)
             SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp);
             return move;
         }
-        if (existingMove == move)
-            return MON_ALREADY_KNOWS_MOVE;
     }
     return MON_HAS_MAX_MOVES;
 }
@@ -1535,9 +1539,46 @@ void SetMonMoveSlot(struct Pokemon *mon, enum Move move, u8 slot)
 
 void SetBoxMonMoveSlot(struct BoxPokemon *mon, enum Move move, u8 slot)
 {
+    if (move != MOVE_NONE && !CanMoveBeFusionMain(move))
+        return;
+    ClearBoxMonMoveHelper(mon, slot);
     SetBoxMonData(mon, MON_DATA_MOVE1 + slot, &move);
     u32 pp = GetMovePP(move);
     SetBoxMonData(mon, MON_DATA_PP1 + slot, &pp);
+}
+
+enum Move GetBoxMonMoveHelper(struct BoxPokemon *mon, u32 slot)
+{
+    if (slot >= MAX_MON_MOVES)
+        return MOVE_NONE;
+    return GetBoxMonData(mon, MON_DATA_HELPER_MOVE1 + slot);
+}
+
+enum Move GetMonMoveHelper(struct Pokemon *mon, u32 slot)
+{
+    return GetBoxMonMoveHelper(&mon->box, slot);
+}
+
+void SetBoxMonMoveHelper(struct BoxPokemon *mon, u32 slot, enum Move helperMove)
+{
+    if (slot < MAX_MON_MOVES
+     && (helperMove == MOVE_NONE || !BoxMonHasMoveOrHelper(mon, helperMove)))
+        SetBoxMonData(mon, MON_DATA_HELPER_MOVE1 + slot, &helperMove);
+}
+
+void SetMonMoveHelper(struct Pokemon *mon, u32 slot, enum Move helperMove)
+{
+    SetBoxMonMoveHelper(&mon->box, slot, helperMove);
+}
+
+void ClearBoxMonMoveHelper(struct BoxPokemon *mon, u32 slot)
+{
+    SetBoxMonMoveHelper(mon, slot, MOVE_NONE);
+}
+
+void ClearMonMoveHelper(struct Pokemon *mon, u32 slot)
+{
+    ClearBoxMonMoveHelper(&mon->box, slot);
 }
 
 static void SetMonMoveSlot_KeepPP(struct Pokemon *mon, enum Move move, u8 slot)
@@ -1579,6 +1620,8 @@ void GiveBoxMonInitialMoveset(struct BoxPokemon *boxMon) //Credit: AsparagusEdua
         if (learnset[i].level > level)
             break;
         if (learnset[i].level == 0)
+            continue;
+        if (!CanMoveBeFusionMain(learnset[i].move))
             continue;
 
         for (j = 0; j < addedMoves; j++)
@@ -1633,6 +1676,8 @@ void GiveBoxMonDefaultMove(struct BoxPokemon *boxMon, u32 slot)
             break;
         if (learnset[i].level == 0)
             continue;
+        if (!CanMoveBeFusionMain(learnset[i].move))
+            continue;
 
         for (j = 0; j < slot; j++)
         {
@@ -1672,6 +1717,12 @@ enum Move MonTryLearningNewMoveAtLevel(struct Pokemon *mon, bool32 firstMove, u3
                 return MOVE_NONE;
         }
     }
+
+    // Helper-only moves unlock their helper contribution through the
+    // learnset, but never enter a main move slot or trigger a learn prompt.
+    while (learnset[sLearningMoveTableID].level == level
+        && !CanMoveBeFusionMain(learnset[sLearningMoveTableID].move))
+        sLearningMoveTableID++;
 
     //  Handler for Pokémon whose moves change upon form change.
     //  For example, if Zacian or Zamazenta should learn Iron Head,
@@ -1715,23 +1766,27 @@ void DeleteFirstMoveAndGiveMoveToMon(struct Pokemon *mon, enum Move move)
     s32 i;
     enum Move moves[MAX_MON_MOVES];
     u8 pp[MAX_MON_MOVES];
+    enum Move helpers[MAX_MON_MOVES];
     u8 ppBonuses;
 
     for (i = 0; i < MAX_MON_MOVES - 1; i++)
     {
         moves[i] = GetMonData(mon, MON_DATA_MOVE2 + i);
         pp[i] = GetMonData(mon, MON_DATA_PP2 + i);
+        helpers[i] = GetMonMoveHelper(mon, i + 1);
     }
 
     ppBonuses = GetMonData(mon, MON_DATA_PP_BONUSES);
     ppBonuses >>= 2;
     moves[MAX_MON_MOVES - 1] = move;
     pp[MAX_MON_MOVES - 1] = GetMovePP(move);
+    helpers[MAX_MON_MOVES - 1] = MOVE_NONE;
 
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         SetMonData(mon, MON_DATA_MOVE1 + i, &moves[i]);
         SetMonData(mon, MON_DATA_PP1 + i, &pp[i]);
+        SetMonData(mon, MON_DATA_HELPER_MOVE1 + i, &helpers[i]);
     }
 
     SetMonData(mon, MON_DATA_PP_BONUSES, &ppBonuses);
@@ -1742,23 +1797,27 @@ void DeleteFirstMoveAndGiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move mov
     s32 i;
     enum Move moves[MAX_MON_MOVES];
     u8 pp[MAX_MON_MOVES];
+    enum Move helpers[MAX_MON_MOVES];
     u8 ppBonuses;
 
     for (i = 0; i < MAX_MON_MOVES - 1; i++)
     {
         moves[i] = GetBoxMonData(boxMon, MON_DATA_MOVE2 + i);
         pp[i] = GetBoxMonData(boxMon, MON_DATA_PP2 + i);
+        helpers[i] = GetBoxMonMoveHelper(boxMon, i + 1);
     }
 
     ppBonuses = GetBoxMonData(boxMon, MON_DATA_PP_BONUSES);
     ppBonuses >>= 2;
     moves[MAX_MON_MOVES - 1] = move;
     pp[MAX_MON_MOVES - 1] = GetMovePP(move);
+    helpers[MAX_MON_MOVES - 1] = MOVE_NONE;
 
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         SetBoxMonData(boxMon, MON_DATA_MOVE1 + i, &moves[i]);
         SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp[i]);
+        SetBoxMonData(boxMon, MON_DATA_HELPER_MOVE1 + i, &helpers[i]);
     }
 
     SetBoxMonData(boxMon, MON_DATA_PP_BONUSES, &ppBonuses);
@@ -2147,6 +2206,20 @@ u32 GetBoxMonData3(struct BoxPokemon *boxMon, s32 field, u8 *data)
         case MON_DATA_FRIENDSHIP:
             retVal = GetSubstruct0(boxMon)->friendship;
             break;
+        case MON_DATA_HELPER_MOVE1:
+        case MON_DATA_HELPER_MOVE2:
+        case MON_DATA_HELPER_MOVE3:
+        case MON_DATA_HELPER_MOVE4:
+        {
+            u64 packed = 0;
+            u32 slot = field - MON_DATA_HELPER_MOVE1;
+            u32 bit = slot * 11;
+            struct PokemonSubstruct2 *substruct2 = GetSubstruct2(boxMon);
+            for (u32 i = 0; i < ARRAY_COUNT(substruct2->fusionData); i++)
+                packed |= (u64)substruct2->fusionData[i] << (i * 8);
+            retVal = (packed >> bit) & 0x7FF;
+            break;
+        }
         case MON_DATA_MOVE1:
             retVal = GetSubstruct1(boxMon)->move1;
             break;
@@ -2190,22 +2263,12 @@ u32 GetBoxMonData3(struct BoxPokemon *boxMon, s32 field, u8 *data)
             retVal = GetSubstruct2(boxMon)->spDefenseEV;
             break;
         case MON_DATA_COOL:
-            retVal = GetSubstruct2(boxMon)->cool;
-            break;
         case MON_DATA_BEAUTY:
-            retVal = GetSubstruct2(boxMon)->beauty;
-            break;
         case MON_DATA_CUTE:
-            retVal = GetSubstruct2(boxMon)->cute;
-            break;
         case MON_DATA_SMART:
-            retVal = GetSubstruct2(boxMon)->smart;
-            break;
         case MON_DATA_TOUGH:
-            retVal = GetSubstruct2(boxMon)->tough;
-            break;
         case MON_DATA_SHEEN:
-            retVal = GetSubstruct2(boxMon)->sheen;
+            retVal = 0;
             break;
         case MON_DATA_POKERUS:
             retVal = GetSubstruct3(boxMon)->pokerus;
@@ -2662,6 +2725,23 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
         case MON_DATA_FRIENDSHIP:
             SET8(GetSubstruct0(boxMon)->friendship);
             break;
+        case MON_DATA_HELPER_MOVE1:
+        case MON_DATA_HELPER_MOVE2:
+        case MON_DATA_HELPER_MOVE3:
+        case MON_DATA_HELPER_MOVE4:
+        {
+            u64 packed = 0;
+            u32 slot = field - MON_DATA_HELPER_MOVE1;
+            u32 bit = slot * 11;
+            struct PokemonSubstruct2 *substruct2 = GetSubstruct2(boxMon);
+            for (u32 i = 0; i < ARRAY_COUNT(substruct2->fusionData); i++)
+                packed |= (u64)substruct2->fusionData[i] << (i * 8);
+            packed &= ~((u64)0x7FF << bit);
+            packed |= ((u64)(*(const u16 *)dataArg & 0x7FF)) << bit;
+            for (u32 i = 0; i < ARRAY_COUNT(substruct2->fusionData); i++)
+                substruct2->fusionData[i] = packed >> (i * 8);
+            break;
+        }
         case MON_DATA_MOVE1:
             SET16(GetSubstruct1(boxMon)->move1);
             break;
@@ -2705,22 +2785,11 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
             SET8(GetSubstruct2(boxMon)->spDefenseEV);
             break;
         case MON_DATA_COOL:
-            SET8(GetSubstruct2(boxMon)->cool);
-            break;
         case MON_DATA_BEAUTY:
-            SET8(GetSubstruct2(boxMon)->beauty);
-            break;
         case MON_DATA_CUTE:
-            SET8(GetSubstruct2(boxMon)->cute);
-            break;
         case MON_DATA_SMART:
-            SET8(GetSubstruct2(boxMon)->smart);
-            break;
         case MON_DATA_TOUGH:
-            SET8(GetSubstruct2(boxMon)->tough);
-            break;
         case MON_DATA_SHEEN:
-            SET8(GetSubstruct2(boxMon)->sheen);
             break;
         case MON_DATA_POKERUS:
             SET8(GetSubstruct3(boxMon)->pokerus);
@@ -2747,22 +2816,22 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
             SET8(GetSubstruct3(boxMon)->otGender);
             break;
         case MON_DATA_HP_IV:
-            SET8(GetSubstruct3(boxMon)->hpIV);
+            GetSubstruct3(boxMon)->hpIV = MAX_PER_STAT_IVS;
             break;
         case MON_DATA_ATK_IV:
-            SET8(GetSubstruct3(boxMon)->attackIV);
+            GetSubstruct3(boxMon)->attackIV = MAX_PER_STAT_IVS;
             break;
         case MON_DATA_DEF_IV:
-            SET8(GetSubstruct3(boxMon)->defenseIV);
+            GetSubstruct3(boxMon)->defenseIV = MAX_PER_STAT_IVS;
             break;
         case MON_DATA_SPEED_IV:
-            SET8(GetSubstruct3(boxMon)->speedIV);
+            GetSubstruct3(boxMon)->speedIV = MAX_PER_STAT_IVS;
             break;
         case MON_DATA_SPATK_IV:
-            SET8(GetSubstruct3(boxMon)->spAttackIV);
+            GetSubstruct3(boxMon)->spAttackIV = MAX_PER_STAT_IVS;
             break;
         case MON_DATA_SPDEF_IV:
-            SET8(GetSubstruct3(boxMon)->spDefenseIV);
+            GetSubstruct3(boxMon)->spDefenseIV = MAX_PER_STAT_IVS;
             break;
         case MON_DATA_IS_EGG:
             SET8(GetSubstruct3(boxMon)->isEgg);
@@ -2827,15 +2896,13 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
             break;
         case MON_DATA_IVS:
         {
-            u32 ivs;
             struct PokemonSubstruct3 *substruct3 = GetSubstruct3(boxMon);
-            SET32(ivs);
-            substruct3->hpIV = ivs & MAX_IV_MASK;
-            substruct3->attackIV = (ivs >> 5) & MAX_IV_MASK;
-            substruct3->defenseIV = (ivs >> 10) & MAX_IV_MASK;
-            substruct3->speedIV = (ivs >> 15) & MAX_IV_MASK;
-            substruct3->spAttackIV = (ivs >> 20) & MAX_IV_MASK;
-            substruct3->spDefenseIV = (ivs >> 25) & MAX_IV_MASK;
+            substruct3->hpIV = MAX_PER_STAT_IVS;
+            substruct3->attackIV = MAX_PER_STAT_IVS;
+            substruct3->defenseIV = MAX_PER_STAT_IVS;
+            substruct3->speedIV = MAX_PER_STAT_IVS;
+            substruct3->spAttackIV = MAX_PER_STAT_IVS;
+            substruct3->spDefenseIV = MAX_PER_STAT_IVS;
             break;
         }
         case MON_DATA_HYPER_TRAINED_HP:
@@ -5413,8 +5480,10 @@ void BoxMonRestorePP(struct BoxPokemon *boxMon)
         if (GetBoxMonData(boxMon, MON_DATA_MOVE1 + i, 0))
         {
             enum Move move = GetBoxMonData(boxMon, MON_DATA_MOVE1 + i, 0);
+            enum Move helper = GetBoxMonMoveHelper(boxMon, i);
             u16 bonus = GetBoxMonData(boxMon, MON_DATA_PP_BONUSES, 0);
-            u8 pp = CalculatePPWithBonus(move, bonus, i);
+            struct ResolvedMoveFusion fusion;
+            u8 pp = ResolveMoveFusion(move, helper, &fusion) ? fusion.pp : CalculatePPWithBonus(move, bonus, i);
             SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp);
         }
     }
@@ -5570,7 +5639,16 @@ static void Task_PokemonSummaryAnimateAfterDelay(u8 taskId)
     if (--gTasks[taskId].sAnimDelay == 0)
     {
         StartMonSummaryAnimation(READ_PTR_FROM_TASK(taskId, 0), gTasks[taskId].sAnimId);
-        SummaryScreen_SetAnimDelayTaskId(TASK_NONE);
+
+        #define tIsShadow data[4]
+        #if BW_SUMMARY_SCREEN == TRUE
+        if (gTasks[taskId].tIsShadow)
+            SummaryScreen_SetShadowAnimDelayTaskId_BW(TASK_NONE); // needed to track anim delay task for mon shadow in BW summary screen
+        else
+        #endif
+            SummaryScreen_SetAnimDelayTaskId(TASK_NONE);
+        #undef tIsShadow
+
         DestroyTask(taskId);
     }
 }
@@ -5630,7 +5708,7 @@ void DoMonFrontSpriteAnimation(struct Sprite *sprite, enum Species species, bool
     }
 }
 
-void PokemonSummaryDoMonAnimation(struct Sprite *sprite, enum Species species, bool8 oneFrame)
+void PokemonSummaryDoMonAnimation(struct Sprite *sprite, enum Species species, bool8 oneFrame, bool32 isShadow)
 {
     if (!oneFrame && HasTwoFramesAnimation(species))
         StartSpriteAnim(sprite, 1);
@@ -5641,7 +5719,18 @@ void PokemonSummaryDoMonAnimation(struct Sprite *sprite, enum Species species, b
         STORE_PTR_IN_TASK(sprite, taskId, 0);
         gTasks[taskId].sAnimId = gSpeciesInfo[species].frontAnimId;
         gTasks[taskId].sAnimDelay = gSpeciesInfo[species].frontAnimDelay;
-        SummaryScreen_SetAnimDelayTaskId(taskId);
+
+        #define tIsShadow data[4]
+        gTasks[taskId].tIsShadow = isShadow; // needed to track anim delay task for mon shadow in BW summary screen
+
+        #if BW_SUMMARY_SCREEN == TRUE
+        if (isShadow)
+            SummaryScreen_SetShadowAnimDelayTaskId_BW(taskId);
+        else
+        #endif
+            SummaryScreen_SetAnimDelayTaskId(taskId);
+        #undef tIsShadow
+
         SetSpriteCB_MonAnimDummy(sprite);
     }
     else

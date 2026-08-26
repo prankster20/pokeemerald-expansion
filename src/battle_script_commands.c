@@ -9,8 +9,8 @@
 #include "battle_scripts.h"
 #include "battle_switch_in.h"
 #include "battle_environment.h"
-#include "battle_gimmick.h"
 #include "battle_z_move.h"
+#include "bw_summary_screen.h"
 #include "battle_stat_change.h"
 #include "battle_move_resolution.h"
 #include "item.h"
@@ -54,6 +54,7 @@
 #include "data.h"
 #include "config_changes.h"
 #include "move.h"
+#include "move_fusion.h"
 #include "constants/abilities.h"
 #include "constants/battle_anim.h"
 #include "constants/battle_move_effects.h"
@@ -2292,7 +2293,7 @@ static bool32 DoesSubstituteBlockMoveEffectOnTarget(enum BattlerId battlerAtk, e
     return FALSE;
 }
 
-void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum MoveEffect moveEffect, const u8 *battleScript, enum SetMoveEffectFlags effectFlags)
+static void SetMoveEffectInternal(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum MoveEffect moveEffect, const u8 *battleScript, enum SetMoveEffectFlags effectFlags, const struct AdditionalEffect *additionalEffect)
 {
     enum Ability abilities[MAX_BATTLERS_COUNT] = {ABILITY_NONE};
     abilities[battlerAtk] = GetBattlerAbility(battlerAtk);
@@ -2318,7 +2319,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     if (!primary && !affectsUser && IsMoveEffectBlockedByTarget(abilities[effectBattler]))
         moveEffect = MOVE_EFFECT_NONE;
     else if (!primary
-          && IsSheerForceAffected(gCurrentMove, abilities[battlerAtk])
+          && IsBattlerSheerForceAffected(battlerAtk, gCurrentMove, abilities[battlerAtk])
           && !(moveEffect == MOVE_EFFECT_ORDER_UP && gBattleStruct->battlerState[battlerAtk].commanderSpecies != SPECIES_NONE))
         moveEffect = MOVE_EFFECT_NONE;
     else if (!IsBattlerAlive(effectBattler) && !IgnoreTargetingForMoveEffect(moveEffect))
@@ -2483,8 +2484,12 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     case MOVE_EFFECT_STAT_PLUS:
     case MOVE_EFFECT_STAT_MINUS:
     {
-        // Better to pass the addtional effect as an argument but for now that works
-        const struct AdditionalEffect *effect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+        const struct AdditionalEffect *effect = additionalEffect;
+
+        // Legacy callers do not carry an AdditionalEffect payload. The fused
+        // path always does, because its effect may not exist in gMovesInfo.
+        if (effect == NULL)
+            effect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
 
         for (enum Stat i = STAT_ATK; i < NUM_BATTLE_STATS; i++)
         {
@@ -3411,6 +3416,11 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     gBattleScripting.moveEffect = MOVE_EFFECT_NONE;
 }
 
+void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum MoveEffect moveEffect, const u8 *battleScript, enum SetMoveEffectFlags effectFlags)
+{
+    SetMoveEffectInternal(battlerAtk, effectBattler, moveEffect, battleScript, effectFlags, NULL);
+}
+
 static void Cmd_setpreattackadditionaleffect(void)
 {
     CMD_ARGS();
@@ -3423,10 +3433,11 @@ static void Cmd_setpreattackadditionaleffect(void)
 
     while (gEffectBattler != MAX_BATTLERS_COUNT)
     {
-        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+        struct AdditionalEffect effectBuffer;
+        u32 numAdditionalEffects = GetBattlerMoveAdditionalEffectCount(gBattlerAttacker, gCurrentMove);
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
         {
-            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+            const struct AdditionalEffect *additionalEffect = GetBattlerMoveAdditionalEffectById(gBattlerAttacker, gCurrentMove, gBattleStruct->additionalEffectsCounter, &effectBuffer);
             gBattleStruct->additionalEffectsCounter++;
 
             if (!additionalEffect->preAttackEffect)
@@ -3446,12 +3457,13 @@ static void Cmd_setpreattackadditionaleffect(void)
                 if (percentChance == 0) flags |= EFFECT_PRIMARY;
                 if (percentChance >= 100) flags |= EFFECT_CERTAIN;
 
-                SetMoveEffect(
+                SetMoveEffectInternal(
                     gBattlerAttacker,
                     gEffectBattler,
                     additionalEffect->moveEffect,
                     gBattlescriptCurrInstr,
-                    flags
+                    flags,
+                    additionalEffect
                 );
             }
             return;
@@ -3515,12 +3527,13 @@ static void Cmd_setadditionaleffects(void)
 
     if (!IsBattlerUnaffectedByMove(gBattlerTarget))
     {
-        u32 numAdditionalEffects = GetMoveAdditionalEffectCount(gCurrentMove);
+        struct AdditionalEffect effectBuffer;
+        u32 numAdditionalEffects = GetBattlerMoveAdditionalEffectCount(gBattlerAttacker, gCurrentMove);
         SetToxicChainPriority();
         if (numAdditionalEffects > gBattleStruct->additionalEffectsCounter)
         {
             u32 percentChance;
-            const struct AdditionalEffect *additionalEffect = GetMoveAdditionalEffectById(gCurrentMove, gBattleStruct->additionalEffectsCounter);
+            const struct AdditionalEffect *additionalEffect = GetBattlerMoveAdditionalEffectById(gBattlerAttacker, gCurrentMove, gBattleStruct->additionalEffectsCounter, &effectBuffer);
 
             // Various checks for if this move effect can be applied this turn
             if (CanApplyAdditionalEffect(additionalEffect))
@@ -3537,12 +3550,13 @@ static void Cmd_setadditionaleffects(void)
                     if (percentChance >= 100)     flags |= EFFECT_CERTAIN;
                     if (additionalEffect->onSide) flags |= EFFECT_ON_SIDE;
 
-                    SetMoveEffect(
+                    SetMoveEffectInternal(
                         gBattlerAttacker,
                         additionalEffect->self ? gBattlerAttacker : gBattlerTarget,
                         additionalEffect->moveEffect,
                         gBattlescriptCurrInstr,
-                        flags
+                        flags,
+                        additionalEffect
                     );
                 }
             }
@@ -4222,7 +4236,7 @@ static bool32 WillPlayerWhiteOutIfPartnerWinsAlone()
         return TRUE;
     if (TESTING)
         return FALSE;
-    for (u32 i = 0; i < ARRAY_COUNT(gSelectedOrderFromParty); i++)
+    for (u32 i = 0; i < PARTY_SIZE; i++)
     {
         if (gSelectedOrderFromParty[i] <= MULTI_PARTY_SIZE)
             continue;
@@ -5627,7 +5641,10 @@ static void Cmd_yesnoboxlearnmove(void)
         if (!gPaletteFade.active)
         {
             CloseMainBattleScreen();
-            ShowSelectMovePokemonSummaryScreen(gParties[B_TRAINER_PLAYER], gBattleStruct->expGetterMonId, ReshowBattleScreenAfterMenu, gMoveToLearn);
+            if (BW_SUMMARY_SCREEN)
+                ShowSelectMovePokemonSummaryScreen_BW(gParties[B_TRAINER_PLAYER], gBattleStruct->expGetterMonId, gPartiesCount[B_TRAINER_PLAYER] - 1, ReshowBattleScreenAfterMenu, gMoveToLearn);
+            else
+                ShowSelectMovePokemonSummaryScreen(gParties[B_TRAINER_PLAYER], gBattleStruct->expGetterMonId, ReshowBattleScreenAfterMenu, gMoveToLearn);
             gBattleScripting.learnMoveState++;
         }
         break;
@@ -9289,9 +9306,6 @@ static void Cmd_switchoutabilities(void)
 
     enum BattlerId battler = GetBattlerForBattleScript(cmd->battler);
 
-    if (GetActiveGimmick(battler) == GIMMICK_Z_MOVE)
-        SetActiveGimmick(battler, GIMMICK_NONE);
-
     if (gBattleMons[battler].volatiles.neutralizingGas)
     {
         gBattleMons[battler].volatiles.neutralizingGas = FALSE;
@@ -9498,7 +9512,8 @@ bool32 IsSubstituteProtected(enum BattlerId battlerAtk, enum BattlerId battlerDe
         return TRUE;
     else if (GetMoveEffect(move) == EFFECT_TRANSFORM || GetMoveEffect(move) == EFFECT_SKY_DROP)
         return TRUE;
-    else if (IsAbilityAndRecord(battlerAtk, abilityAtk, ABILITY_INFILTRATOR))
+    else if (IsAbilityAndRecord(battlerAtk, abilityAtk, ABILITY_INFILTRATOR)
+          || BattlerMoveInfiltrates(battlerAtk, move))
         return FALSE;
     else
         return TRUE;

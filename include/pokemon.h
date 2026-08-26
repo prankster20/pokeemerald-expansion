@@ -48,6 +48,10 @@ enum MonData {
     MON_DATA_MOVE2,
     MON_DATA_MOVE3,
     MON_DATA_MOVE4,
+    MON_DATA_HELPER_MOVE1,
+    MON_DATA_HELPER_MOVE2,
+    MON_DATA_HELPER_MOVE3,
+    MON_DATA_HELPER_MOVE4,
     MON_DATA_PP1,
     MON_DATA_PP2,
     MON_DATA_PP3,
@@ -173,12 +177,9 @@ struct PokemonSubstruct2
     u8 speedEV;
     u8 spAttackEV;
     u8 spDefenseEV;
-    u8 cool;
-    u8 beauty;
-    u8 cute;
-    u8 smart;
-    u8 tough;
-    u8 sheen;
+    // Four packed 11-bit move IDs. This reuses the six former Contest
+    // condition bytes without changing BoxPokemon or the save-block layout.
+    u8 fusionData[6];
 };
 
 struct PokemonSubstruct3
@@ -767,6 +768,12 @@ u16 GiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move);
 u16 GiveMoveToBattleMon(struct BattlePokemon *mon, enum Move move);
 void SetMonMoveSlot(struct Pokemon *mon, enum Move move, u8 slot);
 void SetBoxMonMoveSlot(struct BoxPokemon *mon, enum Move move, u8 slot);
+enum Move GetBoxMonMoveHelper(struct BoxPokemon *mon, u32 slot);
+enum Move GetMonMoveHelper(struct Pokemon *mon, u32 slot);
+void SetBoxMonMoveHelper(struct BoxPokemon *mon, u32 slot, enum Move helperMove);
+void SetMonMoveHelper(struct Pokemon *mon, u32 slot, enum Move helperMove);
+void ClearBoxMonMoveHelper(struct BoxPokemon *mon, u32 slot);
+void ClearMonMoveHelper(struct Pokemon *mon, u32 slot);
 void SetBattleMonMoveSlot(struct BattlePokemon *mon, enum Move move, u8 slot);
 void GiveMonInitialMoveset(struct Pokemon *mon);
 void GiveBoxMonInitialMoveset(struct BoxPokemon *boxMon);
@@ -904,7 +911,7 @@ bool8 IsMonShiny(struct Pokemon *mon);
 const u8 *GetTrainerPartnerName(void);
 void BattleAnimateFrontSprite(struct Sprite *sprite, enum Species species, bool8 noCry, u8 panMode);
 void DoMonFrontSpriteAnimation(struct Sprite *sprite, enum Species species, bool8 noCry, u8 panModeAnimFlag);
-void PokemonSummaryDoMonAnimation(struct Sprite *sprite, enum Species species, bool8 oneFrame);
+void PokemonSummaryDoMonAnimation(struct Sprite *sprite, enum Species species, bool8 oneFrame, bool32 isShadow);
 void StopPokemonAnimationDelayTask(void);
 void BattleAnimateBackSprite(struct Sprite *sprite, enum Species species);
 u8 GetOpposingLinkMultiBattlerId(bool8 rightSide, u8 multiplayerId);

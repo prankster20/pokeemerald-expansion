@@ -3,6 +3,7 @@
 #include "battle.h"
 #include "battle_util.h"
 #include "bg.h"
+#include "bw_summary_screen.h"
 #include "chooseboxmon.h"
 #include "contest_effect.h"
 #include "data.h"
@@ -12,6 +13,7 @@
 #include "gpu_regs.h"
 #include "item.h"
 #include "move_relearner.h"
+#include "move_fusion.h"
 #include "list_menu.h"
 #include "malloc.h"
 #include "menu.h"
@@ -427,7 +429,9 @@ static void CB2_InitLearnMoveReturnFromSelectMove(void)
 
 static void StoreMoveText(void)
 {
-    if (P_ENABLE_MOVE_RELEARNERS || P_TM_MOVES_RELEARNER
+    if (gRelearnMode == RELEARN_MODE_MOVE_FUSION)
+        StringCopy(gStringVar3, COMPOUND_STRING("helper"));
+    else if (P_ENABLE_MOVE_RELEARNERS || P_TM_MOVES_RELEARNER
     || FlagGet(P_FLAG_EGG_MOVES) || FlagGet(P_FLAG_TUTOR_MOVES))
         StringCopy(gStringVar3, sRelearnTypes[gMoveRelearnerState].moveText);
     else
@@ -503,7 +507,10 @@ static void UIShowMoveList(u8 taskId)
     gSpecialVar_0x8008 = gTasks[taskId].tPartyIndex;
     gSpecialVar_0x8009 = gTasks[taskId].tMove;
     gSpecialVar_0x800A = gTasks[taskId].tCategory;
-    ShowSelectMovePokemonSummaryScreen(gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, CB2_InitLearnMoveReturnFromSelectMove, gTasks[taskId].tMove);
+    if (BW_SUMMARY_SCREEN)
+        ShowSelectMovePokemonSummaryScreen_BW(gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, CB2_InitLearnMoveReturnFromSelectMove, gTasks[taskId].tMove);
+    else
+        ShowSelectMovePokemonSummaryScreen(gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, CB2_InitLearnMoveReturnFromSelectMove, gTasks[taskId].tMove);
     DestroyTask(taskId);
     FreeMoveRelearnerResources();
 }
@@ -556,9 +563,19 @@ static void Task_MoveRelearner_Quit(u8 taskId)
     if (gInitialSummaryScreenCallback != NULL)
     {
         if (gRelearnMode == RELEARN_MODE_PSS_PAGE_CONTEST_MOVES)
-            ShowPokemonSummaryScreen(SUMMARY_MODE_RELEARNER_CONTEST, gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, gInitialSummaryScreenCallback);
+        {
+            if (BW_SUMMARY_SCREEN)
+                ShowPokemonSummaryScreen_BW(SUMMARY_MODE_RELEARNER_CONTEST, gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, gInitialSummaryScreenCallback);
+            else
+                ShowPokemonSummaryScreen(SUMMARY_MODE_RELEARNER_CONTEST, gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, gInitialSummaryScreenCallback);
+        }
         else
-            ShowPokemonSummaryScreen(SUMMARY_MODE_RELEARNER_BATTLE, gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, gInitialSummaryScreenCallback);
+        {
+            if (BW_SUMMARY_SCREEN)
+                ShowPokemonSummaryScreen_BW(SUMMARY_MODE_RELEARNER_BATTLE, gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, gInitialSummaryScreenCallback);
+            else
+                ShowPokemonSummaryScreen(SUMMARY_MODE_RELEARNER_BATTLE, gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, gInitialSummaryScreenCallback);
+        }
     }
     else
     {
@@ -652,6 +669,21 @@ static void Task_MoveRelearner_HandleInput(u8 taskId)
     default:
         PlaySE(SE_SELECT);
         RemoveScrollArrows();
+        if (gRelearnMode == RELEARN_MODE_MOVE_FUSION)
+        {
+            struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gTasks[taskId].tPartyIndex];
+            struct ResolvedMoveFusion fusion;
+            enum Move mainMove = GetMonData(mon, MON_DATA_MOVE1 + gSpecialVar_0x8005);
+            SetMonMoveHelper(mon, gSpecialVar_0x8005, itemId);
+            if (ResolveMoveFusion(mainMove, itemId, &fusion))
+            {
+                u16 pp = min(GetMonData(mon, MON_DATA_PP1 + gSpecialVar_0x8005), fusion.pp);
+                SetMonData(mon, MON_DATA_PP1 + gSpecialVar_0x8005, &pp);
+            }
+            gTasks[taskId].func = Task_MoveRelearner_Quit;
+            BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+            break;
+        }
         StringCopy(gStringVar2, GetMoveName(itemId));
         gTasks[taskId].func = Task_MoveRelearner_LearnMove;
         gTasks[taskId].tMove = GetCurrentSelectedMove();
@@ -741,8 +773,28 @@ static void CreateLearnableMovesList(void)
     s32 i;
 
     struct BoxPokemon *boxmon = GetSelectedBoxMonFromPcOrParty();
-    if (gRelearnMode == RELEARN_MODE_SCRIPT || sRelearnTypes[gMoveRelearnerState].isActive())
+    if (gRelearnMode == RELEARN_MODE_MOVE_FUSION)
+    {
+        enum Move mainMove = GetBoxMonData(boxmon, MON_DATA_MOVE1 + gSpecialVar_0x8005);
+        sMoveRelearnerStruct->numMenuChoices = GetAvailableFusionHelpers(boxmon, mainMove, sMoveRelearnerStruct->movesToLearn, MAX_RELEARNER_MOVES);
+    }
+    else if (gRelearnMode == RELEARN_MODE_SCRIPT || sRelearnTypes[gMoveRelearnerState].isActive())
         sMoveRelearnerStruct->numMenuChoices = sRelearnTypes[gMoveRelearnerState].getMoves(boxmon, sMoveRelearnerStruct->movesToLearn);
+
+    if (gRelearnMode != RELEARN_MODE_MOVE_FUSION)
+    {
+        for (i = 0; i < sMoveRelearnerStruct->numMenuChoices; )
+        {
+            if (CanMoveBeFusionMain(sMoveRelearnerStruct->movesToLearn[i]))
+            {
+                i++;
+                continue;
+            }
+            for (s32 j = i; j + 1 < sMoveRelearnerStruct->numMenuChoices; j++)
+                sMoveRelearnerStruct->movesToLearn[j] = sMoveRelearnerStruct->movesToLearn[j + 1];
+            sMoveRelearnerStruct->numMenuChoices--;
+        }
+    }
 
     if (P_SORT_MOVES)
         SortMovesAlphabetically(sMoveRelearnerStruct->movesToLearn, sMoveRelearnerStruct->numMenuChoices);
@@ -880,7 +932,7 @@ static u32 GetRelearnerLevelUpMoves(struct BoxPokemon *mon, u16 *moves)
             if (learnset[i].level > level)
                 break;
 
-            if (BoxMonKnowsMove(mon, learnset[i].move))
+            if (BoxMonHasMoveOrHelper(mon, learnset[i].move))
                 continue;
 
             bool32 alreadyInList = FALSE;
@@ -913,7 +965,7 @@ static u32 GetRelearnerEggMoves(struct BoxPokemon *mon, u16 *moves)
 
     for (u32 i = 0; eggMoves[i] != MOVE_UNAVAILABLE; i++)
     {
-        if (!BoxMonKnowsMove(mon, eggMoves[i]))
+        if (!BoxMonHasMoveOrHelper(mon, eggMoves[i]))
             moves[numMoves++] = eggMoves[i];
     }
 
@@ -939,7 +991,7 @@ static u32 GetRelearnerTMMoves(struct BoxPokemon *mon, u16 *moves)
         if (!CanLearnTeachableMove(species, move))
             continue;
 
-        if (!BoxMonKnowsMove(mon, move))
+        if (!BoxMonHasMoveOrHelper(mon, move))
             moves[numMoves++] = move;
     }
 
@@ -958,7 +1010,7 @@ static u32 GetRelearnerTutorMoves(struct BoxPokemon *mon, u16 *moves)
         if (!CanLearnTeachableMove(species, move))
             continue;
 
-        if (!BoxMonKnowsMove(mon, move))
+        if (!BoxMonHasMoveOrHelper(mon, move))
             moves[numMoves++] = move;
     }
 
@@ -1016,7 +1068,7 @@ static bool32 HasRelearnerLevelUpMoves(struct BoxPokemon *boxMon)
             if (learnset[i].level > level)
                 break;
 
-            if (!BoxMonKnowsMove(boxMon, learnset[i].move))
+            if (!BoxMonHasMoveOrHelper(boxMon, learnset[i].move))
                 return TRUE;
         }
 
@@ -1040,7 +1092,7 @@ static bool32 HasRelearnerEggMoves(struct BoxPokemon *boxMon)
 
     for (u32 i = 0; eggMoves[i] != MOVE_UNAVAILABLE; i++)
     {
-        if (!BoxMonKnowsMove(boxMon, eggMoves[i]))
+        if (!BoxMonHasMoveOrHelper(boxMon, eggMoves[i]))
             return TRUE;
     }
 
@@ -1065,7 +1117,7 @@ static bool32 HasRelearnerTMMoves(struct BoxPokemon *boxMon)
         if (!CanLearnTeachableMove(species, move))
             continue;
 
-        if (!BoxMonKnowsMove(boxMon, move))
+        if (!BoxMonHasMoveOrHelper(boxMon, move))
             return TRUE;
     }
 
@@ -1082,7 +1134,7 @@ static bool32 HasRelearnerTutorMoves(struct BoxPokemon *boxMon)
         if (!CanLearnTeachableMove(species, move))
             continue;
 
-        if (!BoxMonKnowsMove(boxMon, move))
+        if (!BoxMonHasMoveOrHelper(boxMon, move))
             return TRUE;
     }
 

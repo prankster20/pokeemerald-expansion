@@ -94,6 +94,7 @@ struct Pokemon
     int tera_type_line;
 
     struct String moves[MAX_MON_MOVES];
+    struct String move_helpers[MAX_MON_MOVES];
     int moves_n;
     int move1_line;
 
@@ -826,10 +827,12 @@ static bool parse_attribute(struct Parser *p, struct Token *key, struct Token *v
 }
 
 __attribute__((warn_unused_result))
-static bool parse_pokemon_move(struct Parser *p, struct Token *move)
+static bool parse_pokemon_move(struct Parser *p, struct Token *move, struct Token *helper)
 {
-    assert(p && move);
+    assert(p && move && helper);
     struct Parser p_ = *p;
+
+    *helper = (struct Token) {};
 
     if (!match_exact(&p_, "-"))
         return false;
@@ -837,6 +840,13 @@ static bool parse_pokemon_move(struct Parser *p, struct Token *move)
     if (!match_move_identifier(&p_, move))
         return set_parse_error(p, p_.location, "expected move");
     skip_whitespace(&p_);
+    if (match_exact(&p_, "+"))
+    {
+        skip_whitespace(&p_);
+        if (!match_move_identifier(&p_, helper))
+            return set_parse_error(p, p_.location, "expected helper move after '+'");
+        skip_whitespace(&p_);
+    }
     if (!match_eol(&p_))
         return set_parse_error(p, p_.location, "unexpected character in move");
 
@@ -1553,8 +1563,8 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
         // Parse moves.
         for (int j = 0; j < MAX_MON_MOVES; j++)
         {
-            struct Token move;
-            if (!parse_pokemon_move(p, &move))
+            struct Token move, helper;
+            if (!parse_pokemon_move(p, &move, &helper))
             {
                 struct Parser p_ = *p;
                 if (match_eof(&p_) || match_empty_line(&p_))
@@ -1565,6 +1575,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->moves_n == 0)
                     pokemon->move1_line = move.location.line;
                 pokemon->moves[pokemon->moves_n] = token_string(&move);
+                pokemon->move_helpers[pokemon->moves_n] = token_string(&helper);
                 pokemon->moves_n++;
             }
         }
@@ -2158,6 +2169,25 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
                     fprintf(f, ",\n");
                 }
                 fprintf(f, "            },\n");
+
+                bool has_helpers = false;
+                for (int k = 0; k < pokemon->moves_n; k++)
+                    has_helpers |= !is_empty_string(pokemon->move_helpers[k]);
+                if (has_helpers)
+                {
+                    fprintf(f, "            .moveHelpers = {\n");
+                    fprintf(f, "#line %d\n", pokemon->move1_line);
+                    for (int k = 0; k < pokemon->moves_n; k++)
+                    {
+                        fprintf(f, "                ");
+                        if (is_empty_string(pokemon->move_helpers[k]))
+                            fprintf(f, "MOVE_NONE");
+                        else
+                            fprint_constant(f, "MOVE", pokemon->move_helpers[k]);
+                        fprintf(f, ",\n");
+                    }
+                    fprintf(f, "            },\n");
+                }
             }
 
             fprintf(f, "            },\n");

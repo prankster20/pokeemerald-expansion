@@ -36,6 +36,7 @@
 #include "link_rfu.h"
 #include "load_save.h"
 #include "main.h"
+#include "move_fusion.h"
 #include "malloc.h"
 #include "m4a.h"
 #include "palette.h"
@@ -1843,7 +1844,7 @@ void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct TrainerMon 
 
     for (j = 0; j < MAX_MON_MOVES; ++j)
     {
-        if (partyEntry->moves[j] != MOVE_NONE)
+        if (partyEntry->moves[j] != MOVE_NONE && CanMoveBeFusionMain(partyEntry->moves[j]))
             noMoveSet = FALSE;
     }
     if (noMoveSet)
@@ -1855,9 +1856,13 @@ void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct TrainerMon 
 
     for (j = 0; j < MAX_MON_MOVES; ++j)
     {
+        if (partyEntry->moves[j] != MOVE_NONE && !CanMoveBeFusionMain(partyEntry->moves[j]))
+            continue;
         u32 pp = GetMovePP(partyEntry->moves[j]);
         SetMonData(mon, MON_DATA_MOVE1 + j, &partyEntry->moves[j]);
         SetMonData(mon, MON_DATA_PP1 + j, &pp);
+        if (partyEntry->moveHelpers[j] != MOVE_NONE)
+            SetMonMoveHelper(mon, j, partyEntry->moveHelpers[j]);
     }
 }
 

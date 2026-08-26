@@ -3,19 +3,71 @@ PlayersHouse_2F_EventScript_BlockStairsUntilClockIsSet::
 	return
 
 PlayersHouse_1F_EventScript_EnterHouseMovingIn::
-	msgbox PlayersHouse_1F_Text_IsntItNiceInHere, MSGBOX_DEFAULT
 	applymovement VAR_0x8004, Common_Movement_FacePlayer
 	waitmovement 0
 	call_if_eq VAR_0x8005, MALE, PlayersHouse_1F_EventScript_MomFacePlayerMovingInMale
 	call_if_eq VAR_0x8005, FEMALE, PlayersHouse_1F_EventScript_MomFacePlayerMovingInFemale
-	msgbox PlayersHouse_1F_Text_MoversPokemonGoSetClock, MSGBOX_DEFAULT
-	closemessage
-	setvar VAR_LITTLEROOT_INTRO_STATE, 4
-	applymovement LOCALID_PLAYER, PlayersHouse_1F_Movement_PlayerWalkIn
-	applymovement VAR_0x8004, Common_Movement_WalkInPlaceFasterUp
 	waitmovement 0
-	releaseall
+	msgbox PlayersHouse_1F_Text_IsntItNiceInHere, MSGBOX_DEFAULT
+	closemessage
+	applymovement LOCALID_PLAYER, PlayersHouse_1F_Movement_PlayerWalkIn
+	waitmovement 0
+	delay 10
+	playse SE_PIN
+	applymovement VAR_0x8005, Common_Movement_ExclamationMark
+	waitmovement 0
+	applymovement VAR_0x8005, Common_Movement_Delay48
+	waitmovement 0
+	call_if_eq VAR_0x8005, MALE, PlayersHouse_1F_EventScript_MomMoveDirectlyToTVMale
+	call_if_eq VAR_0x8005, FEMALE, PlayersHouse_1F_EventScript_MomMoveDirectlyToTVFemale
+	waitmovement 0
+	setflag FLAG_SET_WALL_CLOCK
+	setflag FLAG_HIDE_LITTLEROOT_TOWN_PLAYERS_HOUSE_VIGOROTH_1
+	setflag FLAG_HIDE_LITTLEROOT_TOWN_PLAYERS_HOUSE_VIGOROTH_2
+	setvar VAR_LITTLEROOT_INTRO_STATE, 6
+	goto_if_eq VAR_0x8005, MALE, PlayersHouse_1F_EventScript_StartTVDirectlyMale
+	goto PlayersHouse_1F_EventScript_StartTVDirectlyFemale
 	end
+
+PlayersHouse_1F_EventScript_MomMoveDirectlyToTVMale::
+	applymovement VAR_0x8004, PlayersHouse_1F_Movement_MomMoveDirectlyToTVMale
+	return
+
+PlayersHouse_1F_EventScript_MomMoveDirectlyToTVFemale::
+	applymovement VAR_0x8004, PlayersHouse_1F_Movement_MomMoveDirectlyToTVFemale
+	return
+
+PlayersHouse_1F_EventScript_StartTVDirectlyMale::
+	copyvar VAR_0x8005, VAR_0x8004
+	goto PlayersHouse_1F_EventScript_PetalburgGymReportMale
+
+PlayersHouse_1F_EventScript_StartTVDirectlyFemale::
+	copyvar VAR_0x8005, VAR_0x8004
+	goto PlayersHouse_1F_EventScript_PetalburgGymReportFemale
+
+PlayersHouse_1F_Movement_MomMoveDirectlyToTVMale:
+	walk_up
+	walk_up
+	walk_up
+	walk_left
+	walk_left
+	walk_left
+	walk_left
+	walk_left
+	walk_in_place_faster_up
+	step_end
+
+PlayersHouse_1F_Movement_MomMoveDirectlyToTVFemale:
+	walk_up
+	walk_up
+	walk_up
+	walk_right
+	walk_right
+	walk_right
+	walk_right
+	walk_right
+	walk_in_place_faster_up
+	step_end
 
 PlayersHouse_1F_EventScript_MomFacePlayerMovingInMale::
 	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterRight
@@ -28,6 +80,10 @@ PlayersHouse_1F_EventScript_MomFacePlayerMovingInFemale::
 	return
 
 PlayersHouse_1F_Movement_PlayerWalkIn:
+	walk_up
+	walk_up
+	walk_up
+	walk_up
 	walk_up
 	step_end
 
@@ -139,6 +195,10 @@ PlayersHouse_2F_Movement_MomExitsFemale:
 
 PlayersHouse_1F_EventScript_SetWatchedBroadcast::
 	setvar VAR_LITTLEROOT_INTRO_STATE, 7
+	setvar VAR_LITTLEROOT_RIVAL_STATE, 3
+	setvar VAR_LITTLEROOT_TOWN_STATE, 1
+	setflag FLAG_HIDE_LITTLEROOT_TOWN_BRENDANS_HOUSE_BRENDAN
+	setflag FLAG_HIDE_LITTLEROOT_TOWN_MAYS_HOUSE_MAY
 	releaseall
 	end
 
@@ -159,7 +219,7 @@ PlayersHouse_1F_EventScript_PetalburgGymReportMale::
 	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterLeft
 	waitmovement 0
 	msgbox PlayersHouse_1F_Text_ItsOverWeMissedHim, MSGBOX_DEFAULT
-	msgbox PlayersHouse_1F_Text_GoIntroduceYourselfNextDoor, MSGBOX_DEFAULT
+	msgbox PlayersHouse_1F_Text_GoSeeProfBirch, MSGBOX_DEFAULT
 	closemessage
 	setvar VAR_TEMP_1, 1
 	applymovement VAR_0x8005, PlayersHouse_1F_Movement_MomReturnToSeatMale
@@ -184,7 +244,7 @@ PlayersHouse_1F_EventScript_PetalburgGymReportFemale::
 	applymovement LOCALID_PLAYER, Common_Movement_WalkInPlaceFasterRight
 	waitmovement 0
 	msgbox PlayersHouse_1F_Text_ItsOverWeMissedHim, MSGBOX_DEFAULT
-	msgbox PlayersHouse_1F_Text_GoIntroduceYourselfNextDoor, MSGBOX_DEFAULT
+	msgbox PlayersHouse_1F_Text_GoSeeProfBirch, MSGBOX_DEFAULT
 	closemessage
 	setvar VAR_TEMP_1, 1
 	applymovement VAR_0x8005, PlayersHouse_1F_Movement_MomReturnToSeatFemale

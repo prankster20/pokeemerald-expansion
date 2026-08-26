@@ -3,6 +3,7 @@
 #include "malloc.h"
 #include "battle.h"
 #include "battle_special.h"
+#include "bw_summary_screen.h"
 #include "cable_club.h"
 #include "data.h"
 #include "daycare.h"
@@ -4509,7 +4510,10 @@ static void UIShowMoveList(u8 taskId)
     gSpecialVar_0x8000 = gTasks[taskId].tPartyIndex;
     gSpecialVar_0x8001 = gTasks[taskId].tMove;
     DestroyTask(taskId);
-    ShowSelectMovePokemonSummaryScreen(gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, CB2_ReturnToFieldWhileLearningMove, gTasks[taskId].tMove);
+    if (BW_SUMMARY_SCREEN)
+        ShowSelectMovePokemonSummaryScreen_BW(gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, gPartiesCount[B_TRAINER_PLAYER] - 1, CB2_ReturnToFieldWhileLearningMove, gTasks[taskId].tMove);
+    else
+        ShowSelectMovePokemonSummaryScreen(gParties[B_TRAINER_PLAYER], gTasks[taskId].tPartyIndex, CB2_ReturnToFieldWhileLearningMove, gTasks[taskId].tMove);
 }
 
 static const struct MoveLearnUI sMoveLearnUI =

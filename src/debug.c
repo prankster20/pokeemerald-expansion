@@ -74,6 +74,7 @@
 #include "vs_seeker.h"
 #include "load_save.h"
 #include "battle_partner.h"
+#include "bw_summary_screen.h"
 
 enum FollowerNPCCreateDebugMenu
 {
@@ -297,6 +298,7 @@ static void DebugAction_PCBag_ClearBag(u8 taskId);
 static void DebugAction_PCBag_ClearBoxes(u8 taskId);
 
 static void DebugAction_Party_HealParty(u8 taskId);
+static void DebugAction_Party_MoveFusion(u8 taskId);
 static void DebugAction_Party_ClearPokerus(u8 taskId);
 static void DebugAction_Party_ClearParty(u8 taskId);
 static void DebugAction_Party_SetParty(u8 taskId);
@@ -628,6 +630,7 @@ static const struct DebugMenuOption sDebugMenu_Actions_EditPokemon[] =
 
 static const struct DebugMenuOption sDebugMenu_Actions_Party[] =
 {
+    { COMPOUND_STRING("Move Fusion"),        DebugAction_Party_MoveFusion },
     { COMPOUND_STRING("Move Relearner"),     DebugAction_ExecuteScript, Common_EventScript_MoveRelearner },
     { COMPOUND_STRING("Hatch an Egg"),       DebugAction_ExecuteScript, Debug_HatchAnEgg },
     { COMPOUND_STRING("Heal party"),         DebugAction_Party_HealParty },
@@ -4725,6 +4728,22 @@ static void DebugAction_Party_HealParty(u8 taskId)
     HealPlayerParty();
     ScriptContext_Enable();
     Debug_DestroyMenu_Full(taskId);
+}
+
+static void DebugAction_Party_MoveFusion(u8 taskId)
+{
+    if (gPartiesCount[B_TRAINER_PLAYER] == 0)
+    {
+        PlaySE(SE_FAILURE);
+        return;
+    }
+
+    Debug_DestroyMenu_Full(taskId);
+    ShowPokemonSummaryScreen_BW(SUMMARY_MODE_NORMAL,
+                                gParties[B_TRAINER_PLAYER],
+                                0,
+                                gPartiesCount[B_TRAINER_PLAYER] - 1,
+                                CB2_ReturnToField);
 }
 
 void DebugNative_GetAbilityNames(void)

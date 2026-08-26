@@ -2709,6 +2709,22 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_GoldBottleCap,
     },
 
+    [ITEM_DAYLIGHT_SAVER] =
+    {
+        .name = ITEM_NAME("Daylight Saver"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "A curious device that\n"
+            "switches the world\n"
+            "between day and night."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_DaylightSaver,
+        .iconPic = gItemIcon_NecrozmaFuser,
+        .iconPalette = gItemIconPalette_NSolarizer,
+    },
+
     [ITEM_NUGGET] =
     {
         .name = ITEM_NAME("Nugget"),

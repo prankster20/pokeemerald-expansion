@@ -3758,7 +3758,7 @@ void ScriptShowItemDescription(struct ScriptContext *ctx)
         textY = 0;
 
     ShowItemIconSprite(item, TRUE, handleFlash);
-    AddTextPrinterParameterized(sHeaderBoxWindowId, 0, dst, ITEM_ICON_X + 2, textY, 0, NULL);
+    AddTextPrinterParameterized5(sHeaderBoxWindowId, FONT_SMALL, dst, ITEM_ICON_X + 2, textY, 0, NULL, 0, -1);
 }
 
 void ScriptHideItemDescription(struct ScriptContext *ctx)

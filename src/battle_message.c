@@ -15,6 +15,7 @@
 #include "item.h"
 #include "link.h"
 #include "menu.h"
+#include "move_fusion.h"
 #include "palette.h"
 #include "recorded_battle.h"
 #include "string_util.h"
@@ -2694,7 +2695,13 @@ void BufferStringBattle(enum StringID stringID, enum BattlerId battler)
          && !IsMaxMove(gBattleMsgDataPtr->currentMove))
             StringCopy(gBattleTextBuff3, gTypesInfo[*(&gBattleStruct->stringMoveType)].generic);
         else
-            StringCopy(gBattleTextBuff3, GetMoveName(gBattleMsgDataPtr->currentMove));
+        {
+            struct ResolvedMoveFusion fusion;
+            if (ResolveBattlerMoveFusion(battler, gBattleMsgDataPtr->currentMove, &fusion))
+                GetFusedMoveName(fusion.mainMove, fusion.helperMove, gBattleTextBuff3);
+            else
+                StringCopy(gBattleTextBuff3, GetMoveName(gBattleMsgDataPtr->currentMove));
+        }
         stringPtr = sText_AttackerUsedX;
         break;
     case STRINGID_BATTLEEND: // battle end
@@ -3842,6 +3849,12 @@ void BattlePutTextOnWindow(const u8 *text, u8 windowId)
     printerTemplate.letterSpacing = textInfo[windowId].letterSpacing;
     printerTemplate.lineSpacing = textInfo[windowId].lineSpacing;
     printerTemplate.color = textInfo[windowId].color;
+
+    if (windowId == B_WIN_MOVE_DESCRIPTION)
+    {
+        printerTemplate.fontId = FONT_SMALL;
+        printerTemplate.lineSpacing = -1;
+    }
 
     if (B_WIN_MOVE_NAME_1 <= windowId && windowId <= B_WIN_MOVE_NAME_4)
     {

@@ -50,7 +50,10 @@
 #include "constants/map_groups.h"
 #include "constants/items.h"
 #include "difficulty.h"
+#include "fake_rtc.h"
 #include "follower_npc.h"
+#include "constants/flags.h"
+#include "constants/rtc.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 extern const u8 EventScript_ResetAllMapFlagsFrlg[];
@@ -216,6 +219,10 @@ void NewGameInitData(void)
         RunScriptImmediately(EventScript_ResetAllMapFlagsFrlg);
     else
         RunScriptImmediately(EventScript_ResetAllMapFlags);
+    FakeRtc_ManuallySetTime(0, DAY_HOUR_BEGIN + 3, 0, 0);
+    FlagSet(FLAG_SYS_B_DASH);
+    FlagSet(FLAG_RECEIVED_RUNNING_SHOES);
+    FlagSet(OW_FLAG_PAUSE_TIME);
 #if IS_FRLG
         StringCopy(gSaveBlock1Ptr->rivalName, rivalName);
 #endif

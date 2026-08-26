@@ -1,6 +1,7 @@
 #include "global.h"
 #include "malloc.h"
 #include "bg.h"
+#include "bw_summary_screen.h"
 #include "data.h"
 #include "decompress.h"
 #include "dma3.h"
@@ -25,6 +26,7 @@
 #include "palette.h"
 #include "pc_screen_effect.h"
 #include "pokemon.h"
+#include "pokemon_palette_variation.h"
 #include "pokemon_icon.h"
 #include "pokemon_summary_screen.h"
 #include "pokemon_storage_system.h"
@@ -3775,7 +3777,10 @@ static void Task_ChangeScreen(u8 taskId)
         maxMonIndex = sStorage->summaryMaxPos;
         mode = sStorage->summaryScreenMode;
         FreePokeStorageData();
-        ShowPokemonSummaryScreen(mode, boxMons, monIndex, maxMonIndex, CB2_ReturnToPokeStorage);
+        if (BW_SUMMARY_SCREEN)
+            ShowPokemonSummaryScreen_BW(mode, boxMons, monIndex, maxMonIndex, CB2_ReturnToPokeStorage);
+        else
+            ShowPokemonSummaryScreen(mode, boxMons, monIndex, maxMonIndex, CB2_ReturnToPokeStorage);
         break;
     case SCREEN_CHANGE_NAME_BOX:
         FreePokeStorageData();
@@ -4002,6 +4007,7 @@ static void LoadDisplayMonGfx(enum Species species, u32 pid, bool32 isEgg)
         LoadSpecialPokePicIsEgg(sStorage->tileBuffer, species, pid, TRUE, isEgg);
         CpuCopy32(sStorage->tileBuffer, sStorage->displayMonTilePtr, MON_PIC_SIZE);
         LoadPalette(sStorage->displayMonPalette, sStorage->displayMonPalOffset, PLTT_SIZE_4BPP);
+        ApplyPersonalityPaletteVariation(sStorage->displayMonPalOffset, pid);
         sStorage->displayMonSprite->invisible = FALSE;
     }
     else
@@ -9327,7 +9333,7 @@ static void PrintItemDescription(void)
         description = GetItemDescription(sStorage->displayMonItemId);
 
     FillWindowPixelBuffer(WIN_ITEM_DESC, PIXEL_FILL(1));
-    AddTextPrinterParameterized5(WIN_ITEM_DESC, FONT_NORMAL, description, 4, 0, 0, NULL, 0, 1);
+    AddTextPrinterParameterized5(WIN_ITEM_DESC, FONT_SMALL, description, 4, 0, 0, NULL, 0, -1);
 }
 
 static void InitItemInfoWindow(void)

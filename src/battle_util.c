@@ -10,6 +10,7 @@
 #include "battle_setup.h"
 #include "battle_z_move.h"
 #include "battle_gimmick.h"
+#include "move_fusion.h"
 #include "battle_hold_effects.h"
 #include "battle_stat_change.h"
 #include "config_changes.h"
@@ -5793,7 +5794,18 @@ bool32 CanBattlerAvoidContactEffects(enum BattlerId battlerAtk, enum BattlerId b
 
 bool32 IsMoveMakingContact(enum BattlerId battlerAtk, enum BattlerId battlerDef, enum Ability abilityAtk, enum HoldEffect holdEffectAtk, enum Move move)
 {
-    if (!(MoveMakesContact(move) || (GetMoveEffect(move) == EFFECT_SHELL_SIDE_ARM
+    struct ResolvedMoveFusion fusion;
+    bool32 makesContact = MoveMakesContact(move);
+
+    if (ResolveBattlerMoveFusion(battlerAtk, move, &fusion))
+    {
+        if (fusion.makesContact == MOVE_FUSION_FLAG_ADD)
+            makesContact = TRUE;
+        else if (fusion.makesContact == MOVE_FUSION_FLAG_REMOVE)
+            return FALSE;
+    }
+
+    if (!(makesContact || (GetMoveEffect(move) == EFFECT_SHELL_SIDE_ARM
                                   && gBattleStruct->shellSideArmCategory[battlerAtk][battlerDef] == DAMAGE_CATEGORY_PHYSICAL)))
     {
         return FALSE;
@@ -5857,6 +5869,10 @@ bool32 IsBattlerProtected(struct BattleCalcValues *cv)
             gSpecialStatuses[cv->battlerAtk].breaksThroughProtectFully = TRUE;
             return FALSE;
         }
+
+        if (cv->abilities[cv->battlerAtk] == ABILITY_INFILTRATOR
+         || BattlerMoveInfiltrates(cv->battlerAtk, cv->move))
+            return FALSE;
     }
 
     if (GetBattlerMoveTargetType(cv->battlerAtk, cv->move) == TARGET_ALL_BATTLERS)
@@ -6054,7 +6070,6 @@ u32 GetMoveTargetCount(struct DamageContext *ctx)
     enum BattlerId battlerAtk = ctx->battlerAtk;
     enum BattlerId battlerDef = ctx->battlerDef;
     enum Move move = ctx->move;
-
     switch (GetBattlerMoveTargetType(battlerAtk, move))
     {
     case TARGET_BOTH:
@@ -6184,7 +6199,9 @@ static inline u32 CalcMoveBasePower(struct DamageContext *ctx)
     enum Move move = ctx->move;
 
     u32 i;
-    u32 basePower = GetMovePower(move);
+    struct ResolvedMoveFusion fusion;
+    bool32 isFused = ResolveBattlerMoveFusion(battlerAtk, move, &fusion);
+    u32 basePower = isFused ? fusion.power : GetMovePower(move);
     u32 moveEffect = GetMoveEffect(move);
     u32 weight, hpFraction, speed;
 
@@ -6401,6 +6418,7 @@ static inline u32 CalcMoveBasePower(struct DamageContext *ctx)
         }
         break;
     }
+
     case EFFECT_GRAV_APPLE:
         if (ctx->fieldStatuses & STATUS_FIELD_GRAVITY)
             basePower = uq4_12_multiply(basePower, UQ_4_12(1.5));
@@ -6435,6 +6453,13 @@ static inline u32 CalcMoveBasePower(struct DamageContext *ctx)
         break;
     }
 
+    if (isFused && fusion.effect == EFFECT_ASSURANCE && gProtectStructs[battlerDef].assuranceDoubled)
+        basePower *= 2;
+    if (isFused && fusion.effect == EFFECT_STORED_POWER)
+        basePower += CountBattlerStatIncreases(battlerAtk, TRUE) * fusion.argument.powerPerStatBoost;
+    if (isFused && fusion.effect == EFFECT_FICKLE_BEAM && gBattleStruct->fickleBeamBoosted)
+        basePower *= fusion.argument.randomPowerMultiplier.multiplier;
+
     if (basePower == 0)
         basePower = 1;
     return basePower;
@@ -6447,6 +6472,8 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
     enum BattlerId battlerAtk = ctx->battlerAtk;
     enum BattlerId battlerDef = ctx->battlerDef;
     enum Move move = ctx->move;
+    struct ResolvedMoveFusion fusion;
+    bool32 isFused = ResolveBattlerMoveFusion(battlerAtk, move, &fusion);
     enum Type moveType = ctx->moveType;
     enum BattleMoveEffects moveEffect = GetMoveEffect(move);
 
@@ -6546,7 +6573,7 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
            modifier = uq4_12_multiply(modifier, UQ_4_12(1.2));
         break;
     case ABILITY_SHEER_FORCE:
-        if (MoveIsAffectedBySheerForce(move))
+        if (BattlerMoveIsAffectedBySheerForce(battlerAtk, move))
            modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
         break;
     case ABILITY_SAND_FORCE:
@@ -6579,11 +6606,13 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
            modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
         break;
     case ABILITY_STRONG_JAW:
-        if (IsBitingMove(move))
+        if ((IsBitingMove(move) && (!isFused || fusion.bitingMove != MOVE_FUSION_FLAG_REMOVE))
+         || (isFused && fusion.bitingMove == MOVE_FUSION_FLAG_ADD))
            modifier = uq4_12_multiply(modifier, UQ_4_12(1.5));
         break;
     case ABILITY_MEGA_LAUNCHER:
-        if (IsPulseMove(move))
+        if ((IsPulseMove(move) && (!isFused || fusion.pulseMove != MOVE_FUSION_FLAG_REMOVE))
+         || (isFused && fusion.pulseMove == MOVE_FUSION_FLAG_ADD))
            modifier = uq4_12_multiply(modifier, UQ_4_12(1.5));
         break;
     case ABILITY_WATER_BUBBLE:
@@ -7374,7 +7403,10 @@ static inline uq4_12_t GetGlaiveRushModifier(enum BattlerId battlerDef)
 
 static inline uq4_12_t GetZMaxMoveAgainstProtectionModifier(struct DamageContext *ctx)
 {
-    if (!IsZMove(ctx->move) && !IsMaxMove(ctx->move))
+    bool32 infiltrates = ctx->abilities[ctx->battlerAtk] == ABILITY_INFILTRATOR
+                      || BattlerMoveInfiltrates(ctx->battlerAtk, ctx->move);
+
+    if (!infiltrates && !IsZMove(ctx->move) && !IsMaxMove(ctx->move))
         return UQ_4_12(1.0);
 
     u32 protected = gProtectStructs[ctx->battlerDef].protected;
@@ -7422,7 +7454,9 @@ static inline uq4_12_t GetScreensModifier(struct DamageContext *ctx)
     {
         return UQ_4_12(1.0);
     }
-    if (ctx->abilities[ctx->battlerAtk] == ABILITY_INFILTRATOR && !IsBattlerAlly(ctx->battlerAtk, ctx->battlerDef))
+        if ((ctx->abilities[ctx->battlerAtk] == ABILITY_INFILTRATOR
+            || BattlerMoveInfiltrates(ctx->battlerAtk, ctx->move))
+         && !IsBattlerAlly(ctx->battlerAtk, ctx->battlerDef))
     {
         if (ctx->updateFlags)
             RecordAbilityBattle(ctx->battlerAtk, ctx->abilities[ctx->battlerAtk]);
@@ -7905,7 +7939,7 @@ s32 CalcCritChanceStage(struct DamageContext *ctx)
     {
         critChance  = (gBattleMons[ctx->battlerAtk].volatiles.focusEnergy != 0 ? 2 : 0)
                     + (gBattleMons[ctx->battlerAtk].volatiles.dragonCheer != 0 ? 1 : 0)
-                    + GetMoveCriticalHitStage(ctx->move)
+                    + GetBattlerMoveCriticalHitStage(ctx->battlerAtk, ctx->move)
                     + GetHoldEffectCritChanceIncrease(ctx->battlerAtk, ctx->holdEffects[ctx->battlerAtk])
                     + ((B_AFFECTION_MECHANICS == TRUE && GetBattlerAffectionHearts(ctx->battlerAtk) == AFFECTION_FIVE_HEARTS) ? 2 : 0)
                     + (ctx->abilities[ctx->battlerAtk] == ABILITY_SUPER_LUCK ? 1 : 0)
@@ -7939,7 +7973,7 @@ s32 CalcCritChanceStage(struct DamageContext *ctx)
 s32 CalcCritChanceStageGen1(struct DamageContext *ctx)
 {
     s32 critChance = 0;
-    s32 moveCritStage = GetMoveCriticalHitStage(ctx->move);
+    s32 moveCritStage = GetBattlerMoveCriticalHitStage(ctx->battlerAtk, ctx->move);
     s32 bonusCritStage = gBattleMons[ctx->battlerAtk].volatiles.bonusCritStages; // G-Max Chi Strike
     u32 holdEffectCritStage = GetHoldEffectCritChanceIncrease(ctx->battlerAtk, ctx->holdEffects[ctx->battlerAtk]);
     u16 baseSpeed = GetSpeciesBaseSpeed(gBattleMons[ctx->battlerAtk].species);
@@ -8866,7 +8900,7 @@ void SetIllusionMon(struct Pokemon *mon, enum BattlerId battler)
     party = GetBattlerParty(battler);
 
     if (IsBattlerAlive(GetPartnerBattler(battler)))
-        partnerMon = GetBattlerMon(GetPartnerBattler(battler));
+        partnerMon = &party[gBattlerPartyIndexes[GetPartnerBattler(battler)]];
     else
         partnerMon = mon;
 
@@ -9763,6 +9797,12 @@ enum Type GetBattleMoveType(enum Move move)
         if (B_UPDATED_MOVE_TYPES < GEN_5
          && (effect == EFFECT_BEAT_UP || effect == EFFECT_FUTURE_SIGHT))
           return TYPE_MYSTERY;
+    }
+    if (gMain.inBattle && gBattlerAttacker < MAX_BATTLERS_COUNT)
+    {
+        struct ResolvedMoveFusion fusion;
+        if (ResolveBattlerMoveFusion(gBattlerAttacker, move, &fusion) && fusion.overridesType)
+            return fusion.type;
     }
     return GetMoveType(move);
 }

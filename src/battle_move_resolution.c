@@ -12,6 +12,7 @@
 #include "item.h"
 #include "battle_controllers.h"
 #include "move.h"
+#include "move_fusion.h"
 #include "constants/battle_move_resolution.h"
 
 static void ValidateBattlers(void);
@@ -1857,6 +1858,9 @@ static enum CancelerResult CancelerExplosion(struct BattleCalcValues *cv)
 
 static enum CancelerResult CancelerMoveSpecificMessage(struct BattleCalcValues *cv)
 {
+    struct ResolvedMoveFusion fusion;
+    bool32 isFused = ResolveBattlerMoveFusion(gBattlerAttacker, cv->move, &fusion);
+
     switch (cv->moveEffect)
     {
     case EFFECT_MAGNITUDE:
@@ -1873,6 +1877,18 @@ static enum CancelerResult CancelerMoveSpecificMessage(struct BattleCalcValues *
         break;
     default:
         break;
+    }
+
+    if (cv->moveEffect != EFFECT_FICKLE_BEAM
+     && isFused
+     && fusion.effect == EFFECT_FICKLE_BEAM)
+    {
+        gBattleStruct->fickleBeamBoosted = RandomPercentage(RNG_FICKLE_BEAM, fusion.argument.randomPowerMultiplier.chance);
+        if (gBattleStruct->fickleBeamBoosted)
+        {
+            BattleScriptCall(BattleScript_FickleBeamMessage);
+            return CANCELER_RESULT_RUN_SCRIPT_AND_INCREMENT;
+        }
     }
 
     return CANCELER_RESULT_SUCCESS;
@@ -2317,11 +2333,18 @@ static void SetRandomMultiHitCounter(enum HoldEffect holdEffect)
 
 static enum CancelerResult CancelerMultihitMoves(struct BattleCalcValues *cv)
 {
+    struct ResolvedMoveFusion fusion;
     SetPossibleNewSmartTarget(cv->move);
 
     if (IsBattlerUnaffectedByMove(gBattlerTarget))
     {
         gMultiHitCounter = 0;
+    }
+    else if (ResolveBattlerMoveFusion(cv->battlerAtk, cv->move, &fusion)
+          && fusion.strikeCount > 1)
+    {
+        gMultiHitCounter = fusion.strikeCount;
+        PREPARE_BYTE_NUMBER_BUFFER(gBattleScripting.multihitString, 3, 0)
     }
     else if (IsMultiHitMove(cv->move))
     {
@@ -2603,6 +2626,9 @@ static void SetHealScript(struct BattleCalcValues *cv, s32 healAmount)
 
 static enum MoveEndResult MoveEndAbsorb(struct BattleCalcValues *cv)
 {
+    struct ResolvedMoveFusion fusion;
+    bool32 fusionAbsorb = ResolveBattlerMoveFusion(cv->battlerAtk, cv->move, &fusion)
+                       && fusion.effect == EFFECT_ABSORB;
     if (gBattleStruct->unableToUseMove)
     {
         gBattleScripting.moveendState++;
@@ -2622,7 +2648,18 @@ static enum MoveEndResult MoveEndAbsorb(struct BattleCalcValues *cv)
 
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
 
-    switch (cv->moveEffect)
+    if (fusionAbsorb
+     && cv->moveEffect != EFFECT_ABSORB
+     && cv->moveEffect != EFFECT_DREAM_EATER
+     && gBattleStruct->moveDamage[cv->battlerDef] > 0
+     && IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES)
+     && IsBattlerAlive(cv->battlerAtk))
+    {
+        u32 percentage = fusion.argument.absorbPercentage == 0 ? 50 : fusion.argument.absorbPercentage;
+        SetHealScript(cv, gBattleStruct->moveDamage[cv->battlerDef] * percentage / 100);
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+    }
+    else switch (cv->moveEffect)
     {
     case EFFECT_STRENGTH_SAP:
         if (gBattleStruct->passiveHpUpdate[cv->battlerAtk] > 0 && !IsBattlerUnaffectedByMove(cv->battlerDef))
@@ -2638,7 +2675,10 @@ static enum MoveEndResult MoveEndAbsorb(struct BattleCalcValues *cv)
          && IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES)
          && IsBattlerAlive(cv->battlerAtk))
         {
-            s32 healAmount = (gBattleStruct->moveDamage[cv->battlerDef] * GetMoveAbsorbPercentage(cv->move) / 100);
+            u32 percentage = GetMoveAbsorbPercentage(cv->move);
+            if (fusionAbsorb)
+                percentage += fusion.argument.absorbPercentage == 0 ? 50 : fusion.argument.absorbPercentage;
+            s32 healAmount = (gBattleStruct->moveDamage[cv->battlerDef] * percentage / 100);
             SetHealScript(cv, healAmount);
             result = MOVEEND_RESULT_RUN_SCRIPT;
         }
@@ -3341,6 +3381,22 @@ static enum MoveEndResult MoveEndDefrost(struct BattleCalcValues *cv)
 static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+    struct ResolvedMoveFusion fusion;
+
+    if (ResolveBattlerMoveFusion(cv->battlerAtk, cv->move, &fusion)
+     && fusion.effect == EFFECT_RECOIL
+     && IsBattlerTurnDamaged(cv->battlerDef, INCLUDING_SUBSTITUTES)
+     && IsBattlerAlive(cv->battlerAtk)
+     && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_ROCK_HEAD)
+     && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
+    {
+        u32 percentage = fusion.argument.recoilPercentage == 0 ? 25 : fusion.argument.recoilPercentage;
+        SetPassiveDamageAmount(cv->battlerAtk, max(1, gBattleScripting.savedDmg * percentage / 100));
+        BattleScriptCall(BattleScript_MoveEffectRecoil);
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+        gBattleScripting.moveendState++;
+        return result;
+    }
 
     switch (cv->moveEffect)
     {
@@ -3413,7 +3469,7 @@ static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
 
 static enum MoveEndResult MoveEndSheerForce(struct BattleCalcValues *cv)
 {
-    if (IsSheerForceAffected(cv->move, cv->abilities[cv->battlerAtk]))
+    if (IsBattlerSheerForceAffected(cv->battlerAtk, cv->move, cv->abilities[cv->battlerAtk]))
         gBattleScripting.moveendState = MOVEEND_ITEMS_EFFECTS_ALL;
     else
         gBattleScripting.moveendState++;
@@ -3942,8 +3998,13 @@ static bool32 CanPartingShotTrigger(enum BattlerId battlerAtk)
 static enum MoveEndResult MoveEndHitEscape(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+    struct ResolvedMoveFusion fusion;
+    bool32 isFused = ResolveBattlerMoveFusion(cv->battlerAtk, cv->move, &fusion);
 
-    switch (GetMoveEffect(cv->move))
+    bool32 fusionSwitch = isFused
+                       && fusion.effect == EFFECT_HIT_ESCAPE;
+
+    switch (fusionSwitch ? EFFECT_HIT_ESCAPE : GetMoveEffect(cv->move))
     {
     case EFFECT_HIT_ESCAPE:
         if (!HasAnyBattlerQueuedSwitch()

@@ -687,7 +687,7 @@ static void PrintItemDescription(s32 listMenuId)
         desc = gStringVar4;
     }
     FillWindowPixelBuffer(WIN_INFO, PIXEL_FILL(0));
-    PyramidBagPrint(WIN_INFO, desc, 3, 0, 0, 1, 0, COLORID_DARK_GRAY);
+    AddTextPrinterParameterized4(WIN_INFO, FONT_SMALL, 3, 0, 0, -1, sTextColors[COLORID_DARK_GRAY], 0, desc);
 }
 
 static void AddScrollArrows(void)

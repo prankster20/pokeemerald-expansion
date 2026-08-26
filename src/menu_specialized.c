@@ -806,7 +806,7 @@ static void MoveRelearnerLoadBattleMoveDescription(u32 chosenMove)
         str = buffer;
     }
     AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_NORMAL, str, 106, 41, TEXT_SKIP_DRAW, NULL);
-    AddTextPrinterParameterized(RELEARNERWIN_DESC_BATTLE, FONT_NARROW, GetMoveDescription(chosenMove), 0, 65, 0, NULL);
+    AddTextPrinterParameterized4(RELEARNERWIN_DESC_BATTLE, FONT_SMALL, 0, 65, 0, -1, sPlayerNameTextColors, 0, GetMoveDescription(chosenMove));
 }
 
 static void MoveRelearnerMenuLoadContestMoveDescription(u32 chosenMove)

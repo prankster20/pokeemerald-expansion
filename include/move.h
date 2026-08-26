@@ -57,6 +57,56 @@ struct AdditionalEffect
     u32 padding2:11;
 };
 
+// Arguments used by primary move effects.  This is named separately from
+// MoveInfo so move-fusion helpers can use the exact same authoring syntax and
+// argument meanings as ordinary moves.
+union MoveEffectArgument
+{
+    struct {
+        u16 stringId;
+        union {
+            u16 status;
+            u16 weather;
+        };
+    } twoTurnAttack;
+    struct {
+        enum Species species;
+        u16 power:9;
+        u16 numOfHits:7;
+    } speciesPowerOverride;
+    struct {
+        u16 damagePercent:12;
+        u16 damageCategories:4;
+    } reflectDamage;
+    struct {
+        u16 terrain;
+        u16 percent:13;
+        u16 groundCheck:2;
+        u16 hitsBothFoes:1;
+    } terrainBoost;
+    struct {
+        u16 comboMove;
+        u16 resultMove;
+    } pledge;
+    u32 protectMethod;
+    u32 status;
+    u32 moveProperty;
+    u32 holdEffect;
+    u32 type;
+    u32 fixedDamage;
+    u32 damagePercentage;
+    u32 absorbPercentage;
+    u32 recoilPercentage;
+    u32 nonVolatileStatus;
+    u32 overwriteAbility;
+    u32 weatherType;
+    u32 powerPerStatBoost;
+    struct {
+        u16 chance;
+        u16 multiplier;
+    } randomPowerMultiplier;
+};
+
 enum ProtectType
 {
     PROTECT_TYPE_NONE,
@@ -130,6 +180,7 @@ struct MoveInfo
     bool32 slicingMove:1;
     bool32 healingMove:1;
     bool32 minimizeDoubleDamage:1;
+    bool32 infiltrates:1; // pranks
     // end of word
     bool32 ignoresTargetAbility:1;
     bool32 ignoresTargetDefenseEvasionStages:1;
@@ -171,46 +222,7 @@ struct MoveInfo
     u32 padding2:17;
     // end of word
 
-    union {
-        struct {
-            u16 stringId;
-            union {
-                u16 status;
-                u16 weather;
-            };
-        } twoTurnAttack;
-        struct {
-            enum Species species;
-            u16 power:9;
-            u16 numOfHits:7;
-        } speciesPowerOverride;
-        struct {
-            u16 damagePercent:12;
-            u16 damageCategories:4; // bit field
-        } reflectDamage;
-        struct {
-            u16 terrain;
-            u16 percent:13;
-            enum TerrainGroundCheck groundCheck:2;
-            u16 hitsBothFoes:1;
-        } terrainBoost;
-        struct {
-            u16 comboMove;
-            u16 resultMove;
-        } pledge;
-        u32 protectMethod;
-        u32 status;
-        u32 moveProperty;
-        u32 holdEffect;
-        u32 type;
-        u32 fixedDamage;
-        u32 damagePercentage;
-        u32 absorbPercentage;
-        u32 recoilPercentage;
-        u32 nonVolatileStatus;
-        u32 overwriteAbility;
-        u32 weatherType;
-    } argument;
+    union MoveEffectArgument argument;
 
     // primary/secondary effects
     const struct AdditionalEffect *additionalEffects;
@@ -345,6 +357,11 @@ static inline bool32 MoveMakesContact(enum Move moveId)
 static inline bool32 MoveIgnoresProtect(enum Move moveId)
 {
     return gMovesInfo[SanitizeMoveId(moveId)].ignoresProtect;
+}
+
+static inline bool32 MoveInfiltrates(enum Move moveId)
+{
+    return gMovesInfo[SanitizeMoveId(moveId)].infiltrates;
 }
 
 static inline bool32 MoveCanBeBouncedBack(enum Move moveId)

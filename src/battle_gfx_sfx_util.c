@@ -13,6 +13,7 @@
 #include "random.h"
 #include "util.h"
 #include "pokemon.h"
+#include "pokemon_palette_variation.h"
 #include "constants/moves.h"
 #include "task.h"
 #include "sprite.h"
@@ -659,6 +660,8 @@ void BattleLoadMonSpriteGfx(struct Pokemon *mon, enum BattlerId battler)
 
     LoadPalette(paletteData, paletteOffset, PLTT_SIZE_4BPP);
     LoadPalette(paletteData, BG_PLTT_ID(8) + BG_PLTT_ID(battler), PLTT_SIZE_4BPP);
+    ApplyPersonalityPaletteVariation(paletteOffset, personalityValue);
+    ApplyPersonalityPaletteVariation(BG_PLTT_ID(8) + BG_PLTT_ID(battler), personalityValue);
 
     // transform's pink color
     if (gBattleMons[battler].volatiles.transformed)
