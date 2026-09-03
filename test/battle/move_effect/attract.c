@@ -8,7 +8,7 @@ ASSUMPTIONS
     ASSUME(gSpeciesInfo[SPECIES_NIDOQUEEN].genderRatio == MON_FEMALE);
 }
 
-SINGLE_BATTLE_TEST("Attract causes the target to become infatuated with the user if they have opposite genders")
+SINGLE_BATTLE_TEST("Attract causes the target to become infatuated regardless of gender")
 {
     GIVEN {
         PLAYER(SPECIES_NIDOQUEEN);
@@ -73,7 +73,7 @@ SINGLE_BATTLE_TEST("Attract fails if the target is already infatuated")
     }
 }
 
-SINGLE_BATTLE_TEST("Attract fails when used on a Pokémon of the same gender")
+SINGLE_BATTLE_TEST("Attract works on a Pokémon of the same gender")
 {
     GIVEN {
         PLAYER(SPECIES_NIDOQUEEN);
@@ -81,14 +81,14 @@ SINGLE_BATTLE_TEST("Attract fails when used on a Pokémon of the same gender")
     } WHEN {
         TURN { MOVE(player, MOVE_ATTRACT); }
     } SCENE {
-        MESSAGE("Nidoqueen used Attract!");
-        MESSAGE("But it failed!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ATTRACT, player);
+        MESSAGE("The opposing Nidoqueen fell in love!");
     } THEN {
-        EXPECT(!(opponent->volatiles.infatuation));
+        EXPECT(opponent->volatiles.infatuation);
     }
 }
 
-SINGLE_BATTLE_TEST("Attract fails when used on a genderless Pokémon")
+SINGLE_BATTLE_TEST("Attract works on a genderless Pokémon")
 {
     GIVEN {
         ASSUME(gSpeciesInfo[SPECIES_STARMIE].genderRatio == MON_GENDERLESS);
@@ -97,9 +97,36 @@ SINGLE_BATTLE_TEST("Attract fails when used on a genderless Pokémon")
     } WHEN {
         TURN { MOVE(player, MOVE_ATTRACT); }
     } SCENE {
-        MESSAGE("Nidoqueen used Attract!");
-        MESSAGE("But it failed!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ATTRACT, player);
+        MESSAGE("The opposing Starmie fell in love!");
     } THEN {
-        EXPECT(!(opponent->volatiles.infatuation));
+        EXPECT(opponent->volatiles.infatuation);
+    }
+}
+
+SINGLE_BATTLE_TEST("Infatuation lowers physical and special damage by 25 percent without preventing actions", s16 damage)
+{
+    u32 move;
+    bool32 infatuated;
+
+    PARAMETRIZE { move = MOVE_SCRATCH; infatuated = FALSE; }
+    PARAMETRIZE { move = MOVE_SCRATCH; infatuated = TRUE; }
+    PARAMETRIZE { move = MOVE_SWIFT; infatuated = FALSE; }
+    PARAMETRIZE { move = MOVE_SWIFT; infatuated = TRUE; }
+    GIVEN {
+        ASSUME(GetMoveCategory(MOVE_SCRATCH) == DAMAGE_CATEGORY_PHYSICAL);
+        ASSUME(GetMoveCategory(MOVE_SWIFT) == DAMAGE_CATEGORY_SPECIAL);
+        PLAYER(SPECIES_NIDOQUEEN) { Attack(100); SpAttack(100); }
+        OPPONENT(SPECIES_NIDOKING) { Defense(100); SpDefense(100); }
+    } WHEN {
+        if (infatuated)
+            TURN { MOVE(opponent, MOVE_ATTRACT); }
+        TURN { MOVE(player, move); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+        NONE_OF { MESSAGE("Nidoqueen is immobilized by love!"); }
+    } FINALLY {
+        EXPECT_MUL_EQ(results[0].damage, Q_4_12(0.75), results[1].damage);
+        EXPECT_MUL_EQ(results[2].damage, Q_4_12(0.75), results[3].damage);
     }
 }

@@ -75,7 +75,7 @@ WILD_BATTLE_TEST("pranks Ambitious receives the Defense Badge Boost", s16 damage
     }
 }
 
-TEST("pranks Communal counts shared traits once each and caps its boost at ten percent")
+TEST("pranks Communal counts shared traits once each and caps its boost at eight percent")
 {
     struct Pokemon party[2] = {0};
 
@@ -89,7 +89,7 @@ TEST("pranks Communal counts shared traits once each and caps its boost at ten p
         SetMonMoveSlot(&party[i], MOVE_POISON_POWDER, 3);
     }
 
-    EXPECT_EQ(GetCommunalBoostPercent(party, ARRAY_COUNT(party), 0), 10);
+    EXPECT_EQ(GetCommunalBoostPercent(party, ARRAY_COUNT(party), 0), 8);
     EXPECT_EQ(GetCommunalBoostPercent(NULL, ARRAY_COUNT(party), 0), 0);
 }
 
@@ -122,7 +122,7 @@ TEST("pranks Impressionable copies the preceding party member's stat ranking")
     u32 value;
 
     CreateNatureMon(&gParties[B_TRAINER_PLAYER][0], SPECIES_WOBBUFFET, 50, NATURE_HARDY);
-    CreateNatureMon(&gParties[B_TRAINER_PLAYER][1], SPECIES_WYNAUT, 50, NATURE_IMPRESSIONABLE);
+    CreateNatureMon(&gParties[B_TRAINER_PLAYER][1], SPECIES_WYNAUT, 50, NATURE_OLD_IMPRESSIONABLE);
     value = 500; SetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_ATK, &value);
     value = 400; SetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_DEF, &value);
     value = 300; SetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SPATK, &value);
@@ -153,9 +153,9 @@ TEST("pranks Pompous maps nickname length to the documented weight offsets")
 
     CreateNatureMon(&mon, SPECIES_WOBBUFFET, 50, NATURE_POMPOUS);
     SetMonData(&mon, MON_DATA_NICKNAME, shortName);
-    EXPECT_EQ(GetPompousWeightPercent(&mon), -60);
+    EXPECT_EQ(GetPompousWeightPercent(&mon), 100);
     SetMonData(&mon, MON_DATA_NICKNAME, longName);
-    EXPECT_EQ(GetPompousWeightPercent(&mon), 10);
+    EXPECT_EQ(GetPompousWeightPercent(&mon), 100);
 }
 
 TEST("pranks Proud boosts the highest stat and lowers the lowest stat by ten percent")
@@ -170,20 +170,20 @@ TEST("pranks Proud boosts the highest stat and lowers the lowest stat by ten per
     EXPECT_EQ(GetMonData(&proud, MON_DATA_ATK), GetMonData(&baseline, MON_DATA_ATK) * 90 / 100);
 }
 
-TEST("pranks Supportive starts at six percent and adds one percent per extra teammate")
+TEST("pranks Supportive starts at five percent and adds one percent per extra teammate")
 {
     struct Pokemon party[4] = {0};
 
     CreateNatureMon(&party[0], SPECIES_WOBBUFFET, 50, NATURE_HARDY);
     CreateNatureMon(&party[1], SPECIES_WYNAUT, 50, NATURE_SUPPORTIVE);
-    EXPECT_EQ(GetSupportiveBoostPercent(party, ARRAY_COUNT(party), 0), 6);
+    EXPECT_EQ(GetSupportiveBoostPercent(party, ARRAY_COUNT(party), 0), 5);
     CreateNatureMon(&party[2], SPECIES_ABRA, 50, NATURE_SUPPORTIVE);
     CreateNatureMon(&party[3], SPECIES_RALTS, 50, NATURE_SUPPORTIVE);
-    EXPECT_EQ(GetSupportiveBoostPercent(party, ARRAY_COUNT(party), 0), 8);
-    EXPECT_EQ(GetSupportiveBoostPercent(party, ARRAY_COUNT(party), 1), 7);
+    EXPECT_EQ(GetSupportiveBoostPercent(party, ARRAY_COUNT(party), 0), 7);
+    EXPECT_EQ(GetSupportiveBoostPercent(party, ARRAY_COUNT(party), 1), 6);
 }
 
-TEST("pranks Youthful activates at the evolution level and boosts offenses and Speed")
+TEST("pranks Youthful activates at the evolution level and boosts both offenses")
 {
     struct Pokemon baseline;
     struct Pokemon youthful;
@@ -194,6 +194,6 @@ TEST("pranks Youthful activates at the evolution level and boosts offenses and S
     EXPECT(IsYouthfulNatureActive(&youthful));
     EXPECT_EQ(GetMonData(&youthful, MON_DATA_ATK), GetMonData(&baseline, MON_DATA_ATK) * 120 / 100);
     EXPECT_EQ(GetMonData(&youthful, MON_DATA_SPATK), GetMonData(&baseline, MON_DATA_SPATK) * 120 / 100);
-    EXPECT_EQ(GetMonData(&youthful, MON_DATA_SPEED), GetMonData(&baseline, MON_DATA_SPEED) * 120 / 100);
+    EXPECT_EQ(GetMonData(&youthful, MON_DATA_SPEED), GetMonData(&baseline, MON_DATA_SPEED));
     EXPECT_EQ(GetMonData(&youthful, MON_DATA_DEF), GetMonData(&baseline, MON_DATA_DEF));
 }

@@ -5130,6 +5130,15 @@ BattleScript_RoughSkinActivates::
 	call BattleScript_HurtAttacker
 	return
 
+BattleScript_UnderhandedChip::
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
+	healthbarupdate BS_TARGET, PASSIVE_HP_UPDATE
+	datahpupdate BS_TARGET, PASSIVE_HP_UPDATE
+	tryfaintmon BS_TARGET
+	return
+
 BattleScript_RockyHelmetActivates::
 	call BattleScript_HurtAttacker
 	return
@@ -5209,6 +5218,14 @@ BattleScript_DancerActivates::
 BattleScript_SynchronizeActivates::
 	waitstate
 	call BattleScript_AbilityPopUp
+	setnonvolatilestatus TRIGGER_ON_ABILITY
+	return
+
+BattleScript_BitterSynchronizes::
+	waitstate
+	copybyte gBattlerAbility, sBATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_SHORT
 	setnonvolatilestatus TRIGGER_ON_ABILITY
 	return
 

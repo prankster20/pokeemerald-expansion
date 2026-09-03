@@ -592,12 +592,16 @@ static bool32 HandleEndTurnPoison(enum BattlerId battler)
             if ((gBattleMons[battler].status1 & STATUS1_TOXIC_COUNTER) != STATUS1_TOXIC_TURN(15)) // not 16 turns
                 gBattleMons[battler].status1 += STATUS1_TOXIC_TURN(1);
             gBattleStruct->passiveHpUpdate[battler] *= (gBattleMons[battler].status1 & STATUS1_TOXIC_COUNTER) >> 8;
+            if (HasNature(battler, NATURE_STOIC))
+                gBattleStruct->passiveHpUpdate[battler] = max(1, gBattleStruct->passiveHpUpdate[battler] / 2);
             BattleScriptCall(BattleScript_PoisonTurnDmg);
             effect = TRUE;
         }
         else
         {
             SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 8);
+            if (HasNature(battler, NATURE_STOIC))
+                gBattleStruct->passiveHpUpdate[battler] = max(1, gBattleStruct->passiveHpUpdate[battler] / 2);
             BattleScriptCall(BattleScript_PoisonTurnDmg);
             effect = TRUE;
         }
@@ -625,6 +629,8 @@ static bool32 HandleEndTurnBurn(enum BattlerId battler)
                 RecordAbilityBattle(battler, ABILITY_HEATPROOF);
             burnDamage /= 2;
         }
+        if (HasNature(battler, NATURE_STOIC))
+            burnDamage = max(1, burnDamage / 2);
         SetPassiveDamageAmount(battler, burnDamage);
         BattleScriptCall(BattleScript_BurnTurnDmg);
         effect = TRUE;
@@ -643,7 +649,10 @@ static bool32 HandleEndTurnFrostbite(enum BattlerId battler)
      && IsBattlerPresent(battler)
      && !IsAbilityAndRecord(battler, GetBattlerAbility(battler), ABILITY_MAGIC_GUARD))
     {
-        SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / ((GetConfig(B_BURN_DAMAGE) >= GEN_7 || GetConfig(B_BURN_DAMAGE) == GEN_1) ? 16 : 8));
+        s32 frostbiteDamage = GetNonDynamaxMaxHP(battler) / ((GetConfig(B_BURN_DAMAGE) >= GEN_7 || GetConfig(B_BURN_DAMAGE) == GEN_1) ? 16 : 8);
+        if (HasNature(battler, NATURE_STOIC))
+            frostbiteDamage = max(1, frostbiteDamage / 2);
+        SetPassiveDamageAmount(battler, frostbiteDamage);
         BattleScriptCall(BattleScript_FrostbiteTurnDmg);
         effect = TRUE;
     }

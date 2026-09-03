@@ -11,7 +11,7 @@
 #define LEVEL_CAP_VARIABLE              2 // Level cap is chosen according to the contents of the event variable specified by B_LEVEL_CAP_VARIABLE
 
 // Level Cap Configs
-#define B_EXP_CAP_TYPE                  EXP_CAP_SOFT   // Runtime choice between soft and hard is stored in optionsLevelCaps
+#define B_EXP_CAP_TYPE                  EXP_CAP_SOFT   // Runtime OFF bypasses this; HARD prevents EXP at the cap.
 #define B_LEVEL_CAP_TYPE                LEVEL_CAP_VARIABLE
 #define B_LEVEL_CAP_VARIABLE            VAR_LEVEL_CAP
 

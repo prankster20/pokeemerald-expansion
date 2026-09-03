@@ -81,7 +81,7 @@ SINGLE_BATTLE_TEST("Captivate fails if both the user and the opponent are gender
     }
 }
 
-SINGLE_BATTLE_TEST("Attract fails when used by a genderless Pokémon")
+SINGLE_BATTLE_TEST("Attract works when used by a genderless Pokémon")
 {
     GIVEN {
         PLAYER(SPECIES_STARMIE);
@@ -89,14 +89,14 @@ SINGLE_BATTLE_TEST("Attract fails when used by a genderless Pokémon")
     } WHEN {
         TURN { MOVE(player, MOVE_ATTRACT); }
     } SCENE {
-        MESSAGE("Starmie used Attract!");
-        MESSAGE("But it failed!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ATTRACT, player);
+        MESSAGE("The opposing Nidoqueen fell in love!");
     } THEN {
-        EXPECT(!(opponent->volatiles.infatuation));
+        EXPECT(opponent->volatiles.infatuation);
     }
 }
 
-SINGLE_BATTLE_TEST("Attract fails if both the user and the target are genderless")
+SINGLE_BATTLE_TEST("Attract works if both the user and the target are genderless")
 {
     GIVEN {
         PLAYER(SPECIES_STARMIE);
@@ -104,9 +104,9 @@ SINGLE_BATTLE_TEST("Attract fails if both the user and the target are genderless
     } WHEN {
         TURN { MOVE(player, MOVE_ATTRACT); }
     } SCENE {
-        MESSAGE("Starmie used Attract!");
-        MESSAGE("But it failed!");
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_ATTRACT, player);
+        MESSAGE("The opposing Starmie fell in love!");
     } THEN {
-        EXPECT(!(opponent->volatiles.infatuation));
+        EXPECT(opponent->volatiles.infatuation);
     }
 }

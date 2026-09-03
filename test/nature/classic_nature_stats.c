@@ -55,18 +55,34 @@ TEST("pranks Serious and Bashful remain neutral for every non-HP stat")
     EXPECT_EQ(ModifyStatByNature(nature, 200, stat, 0), 200);
 }
 
-TEST("pranks Quirky gives its five stats personality-derived boosts from one through five percent")
+TEST("pranks Quirky apportions exactly twenty-five percent among its five stats")
 {
     enum Stat stat;
     u32 expected;
-    const u32 personality = (0 << 0) | (1 << 3) | (2 << 6) | (3 << 9) | (4 << 12);
+    const u32 personality = 12345;
 
-    PARAMETRIZE { stat = STAT_ATK;   expected = 202; }
-    PARAMETRIZE { stat = STAT_DEF;   expected = 204; }
-    PARAMETRIZE { stat = STAT_SPEED; expected = 206; }
-    PARAMETRIZE { stat = STAT_SPATK; expected = 208; }
-    PARAMETRIZE { stat = STAT_SPDEF; expected = 210; }
+    PARAMETRIZE { stat = STAT_ATK;   expected = 204; }
+    PARAMETRIZE { stat = STAT_DEF;   expected = 208; }
+    PARAMETRIZE { stat = STAT_SPEED; expected = 216; }
+    PARAMETRIZE { stat = STAT_SPATK; expected = 210; }
+    PARAMETRIZE { stat = STAT_SPDEF; expected = 212; }
 
     EXPECT_EQ(ModifyStatByNature(NATURE_QUIRKY, 200, stat, personality), expected);
     EXPECT_EQ(ModifyStatByNature(NATURE_QUIRKY, 200, STAT_HP, personality), 200);
+}
+
+TEST("pranks Quirky caps every individual stat boost at eight percent")
+{
+    u32 total = 0;
+    const u32 personality = 1111; // Displayed code 01111 strongly favors Attack.
+
+    for (enum Stat stat = STAT_ATK; stat <= STAT_SPDEF; stat++)
+    {
+        u32 boost = GetQuirkyStatBoostPercent(personality, stat);
+
+        EXPECT_LE(boost, 8);
+        total += boost;
+    }
+
+    EXPECT_EQ(total, 25);
 }

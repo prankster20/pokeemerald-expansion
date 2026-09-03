@@ -5,7 +5,7 @@ SINGLE_BATTLE_TEST("pranks Stoic ignores Burn's physical damage penalty", s16 da
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
-    PARAMETRIZE { nature = NATURE_STOIC; }
+    PARAMETRIZE { nature = NATURE_OLD_STOIC; }
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Level(50); Attack(100); Status1(STATUS1_BURN); }
         OPPONENT(SPECIES_WOBBUFFET) { Level(50); Defense(100); MaxHP(999); HP(999); }
@@ -23,7 +23,7 @@ SINGLE_BATTLE_TEST("pranks Stoic ignores Frostbite's special damage penalty", s1
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
-    PARAMETRIZE { nature = NATURE_STOIC; }
+    PARAMETRIZE { nature = NATURE_OLD_STOIC; }
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Level(50); SpAttack(100); Status1(STATUS1_FROSTBITE); }
         OPPONENT(SPECIES_WOBBUFFET) { Level(50); SpDefense(100); MaxHP(999); HP(999); }
@@ -43,7 +43,7 @@ SINGLE_BATTLE_TEST("pranks Stoic ignores the Speed penalty from Paralysis")
         WITH_CONFIG(B_PARALYSIS_SPEED, GEN_7);
         PLAYER(SPECIES_WOBBUFFET) { Speed(60); Status1(STATUS1_PARALYSIS); Moves(MOVE_CELEBRATE); }
         OPPONENT(SPECIES_WOBBUFFET) { Speed(50); Moves(MOVE_CELEBRATE); }
-        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_STOIC});
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_STOIC});
     } WHEN {
         TURN { MOVE(player, MOVE_CELEBRATE); MOVE(opponent, MOVE_CELEBRATE); }
     } SCENE {
@@ -61,7 +61,7 @@ SINGLE_BATTLE_TEST("pranks Stoic is immune to Infatuation")
         ASSUME(GetMoveEffect(MOVE_ATTRACT) == EFFECT_ATTRACT);
         PLAYER(SPECIES_MIENFOO) { Gender(MON_MALE); Moves(MOVE_ATTRACT); }
         OPPONENT(SPECIES_WOBBUFFET) { Gender(MON_FEMALE); }
-        SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_STOIC});
+        SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_STOIC});
     } WHEN {
         TURN { MOVE(player, MOVE_ATTRACT); }
     } THEN {
@@ -71,6 +71,25 @@ SINGLE_BATTLE_TEST("pranks Stoic is immune to Infatuation")
 
 TEST("pranks Stoic permanently lowers Speed by five percent")
 {
-    EXPECT_EQ(ModifyStatByNature(NATURE_STOIC, 200, STAT_SPEED, 0), 190);
-    EXPECT_EQ(ModifyStatByNature(NATURE_STOIC, 200, STAT_ATK, 0), 200);
+    EXPECT_EQ(ModifyStatByNature(NATURE_OLD_STOIC, 200, STAT_SPEED, 0), 190);
+    EXPECT_EQ(ModifyStatByNature(NATURE_OLD_STOIC, 200, STAT_ATK, 0), 200);
+}
+
+SINGLE_BATTLE_TEST("pranks new Stoic halves Burn's damage and stat penalties", s16 damage)
+{
+    u32 nature;
+    PARAMETRIZE { nature = NATURE_HARDY; }
+    PARAMETRIZE { nature = NATURE_STOIC; }
+    GIVEN {
+        PLAYER(SPECIES_MIENFOO) { Level(50); Attack(100); Status1(STATUS1_BURN); MaxHP(160); HP(160); }
+        OPPONENT(SPECIES_WOBBUFFET) { Level(50); Defense(100); MaxHP(999); HP(999); }
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+    } WHEN {
+        TURN { MOVE(player, MOVE_TACKLE); }
+    } SCENE {
+        HP_BAR(opponent, captureDamage: &results[i].damage);
+        HP_BAR(player, damage: nature == NATURE_STOIC ? 5 : 10);
+    } FINALLY {
+        EXPECT_MUL_EQ(results[0].damage, Q_4_12(1.5), results[1].damage);
+    }
 }

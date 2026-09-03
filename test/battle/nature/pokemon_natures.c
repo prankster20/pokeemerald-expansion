@@ -63,7 +63,7 @@ TEST("pranks requested interaction-heavy Natures have semantic audit groups")
     EXPECT(NatureHasSemanticGroup(NATURE_APATHETIC, NATURE_GROUP_WEATHER_TERRAIN));
     EXPECT(NatureHasSemanticGroup(NATURE_AMBIENT, NATURE_GROUP_TIMED_FIELD_EFFECTS));
     EXPECT(NatureHasSemanticGroup(NATURE_INDOMITABLE, NATURE_GROUP_DELAYED_FAINTING));
-    EXPECT(NatureHasSemanticGroup(NATURE_RUGGED, NATURE_GROUP_RECOIL_CRASH_HAZARDS));
+    EXPECT(NatureHasSemanticGroup(NATURE_OLD_RUGGED, NATURE_GROUP_RECOIL_CRASH_HAZARDS));
     EXPECT(NatureHasSemanticGroup(NATURE_RELENTLESS, NATURE_GROUP_MOVE_EFFECT_CHANCE));
     EXPECT(NatureHasSemanticGroup(NATURE_PERFECTIONIST, NATURE_GROUP_TURN_ORDER_ACCURACY));
     EXPECT(NatureHasSemanticGroup(NATURE_DREAMY, NATURE_GROUP_SLEEP_ACTION));
@@ -72,7 +72,7 @@ TEST("pranks requested interaction-heavy Natures have semantic audit groups")
 TEST("pranks Nostalgic and Level-Headed occupy their stable IDs")
 {
     EXPECT_EQ(NATURE_NOSTALGIC, 46);
-    EXPECT_EQ(NATURE_LEVEL_HEADED, 77);
+    EXPECT_EQ(NATURE_STALWART, 77);
 }
 
 TEST("pranks Ordinary custom Natures remain directly mintable")
@@ -80,7 +80,7 @@ TEST("pranks Ordinary custom Natures remain directly mintable")
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_INNOCENT));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_AFFECTIONATE));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_CAPRICIOUS));
-    EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_LEVEL_HEADED));
+    EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_STALWART));
 }
 
 TEST("pranks Vain and Noble five-percent stat modifiers use meaningful values")

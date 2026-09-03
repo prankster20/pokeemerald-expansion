@@ -31,7 +31,7 @@ SINGLE_BATTLE_TEST("Cute Charm inflicts infatuation on contact")
     }
 }
 
-SINGLE_BATTLE_TEST("Cute Charm cannot infatuate same gender")
+SINGLE_BATTLE_TEST("Cute Charm can infatuate the same gender")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Gender(MON_MALE); }
@@ -41,12 +41,26 @@ SINGLE_BATTLE_TEST("Cute Charm cannot infatuate same gender")
         TURN { MOVE(player, MOVE_SCRATCH); }
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_SCRATCH, player);
-        NOT ABILITY_POPUP(opponent, ABILITY_CUTE_CHARM);
-        ANIMATION(ANIM_TYPE_MOVE, MOVE_SCRATCH, player);
+        ABILITY_POPUP(opponent, ABILITY_CUTE_CHARM);
+        ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_INFATUATION, player);
+        MESSAGE("Wobbuffet fell in love!");
     }
 }
 
-TO_DO_BATTLE_TEST("Cute Charm cannot infatuate if either Pokémon are Gender-unknown")
+SINGLE_BATTLE_TEST("Cute Charm can infatuate a genderless Pokémon")
+{
+    GIVEN {
+        ASSUME(gSpeciesInfo[SPECIES_STARMIE].genderRatio == MON_GENDERLESS);
+        PLAYER(SPECIES_STARMIE);
+        OPPONENT(SPECIES_CLEFAIRY) { Ability(ABILITY_CUTE_CHARM); }
+    } WHEN {
+        TURN { MOVE(player, MOVE_SCRATCH); }
+    } SCENE {
+        ABILITY_POPUP(opponent, ABILITY_CUTE_CHARM);
+        ANIMATION(ANIM_TYPE_STATUS, B_ANIM_STATUS_INFATUATION, player);
+        MESSAGE("Starmie fell in love!");
+    }
+}
 
 SINGLE_BATTLE_TEST("Cute Charm triggers 1/3 times (Gen3) or 30% (Gen 4+) of the time")
 {

@@ -362,7 +362,6 @@ static void HandleMonShinyIcon(bool8);
 static void HandleStatusSprite(struct Pokemon *);
 static u8 AddWindowFromTemplateList(const struct WindowTemplate*, u8);
 static void ClearCancelText(void);
-static void FormatTextByWidth(u8*, s32, u8, const u8*, s16);
 static void Task_ShowEffectTilemap(u8);
 static void Task_HideEffectTilemap(u8);
 static void HideInactivePageDots(void);
@@ -430,10 +429,15 @@ static const u8 sText_RentalPkmn[]                          = _("RENTAL POKéMON
 static const u8 sText_None[]                                = _("NONE");
 #endif
 // bg gfx
+#define BW_SUMMARY_INFO_TILE_OFFSET 304 // Original tiles.png contains 16 x 19 tiles.
+#define BW_SUMMARY_INFO_PALETTE       9 // Separate from the shared UI palettes 0-8.
+
 const u32 sSummaryScreen_Gfx_BW[]                           = INCBIN_U32("graphics/summary_screen/bw/tiles.4bpp.smol");
 const u16 sSummaryScreen_Pal_BW[]                           = INCBIN_U16("graphics/summary_screen/bw/tiles.gbapal");
+const u32 sSummaryPage_Info_Gfx_BW[]                        = INCBIN_U32("graphics/summary_screen/bw/new_page_info.4bpp");
+const u16 sSummaryPage_Info_Pal_BW[]                        = INCBIN_U16("graphics/summary_screen/bw/new_page_info.gbapal");
 const u32 sSummaryPage_ScrollBG_Tilemap_BW[]                = INCBIN_U32("graphics/summary_screen/bw/scroll_bg.bin.smolTM");
-const u32 sSummaryPage_Info_Tilemap_BW[]                    = INCBIN_U32("graphics/summary_screen/bw/page_info.bin.smolTM");
+const u32 sSummaryPage_Info_Tilemap_BW[]                    = INCBIN_U32("graphics/summary_screen/bw/new_page_info.bin.smolTM");
 const u32 sSummaryPage_Skills_Tilemap_BW[]                  = INCBIN_U32("graphics/summary_screen/bw/page_skills.bin.smolTM");
 const u32 sSummaryPage_BattleMoves_Tilemap_BW[]             = INCBIN_U32("graphics/summary_screen/bw/page_battle_moves.bin.smolTM");
 const u32 sSummaryPage_ContestMoves_Tilemap_BW[]            = INCBIN_U32("graphics/summary_screen/bw/page_contest_moves.bin.smolTM");
@@ -684,7 +688,7 @@ static const struct WindowTemplate sPageSkillsTemplate[] =
         .bg = 0,
         .tilemapLeft = 8,
         .tilemapTop = 2,
-        .width = 8,
+        .width = 10,
         .height = 2,
         .paletteNum = 6,
         .baseBlock = 355,
@@ -696,7 +700,7 @@ static const struct WindowTemplate sPageSkillsTemplate[] =
         .width = 10,
         .height = 8,
         .paletteNum = 6,
-        .baseBlock = 371,
+        .baseBlock = 375,
     },
     [PSS_DATA_WINDOW_EXP] = {
         .bg = 0,
@@ -705,7 +709,7 @@ static const struct WindowTemplate sPageSkillsTemplate[] =
         .width = 11,
         .height = 2,
         .paletteNum = 6,
-        .baseBlock = 451,
+        .baseBlock = 455,
     },
     [PSS_DATA_WINDOW_EXP_NEXT_LEVEL] = {
         .bg = 0,
@@ -714,7 +718,7 @@ static const struct WindowTemplate sPageSkillsTemplate[] =
         .width = 9,
         .height = 2,
         .paletteNum = 6,
-        .baseBlock = 473,
+        .baseBlock = 477,
     },
     [PSS_DATA_WINDOW_SKILLS_ABILITY] = {
         .bg = 0,
@@ -723,7 +727,7 @@ static const struct WindowTemplate sPageSkillsTemplate[] =
         .width = 24,
         .height = 5,
         .paletteNum = 6,
-        .baseBlock = 491,
+        .baseBlock = 495,
     },
 };
 static const struct WindowTemplate sPageMovesTemplate[] = // This is used for both battle and contest moves
@@ -2050,7 +2054,20 @@ static bool8 DecompressGraphics(void)
     case 1:
         if (FreeTempTileDataBuffersIfPossible() != 1)
         {
+            u32 i;
+
+            // BG1-BG3 share this character block, so retain the common tiles
+            // at 0-303 and append the Info-only Image-to-Tiles output at 304.
+            LoadBgTiles(1, sSummaryPage_Info_Gfx_BW, sizeof(sSummaryPage_Info_Gfx_BW), BW_SUMMARY_INFO_TILE_OFFSET);
             DecompressDataWithHeaderWram(sSummaryPage_Info_Tilemap_BW, sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO]);
+            for (i = 0; i < PSS_BUFFER_SIZE; i++)
+            {
+                u16 entry = sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][i];
+                sMonSummaryScreen->bg2TilemapBuffers[PSS_PAGE_INFO][i]
+                    = (entry & 0x0C00)
+                    | (((entry & 0x03FF) + BW_SUMMARY_INFO_TILE_OFFSET) & 0x03FF)
+                    | (BW_SUMMARY_INFO_PALETTE << 12);
+            }
             sMonSummaryScreen->switchCounter++;
         }
         break;
@@ -2080,6 +2097,7 @@ static bool8 DecompressGraphics(void)
         break;
     case 8:
         LoadPalette(sSummaryScreen_Pal_BW, BG_PLTT_ID(0), 8 * PLTT_SIZE_4BPP);
+        LoadPalette(sSummaryPage_Info_Pal_BW, BG_PLTT_ID(BW_SUMMARY_INFO_PALETTE), PLTT_SIZE_4BPP);
         LoadPalette(&sSummaryScreen_PPTextPalette_BW, BG_PLTT_ID(8) + 1, PLTT_SIZEOF(16 - 1));
         sMonSummaryScreen->switchCounter++;
         break;
@@ -2255,12 +2273,6 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
                 sMonSummaryScreen->curMonIndex);
             sum->def = sum->def * (100 + sum->defensiveNatureBoost) / 100;
             sum->spdef = sum->spdef * (100 + sum->defensiveNatureBoost) / 100;
-        }
-        else if (sum->mintNature == NATURE_POMPOUS)
-        {
-            // Store weight percent offset in defensiveNatureBoost for "Currently X%"
-            // display. Weight is affected in GetBattlerWeight, not here.
-            sum->defensiveNatureBoost = (u8)(100 + GetPompousWeightPercent(mon));
         }
         if (!sMonSummaryScreen->isBoxMon)
         {
@@ -4106,7 +4118,7 @@ static void PrintMonDexNumberSpecies(void)
     struct Pokemon *mon = &sMonSummaryScreen->currentMon;
     struct PokeSummary *summary = &sMonSummaryScreen->summary;
 
-    u16 dexNum = SpeciesToNationalPokedexNum(summary->species);
+    u32 personalityCode = GetPersonalityCode(summary->pid);
     windowId = AddWindowFromTemplateList(sPageInfoTemplate, PSS_DATA_WINDOW_INFO_DEX_NUMBER_NAME);
 
     if (sMonSummaryScreen->summary.isEgg)
@@ -4118,14 +4130,13 @@ static void PrintMonDexNumberSpecies(void)
     {
         PrintTextOnWindowToFitPx(windowId, GetSpeciesName(summary->species2), 4, 12, 0, 0, WindowWidthPx(windowId) - 9);
 
-        if (dexNum != NATIONAL_DEX_NONE)
         {
-            u8 digitCount = 4;
+            u8 digitCount = 5;
 
             StringCopy(gStringVar1, &gText_NumberClear01[0]);
-            ConvertIntToDecimalStringN(gStringVar2, dexNum, STR_CONV_MODE_LEADING_ZEROS, digitCount);
+            ConvertIntToDecimalStringN(gStringVar2, personalityCode, STR_CONV_MODE_LEADING_ZEROS, digitCount);
             StringAppend(gStringVar1, gStringVar2);
-            ConvertIntToDecimalStringN(gStringVar1, dexNum, STR_CONV_MODE_LEADING_ZEROS, digitCount);
+            ConvertIntToDecimalStringN(gStringVar1, personalityCode, STR_CONV_MODE_LEADING_ZEROS, digitCount);
 
             if (!IsMonShiny(mon))
             {
@@ -4520,16 +4531,12 @@ static void BufferMonTrainerMemo(void)
             description = sDynamicNatureDescriptionBuffer;
         }
         // --- Custom Archetype nature: Pompous ---
-        // defensiveNatureBoost stores the full weight percent (e.g. 100, 40, 160).
         else if (description != NULL && sum->mintNature == NATURE_POMPOUS)
         {
-            u8 numberString[4];
             StringCopy(sDynamicNatureDescriptionBuffer, description);
-            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently "));
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Its title is "));
             StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
-            ConvertIntToDecimalStringN(numberString, sum->defensiveNatureBoost, STR_CONV_MODE_LEFT_ALIGN, 3);
-            StringAppend(sDynamicNatureDescriptionBuffer, numberString);
-            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
+            StringAppend(sDynamicNatureDescriptionBuffer, GetPompousTitle(sum->pid));
             StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
             StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
             description = sDynamicNatureDescriptionBuffer;
@@ -4895,6 +4902,14 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
 
     switch (nature)
     {
+    case NATURE_AMBITIOUS:
+        if ((stat == STAT_ATK && FlagGet(B_FLAG_BADGE_BOOST_ATTACK))
+         || (stat == STAT_DEF && FlagGet(B_FLAG_BADGE_BOOST_DEFENSE))
+         || (stat == STAT_SPEED && FlagGet(B_FLAG_BADGE_BOOST_SPEED))
+         || (stat == STAT_SPATK && FlagGet(B_FLAG_BADGE_BOOST_SPATK))
+         || (stat == STAT_SPDEF && FlagGet(B_FLAG_BADGE_BOOST_SPDEF)))
+            boost += 5;
+        break;
     case NATURE_LOYAL:
         if (stat == STAT_ATK || stat == STAT_SPATK)
             boost += GetLoyalBoostPercent(sum->level, sum->metLevel);
@@ -4907,13 +4922,13 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
         else if (stat == STAT_SPEED)
             boost += 5 * CountBoxMonMovesInCategory(GetCurrentSummaryBoxMon(), DAMAGE_CATEGORY_STATUS);
         break;
-    case NATURE_IMPRESSIONABLE:
+    case NATURE_OLD_IMPRESSIONABLE:
         if (partyMon != NULL)
             boost += GetImpressionableStatBoostPercent(partyMon, stat);
         break;
     case NATURE_YOUTHFUL:
         if (partyMon != NULL && IsYouthfulNatureActive(partyMon)
-         && (stat == STAT_ATK || stat == STAT_SPATK || stat == STAT_SPEED))
+         && (stat == STAT_ATK || stat == STAT_SPATK))
             boost += 20;
         break;
     case NATURE_PROUD:
@@ -5009,13 +5024,16 @@ static void PrintStatBoostPercentages(void)
     u8 text[20];
     u8 hpWindowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_HP);
     u8 nonHpWindowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_NON_HP);
+    u8 x;
 
     BufferStatBoostText(text, GetSummaryStatBoostPercent(STAT_HP));
-    PrintTextOnWindowWithFont(hpWindowId, text, 50, 1, 0, 0, FONT_SMALL_NARROWER);
+    x = GetStringRightAlignXOffset(FONT_SMALL_NARROWER, text, WindowWidthPx(hpWindowId) - 2);
+    // PrintTextOnWindowWithFont(hpWindowId, text, x, 1, 0, 0, FONT_SMALL_NARROWER);
     for (u32 i = 0; i < ARRAY_COUNT(nonHpStats); i++)
     {
         BufferStatBoostText(text, GetSummaryStatBoostPercent(nonHpStats[i]));
-        PrintTextOnWindowWithFont(nonHpWindowId, text, 50, i * 12 + 5, 0, 0, FONT_SMALL_NARROWER);
+        x = GetStringRightAlignXOffset(FONT_SMALL_NARROWER, text, WindowWidthPx(nonHpWindowId) - 2);
+        PrintTextOnWindowWithFont(nonHpWindowId, text, x - 8, i * 12 + 3, 0, 0, FONT_SMALL_NARROWER);
     }
 }
 
@@ -5169,11 +5187,11 @@ static void PrintNonHPStats(u8 mode)
     u8 windowId = AddWindowFromTemplateList(sPageSkillsTemplate, PSS_DATA_WINDOW_SKILLS_STATS_NON_HP);
     u32 x = (mode == SKILL_STATE_STATS) ? 4 : 16;
 
-    PrintTextOnWindowWithFont(windowId, gStringVar1, x, 4,  0, 0, FONT_NARROW);
-    PrintTextOnWindowWithFont(windowId, gStringVar2, x, 16, 0, 0, FONT_NARROW);
-    PrintTextOnWindowWithFont(windowId, gStringVar3, x, 28, 0, 0, FONT_NARROW);
-    PrintTextOnWindowWithFont(windowId, gStringVar4, x, 40, 0, 0, FONT_NARROW);
-    PrintTextOnWindowWithFont(windowId, sStringVar5, x, 52, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar1, x, 3,  0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar2, x, 15, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar3, x, 27, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, gStringVar4, x, 39, 0, 0, FONT_NARROW);
+    PrintTextOnWindowWithFont(windowId, sStringVar5, x, 51, 0, 0, FONT_NARROW);
 }
 
 static void PrintExpPointsNextLevel(void)
@@ -5858,7 +5876,11 @@ static u8 LoadMonGfxAndSprite(struct Pokemon *mon, s16 *state, bool32 isShadow)
         (*state)++;
         return 0xFF;
     case 1:
-        LoadSpritePaletteWithTag(GetMonSpritePalFromSpeciesAndPersonality(summary->species2, summary->isShiny, summary->pid), summary->species2);
+        // The species palette tag may already be resident.  The ordinary
+        // loader treats that as a cache hit and would otherwise discard the
+        // personality-adjusted palette calculated below.
+        FreeSpritePaletteByTag(summary->species2);
+        LoadSpritePaletteWithTag(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(summary->species2, summary->isShiny, summary->pid, summary->mintNature, FALSE), summary->species2);
         SetMultiuseSpriteTemplateToPokemon(summary->species2, B_POSITION_OPPONENT_LEFT);
         (*state)++;
         return 0xFF;
@@ -5889,6 +5911,20 @@ static u8 CreateMonSprite(struct Pokemon *unused, bool32 isShadow)
     gSprites[spriteId].sIsShadow = isShadow;
     gSprites[spriteId].callback = SpriteCB_Pokemon;
     gSprites[spriteId].oam.priority = 2;
+
+    if (!isShadow)
+    {
+        // Write to the palette slot actually chosen by CreateSprite. This is
+        // deliberately done after creation so no tag-cache behavior or later
+        // template setup can substitute the species' unmodified palette.
+        LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(summary->species2,
+                                                                        summary->isShiny,
+                                                                        summary->pid,
+                                                                        summary->mintNature,
+                                                                        FALSE),
+                    OBJ_PLTT_ID(gSprites[spriteId].oam.paletteNum),
+                    PLTT_SIZE_4BPP);
+    }
 
     if (isShadow)
     {
@@ -6167,52 +6203,6 @@ static void KeepMoveSelectorVisible(u8 firstSpriteId)
     {
         gSprites[spriteIds[i]].data[1] = 0;
         gSprites[spriteIds[i]].invisible = FALSE;
-    }
-}
-
-// Shoutout to Vexx for this :)
-static void FormatTextByWidth(u8 *result, s32 maxWidth, u8 fontId, const u8 *str, s16 letterSpacing)
-{
-    u8 *end, *ptr, *curLine, *lastSpace;
-
-    end = result;
-    // copy string, replacing all space and line breaks with EOS
-    while (*str != EOS)
-    {
-        if (*str == CHAR_SPACE || *str == CHAR_NEWLINE)
-            *end = EOS;
-        else
-            *end = *str;
-
-        end++;
-        str++;
-    }
-    *end = EOS; // now end points to the true end of the string
-
-    ptr = result;
-    curLine = ptr;
-
-    while (*ptr != EOS)
-        ptr++;
-    // now ptr is the first EOS char
-
-    while (ptr != end)
-    {
-        // all the EOS chars (except *end) must be replaced by either ' ' or '\n'
-        lastSpace = ptr++; // this points at the EOS
-
-        // check that adding the next word this line still fits
-        *lastSpace = CHAR_SPACE;
-        if (GetStringWidth(fontId, curLine, letterSpacing) > maxWidth)
-        {
-            *lastSpace = CHAR_NEWLINE;
-
-            curLine = ptr;
-        }
-
-        while (*ptr != EOS)
-            ptr++;
-        // now ptr is the next EOS char
     }
 }
 

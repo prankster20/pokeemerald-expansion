@@ -215,8 +215,13 @@ enum Gender
 #define OPTIONS_AUTOSAVE_OFF 0
 #define OPTIONS_AUTOSAVE_PC  1
 
-#define OPTIONS_LEVEL_CAPS_SOFT 0
+#define OPTIONS_LEVEL_CAPS_OFF  0
 #define OPTIONS_LEVEL_CAPS_HARD 1
+
+// Store this as a disable bit so pre-existing save files (whose new bit is 0)
+// receive personality colors by default.
+#define OPTIONS_PERSONALITY_COLORS_ON  0
+#define OPTIONS_PERSONALITY_COLORS_OFF 1
 
 enum __attribute__((packed)) Direction
 {

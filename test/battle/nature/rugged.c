@@ -12,7 +12,7 @@ SINGLE_BATTLE_TEST("pranks Rugged fully ignores entry hazards")
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_SPIKES); }
         OPPONENT(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WYNAUT);
-        SetTestNature(&OPPONENT_PARTY[1], NATURE_RUGGED);
+        SetTestNature(&OPPONENT_PARTY[1], NATURE_OLD_RUGGED);
     } WHEN {
         TURN { MOVE(player, MOVE_SPIKES); }
         TURN { SWITCH(opponent, 1); }
@@ -30,7 +30,7 @@ SINGLE_BATTLE_TEST("pranks Rugged Poison-types still absorb Toxic Spikes")
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_TOXIC_SPIKES); }
         OPPONENT(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_EKANS);
-        SetTestNature(&OPPONENT_PARTY[1], NATURE_RUGGED);
+        SetTestNature(&OPPONENT_PARTY[1], NATURE_OLD_RUGGED);
     } WHEN {
         TURN { MOVE(player, MOVE_TOXIC_SPIKES); }
         TURN { SWITCH(opponent, 1); }
@@ -42,7 +42,7 @@ SINGLE_BATTLE_TEST("pranks Rugged Poison-types still absorb Toxic Spikes")
     }
 }
 
-SINGLE_BATTLE_TEST("pranks Rugged does not ignore passive Sandstorm damage")
+SINGLE_BATTLE_TEST("pranks Rugged halves passive Sandstorm damage")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { MaxHP(160); HP(160); }
@@ -53,7 +53,24 @@ SINGLE_BATTLE_TEST("pranks Rugged does not ignore passive Sandstorm damage")
     } SCENE {
         HP_BAR(player);
     } THEN {
-        EXPECT_LT(player->hp, 160);
+        EXPECT_EQ(player->hp, 155);
+    }
+}
+
+SINGLE_BATTLE_TEST("pranks Rugged takes half damage from entry hazards")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_SPIKES); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WYNAUT) { MaxHP(160); HP(160); }
+        SetTestNature(&OPPONENT_PARTY[1], NATURE_RUGGED);
+    } WHEN {
+        TURN { MOVE(player, MOVE_SPIKES); }
+        TURN { SWITCH(opponent, 1); }
+    } SCENE {
+        HP_BAR(opponent, damage: 10);
+    } THEN {
+        EXPECT_EQ(opponent->hp, 150);
     }
 }
 
@@ -63,7 +80,7 @@ SINGLE_BATTLE_TEST("pranks Rugged ignores move recoil")
         ASSUME(GetMoveRecoil(MOVE_DOUBLE_EDGE) == 33);
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_DOUBLE_EDGE); MaxHP(200); HP(200); }
         OPPONENT(SPECIES_WOBBUFFET) { MaxHP(999); HP(999); }
-        SetTestNature(&PLAYER_PARTY[0], NATURE_RUGGED);
+        SetTestNature(&PLAYER_PARTY[0], NATURE_OLD_RUGGED);
     } WHEN {
         TURN { MOVE(player, MOVE_DOUBLE_EDGE); }
     } SCENE {
@@ -80,7 +97,7 @@ SINGLE_BATTLE_TEST("pranks Rugged ignores crash damage")
         ASSUME(GetMoveEffect(MOVE_JUMP_KICK) == EFFECT_RECOIL_IF_MISS);
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_JUMP_KICK); MaxHP(200); HP(200); }
         OPPONENT(SPECIES_WOBBUFFET);
-        SetTestNature(&PLAYER_PARTY[0], NATURE_RUGGED);
+        SetTestNature(&PLAYER_PARTY[0], NATURE_OLD_RUGGED);
     } WHEN {
         TURN { MOVE(player, MOVE_JUMP_KICK, hit: FALSE); }
     } SCENE {

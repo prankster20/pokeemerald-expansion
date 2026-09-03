@@ -845,6 +845,7 @@ static void UpdateFriendshipStepCounter(void)
             AdjustFriendship(mon, FRIENDSHIP_EVENT_WALKING);
             mon++;
         }
+        ApplyWayfaringStepRecovery();
     }
 }
 

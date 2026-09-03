@@ -68,20 +68,35 @@ EWRAM_DATA struct BattleMsgData *gBattleMsgDataPtr = NULL;
 
 static void GetBattlerNick(enum BattlerId battler, u8 *dst);
 static EWRAM_DATA enum StringID sNatureTitleStringId = 0;
-static const u8 sText_NatureTitleSeparator[] = _(" the ");
+static const u8 sText_NatureTitleSeparator[] = _(", the ");
 
 static void GetBattlerNickWithNatureTitle(enum BattlerId battler, u8 *dst)
 {
     u32 nature;
+    struct Pokemon *mon;
 
     GetBattlerNick(battler, dst);
-    if (gSaveBlock2Ptr->optionsNatureTitles != OPTIONS_NATURE_TITLES_ON
-     || !BattlerIsPlayer(battler)
+    if (!BattlerIsPlayer(battler)
      || (gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK)))
         return;
 
-    nature = GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE);
+    mon = GetBattlerMon(battler);
+    nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
     if (nature >= NUM_NATURES || gNaturesInfo[nature].name == NULL)
+        return;
+
+    // Pompous Pokémon insist upon a grand title even when ordinary Nature
+    // titles are disabled. The personality makes the title stable per mon.
+    if (nature == NATURE_POMPOUS)
+    {
+        u32 personality = GetMonData(mon, MON_DATA_PERSONALITY);
+
+        StringAppend(dst, sText_NatureTitleSeparator);
+        StringAppend(dst, GetPompousTitle(personality));
+        return;
+    }
+
+    if (gSaveBlock2Ptr->optionsNatureTitles != OPTIONS_NATURE_TITLES_ON)
         return;
 
     StringAppend(dst, sText_NatureTitleSeparator);

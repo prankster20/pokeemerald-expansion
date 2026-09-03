@@ -436,6 +436,9 @@ const u16 gTrainerPalette_SisAndBroFrlg[] = INCGFX_U16("graphics/trainers/palett
 const u32 gTrainerFrontPic_ProfessorOakFrlg[] = INCGFX_U32("graphics/trainers/front_pics/professor_oak_frlg.png", ".4bpp.smol");
 const u16 gTrainerPalette_ProfessorOakFrlg[] = INCGFX_U16("graphics/trainers/palettes/professor_oak_frlg.pal", ".gbapal");
 
+const u32 gTrainerFrontPic_ProfBirch[] = INCGFX_U32("graphics/birch_speech/birch.png", ".4bpp.smol");
+const u16 gTrainerPalette_ProfBirch[] = INCGFX_U16("graphics/birch_speech/birch.png", ".gbapal");
+
 const u32 gTrainerFrontPic_RocketGruntFFrlg[] = INCGFX_U32("graphics/trainers/front_pics/rocket_grunt_f_frlg.png", ".4bpp.smol");
 const u16 gTrainerPalette_RocketGruntFFrlg[] = INCGFX_U16("graphics/trainers/palettes/rocket_grunt_f_frlg.pal", ".gbapal");
 
@@ -1201,6 +1204,10 @@ const struct TrainerPicInfo gTrainerPicInfo[TRAINER_PIC_COUNT] =
     [TRAINER_PIC_POKEMON_BREEDER_FRLG] =
     {
         .frontPic = TRAINER_FRONT_PIC(gTrainerFrontPic_PokemonBreederFrlg, gTrainerPalette_PokemonBreederFrlg),
+    },
+    [TRAINER_PIC_PROF_BIRCH] =
+    {
+        .frontPic = TRAINER_FRONT_PIC(gTrainerFrontPic_ProfBirch, gTrainerPalette_ProfBirch),
     },
     [TRAINER_PIC_POKEMON_RANGER_M_FRLG] =
     {

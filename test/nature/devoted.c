@@ -37,10 +37,10 @@ TEST("pranks Devoted returns the intended boost at every personality-distance bo
     s32 slot;
     u32 devotedPersonality;
 
-    PARAMETRIZE { difference = 0;  expectedBoost = 10; expectedSlot = 1; }
-    PARAMETRIZE { difference = 9;  expectedBoost = 10; expectedSlot = 1; }
-    PARAMETRIZE { difference = 10; expectedBoost = 5;  expectedSlot = 1; }
-    PARAMETRIZE { difference = 33; expectedBoost = 5;  expectedSlot = 1; }
+    PARAMETRIZE { difference = 0;  expectedBoost = 6; expectedSlot = 1; }
+    PARAMETRIZE { difference = 9;  expectedBoost = 6; expectedSlot = 1; }
+    PARAMETRIZE { difference = 10; expectedBoost = 3; expectedSlot = 1; }
+    PARAMETRIZE { difference = 33; expectedBoost = 3; expectedSlot = 1; }
     PARAMETRIZE { difference = 34; expectedBoost = 0;  expectedSlot = 1; }
     PARAMETRIZE { difference = 50; expectedBoost = 0;  expectedSlot = 1; }
 
@@ -65,7 +65,7 @@ TEST("pranks Devoted chooses the closest personality match")
     CreatePartyMon(1, SPECIES_WYNAUT, MakePersonalityAtDistance(devotedPersonality, 30));
     CreatePartyMon(2, SPECIES_RALTS, MakePersonalityAtDistance(devotedPersonality, 7));
 
-    EXPECT_EQ(GetDevotedBondData(&gParties[B_TRAINER_PLAYER][0], &slot), 10);
+    EXPECT_EQ(GetDevotedBondData(&gParties[B_TRAINER_PLAYER][0], &slot), 6);
     EXPECT_EQ(slot, 2);
 }
 

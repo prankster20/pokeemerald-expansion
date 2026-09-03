@@ -3,6 +3,7 @@
 #include "event_data.h"
 #include "caps.h"
 #include "pokemon.h"
+#include "constants/global.h"
 
 
 u32 GetCurrentLevelCap(void)
@@ -21,6 +22,9 @@ u32 GetCurrentLevelCap(void)
     };
 
     u32 i;
+
+    if (gSaveBlock2Ptr != NULL && gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_OFF)
+        return MAX_LEVEL;
 
     if (B_LEVEL_CAP_TYPE == LEVEL_CAP_FLAG_LIST)
     {
@@ -45,10 +49,13 @@ u32 GetSoftLevelCapExpValue(u32 level, u32 expValue)
     static const u32 sExpScalingUp[5]   = { 16, 8, 4, 2, 1 };
 
     u32 levelDifference;
-    u32 currentLevelCap = GetCurrentLevelCap();
+    u32 currentLevelCap;
 
-    if (B_EXP_CAP_TYPE == EXP_CAP_NONE)
+    if (B_EXP_CAP_TYPE == EXP_CAP_NONE
+     || gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_OFF)
         return expValue;
+
+    currentLevelCap = GetCurrentLevelCap();
 
     if (level < currentLevelCap)
     {

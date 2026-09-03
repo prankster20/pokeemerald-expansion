@@ -16,6 +16,7 @@
 #include "window.h"
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
+#include "constants/global.h"
 #include "constants/songs.h"
 
 #define tMenuSelection data[0]
@@ -32,6 +33,7 @@
 #define tEasierCatch data[11]
 #define tLevelCaps data[12]
 #define tNatureTitles data[13]
+#define tPersonalityColors data[14]
 
 enum
 {
@@ -55,6 +57,7 @@ enum
 {
     MORE_MENUITEM_ANNOUNCE_NATURES,
     MORE_MENUITEM_NATURE_TITLES,
+    MORE_MENUITEM_PERSONALITY_COLORS,
     MORE_MENUITEM_SHINY_ODDS,
     MORE_MENUITEM_EASIER_CATCH,
     MORE_MENUITEM_LEVEL_CAPS,
@@ -82,9 +85,10 @@ enum
 #define YPOS_FRAMETYPE       (MENUITEM_FRAMETYPE * OPTION_ROW_HEIGHT)
 #define YPOS_MORE_ANNOUNCENATURES 0
 #define YPOS_MORE_NATURE_TITLES    OPTION_ROW_HEIGHT
-#define YPOS_MORE_SHINYODDS        (2 * OPTION_ROW_HEIGHT)
-#define YPOS_MORE_EASIER_CATCH     (3 * OPTION_ROW_HEIGHT)
-#define YPOS_MORE_LEVELCAPS        (4 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_PERSONALITY_COLORS (2 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_SHINYODDS        (3 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_EASIER_CATCH     (4 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_LEVELCAPS        (5 * OPTION_ROW_HEIGHT)
 #define YPOS_FOOTER          (MENUITEM_FOOTER * OPTION_ROW_HEIGHT)
 
 static void Task_OptionMenuFadeIn(u8 taskId);
@@ -102,6 +106,8 @@ static u8 AnnounceNatures_ProcessInput(u8 selection);
 static void AnnounceNatures_DrawChoices(u8 selection);
 static u8 NatureTitles_ProcessInput(u8 selection);
 static void NatureTitles_DrawChoices(u8 selection);
+static u8 PersonalityColors_ProcessInput(u8 selection);
+static void PersonalityColors_DrawChoices(u8 selection);
 static u8 ShinyOdds_ProcessInput(u8 selection);
 static void ShinyOdds_DrawChoices(u8 selection);
 static u8 EasierCatch_ProcessInput(u8 selection);
@@ -150,11 +156,11 @@ static const u8 gText_ShinyOdds64[]        = _("{COLOR GREEN}{SHADOW LIGHT_GREEN
 static const u8 gText_EasierCatch1x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}1x");
 static const u8 gText_EasierCatch2x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}2x");
 static const u8 gText_EasierCatch3x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}3x");
-static const u8 gText_EasierCatch255x[]    = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}100%");
-static const u8 gText_LevelCapsSoft[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SOFT");
+static const u8 gText_LevelCapsOff[]       = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}OFF");
 static const u8 gText_LevelCapsHard[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}HARD");
 static const u8 gText_AnnounceNatures[]    = _("SHOW FOE NATURE");
 static const u8 gText_NatureTitles[]       = _("NATURE TITLES");
+static const u8 gText_PersonalityColors[]  = _("MON COLORS");
 static const u8 gText_ShinyOdds[]          = _("SHINY ODDS");
 static const u8 gText_EasierCatch[]        = _("CATCH RATE");
 static const u8 gText_LevelCaps[]          = _("LEVEL CAPS");
@@ -321,8 +327,11 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tBattleStyle = gSaveBlock2Ptr->optionsBattleStyle;
         gTasks[taskId].tAnnounceNatures = gSaveBlock2Ptr->optionsAnnounceNatures;
         gTasks[taskId].tNatureTitles = gSaveBlock2Ptr->optionsNatureTitles;
+        gTasks[taskId].tPersonalityColors = gSaveBlock2Ptr->optionsPersonalityColors;
         gTasks[taskId].tShinyOdds = gSaveBlock2Ptr->optionsShinyOdds;
         gTasks[taskId].tEasierCatch = gSaveBlock2Ptr->optionsEasierCatch;
+        if (gTasks[taskId].tEasierCatch >= OPTIONS_EASIER_CATCH_COUNT)
+            gTasks[taskId].tEasierCatch = OPTIONS_EASIER_CATCH_1X;
         gTasks[taskId].tLevelCaps = gSaveBlock2Ptr->optionsLevelCaps;
         gTasks[taskId].tSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tButtonMode = gSaveBlock2Ptr->optionsButtonMode;
@@ -429,6 +438,13 @@ static void Task_OptionMenuProcessInput(u8 taskId)
                 if (previousOption != gTasks[taskId].tNatureTitles)
                     NatureTitles_DrawChoices(gTasks[taskId].tNatureTitles);
             }
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_PERSONALITY_COLORS)
+            {
+                previousOption = gTasks[taskId].tPersonalityColors;
+                gTasks[taskId].tPersonalityColors = PersonalityColors_ProcessInput(gTasks[taskId].tPersonalityColors);
+                if (previousOption != gTasks[taskId].tPersonalityColors)
+                    PersonalityColors_DrawChoices(gTasks[taskId].tPersonalityColors);
+            }
             else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_SHINY_ODDS)
             {
                 previousOption = gTasks[taskId].tShinyOdds;
@@ -530,6 +546,7 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsBattleStyle = gTasks[taskId].tBattleStyle;
     gSaveBlock2Ptr->optionsAnnounceNatures = gTasks[taskId].tAnnounceNatures;
     gSaveBlock2Ptr->optionsNatureTitles = gTasks[taskId].tNatureTitles;
+    gSaveBlock2Ptr->optionsPersonalityColors = gTasks[taskId].tPersonalityColors;
     gSaveBlock2Ptr->optionsShinyOdds = gTasks[taskId].tShinyOdds;
     gSaveBlock2Ptr->optionsEasierCatch = gTasks[taskId].tEasierCatch;
     // Autosave is currently unavailable. Clear the dormant option for older saves too.
@@ -596,6 +613,29 @@ static void DrawFourOptionChoices(const u8 *const choices[4], u8 y, u8 selection
     for (u32 i = 0; i < 4; i++)
     {
         if (i == 3)
+            x = 198 - widths[i];
+        DrawOptionMenuChoice(choices[i], x, y, selection == i);
+        x += widths[i] + gap;
+    }
+}
+
+static void DrawThreeOptionChoices(const u8 *const choices[3], u8 y, u8 selection)
+{
+    s32 widths[3];
+    s32 x = 104;
+    s32 totalWidth = 0;
+    s32 gap;
+
+    for (u32 i = 0; i < 3; i++)
+    {
+        widths[i] = GetStringWidth(FONT_NORMAL, choices[i], 0);
+        totalWidth += widths[i];
+    }
+
+    gap = (94 - totalWidth) / 2;
+    for (u32 i = 0; i < 3; i++)
+    {
+        if (i == 2)
             x = 198 - widths[i];
         DrawOptionMenuChoice(choices[i], x, y, selection == i);
         x += widths[i] + gap;
@@ -718,6 +758,25 @@ static void NatureTitles_DrawChoices(u8 selection)
                          selection == OPTIONS_NATURE_TITLES_ON);
 }
 
+static u8 PersonalityColors_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+    return selection;
+}
+
+static void PersonalityColors_DrawChoices(u8 selection)
+{
+    DrawOptionMenuChoice(gText_OptionOff, 104, YPOS_MORE_PERSONALITY_COLORS, selection == OPTIONS_PERSONALITY_COLORS_OFF);
+    DrawOptionMenuChoice(gText_OptionOn,
+                         GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionOn, 198),
+                         YPOS_MORE_PERSONALITY_COLORS,
+                         selection == OPTIONS_PERSONALITY_COLORS_ON);
+}
+
 static u8 ShinyOdds_ProcessInput(u8 selection)
 {
     if (JOY_NEW(DPAD_RIGHT))
@@ -743,14 +802,17 @@ static void ShinyOdds_DrawChoices(u8 selection)
 
 static u8 EasierCatch_ProcessInput(u8 selection)
 {
+    if (selection >= OPTIONS_EASIER_CATCH_COUNT)
+        selection = OPTIONS_EASIER_CATCH_1X;
+
     if (JOY_NEW(DPAD_RIGHT))
     {
-        selection = (selection + 1) % 4;
+        selection = (selection + 1) % OPTIONS_EASIER_CATCH_COUNT;
         sArrowPressed = TRUE;
     }
     else if (JOY_NEW(DPAD_LEFT))
     {
-        selection = (selection + 3) % 4;
+        selection = (selection + OPTIONS_EASIER_CATCH_COUNT - 1) % OPTIONS_EASIER_CATCH_COUNT;
         sArrowPressed = TRUE;
     }
 
@@ -759,9 +821,11 @@ static u8 EasierCatch_ProcessInput(u8 selection)
 
 static void EasierCatch_DrawChoices(u8 selection)
 {
-    const u8 *const choices[] = {gText_EasierCatch1x, gText_EasierCatch2x, gText_EasierCatch3x, gText_EasierCatch255x};
+    const u8 *const choices[] = {gText_EasierCatch1x, gText_EasierCatch2x, gText_EasierCatch3x};
 
-    DrawFourOptionChoices(choices, YPOS_MORE_EASIER_CATCH, selection);
+    if (selection >= OPTIONS_EASIER_CATCH_COUNT)
+        selection = OPTIONS_EASIER_CATCH_1X;
+    DrawThreeOptionChoices(choices, YPOS_MORE_EASIER_CATCH, selection);
 }
 
 static u8 LevelCaps_ProcessInput(u8 selection)
@@ -776,7 +840,7 @@ static u8 LevelCaps_ProcessInput(u8 selection)
 
 static void LevelCaps_DrawChoices(u8 selection)
 {
-    DrawOptionMenuChoice(gText_LevelCapsSoft, 104, YPOS_MORE_LEVELCAPS, selection == OPTIONS_LEVEL_CAPS_SOFT);
+    DrawOptionMenuChoice(gText_LevelCapsOff, 104, YPOS_MORE_LEVELCAPS, selection == OPTIONS_LEVEL_CAPS_OFF);
     DrawOptionMenuChoice(gText_LevelCapsHard,
                          GetStringRightAlignXOffset(FONT_NORMAL, gText_LevelCapsHard, 198),
                          YPOS_MORE_LEVELCAPS,
@@ -964,12 +1028,14 @@ static void DrawOptionMenuPage(u8 taskId)
     {
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_AnnounceNatures, 8, YPOS_MORE_ANNOUNCENATURES + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_NatureTitles, 8, YPOS_MORE_NATURE_TITLES + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_PersonalityColors, 8, YPOS_MORE_PERSONALITY_COLORS + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_ShinyOdds, 8, YPOS_MORE_SHINYODDS + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_EasierCatch, 8, YPOS_MORE_EASIER_CATCH + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_LevelCaps, 8, YPOS_MORE_LEVELCAPS + 1, TEXT_SKIP_DRAW, NULL);
         DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER, gTasks[taskId].tMenuSelection == MENUITEM_FOOTER);
         AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
         NatureTitles_DrawChoices(gTasks[taskId].tNatureTitles);
+        PersonalityColors_DrawChoices(gTasks[taskId].tPersonalityColors);
         ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
         EasierCatch_DrawChoices(gTasks[taskId].tEasierCatch);
         LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);

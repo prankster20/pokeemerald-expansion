@@ -266,7 +266,7 @@ void EvolutionScene(struct Pokemon *mon, enum Species postEvoSpecies, bool32 can
                         currSpecies,
                         personality,
                         TRUE);
-    LoadPalette(GetMonSpritePalFromSpeciesAndPersonality(currSpecies, isShiny, personality), OBJ_PLTT_ID(1), PLTT_SIZE_4BPP);
+    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(currSpecies, isShiny, personality, GetMonData(mon, MON_DATA_HIDDEN_NATURE), FALSE), OBJ_PLTT_ID(1), PLTT_SIZE_4BPP);
 
     SetMultiuseSpriteTemplateToPokemon(currSpecies, B_POSITION_OPPONENT_LEFT);
     gMultiuseSpriteTemplate.affineAnims = gDummySpriteAffineAnimTable;
@@ -281,7 +281,7 @@ void EvolutionScene(struct Pokemon *mon, enum Species postEvoSpecies, bool32 can
                         postEvoSpecies,
                         personality,
                         TRUE);
-    LoadPalette(GetMonSpritePalFromSpeciesAndPersonality(postEvoSpecies, isShiny, personality), OBJ_PLTT_ID(2), PLTT_SIZE_4BPP);
+    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(postEvoSpecies, isShiny, personality, GetMonData(mon, MON_DATA_HIDDEN_NATURE), FALSE), OBJ_PLTT_ID(2), PLTT_SIZE_4BPP);
 
     SetMultiuseSpriteTemplateToPokemon(postEvoSpecies, B_POSITION_OPPONENT_RIGHT);
     gMultiuseSpriteTemplate.affineAnims = gDummySpriteAffineAnimTable;
@@ -612,7 +612,7 @@ static const u8 sCallowBlacklistedNatures[] =
 {
         NATURE_FINICKY,
         NATURE_ECLECTIC,
-    NATURE_IMPRESSIONABLE,
+    NATURE_UNDERHANDED,
 };
 
 static bool32 IsCallowBlacklistedNature(u32 nature)

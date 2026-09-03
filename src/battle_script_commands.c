@@ -1569,6 +1569,8 @@ static void Cmd_healthbarupdate(void)
                 passiveDamage = passiveDamage * 3 / 2;
             if (HasNature(battler, NATURE_DELICATE))
                 passiveDamage = passiveDamage * 3 / 2;
+            if (HasNature(battler, NATURE_RUGGED))
+                passiveDamage = max(1, passiveDamage / 2);
 
             // Keep the HP-bar animation and subsequent data update identical.
             gBattleStruct->passiveHpUpdate[battler] = passiveDamage;
@@ -1627,7 +1629,7 @@ static bool32 TrySetTerritorialSwitchOutDamage(enum BattlerId battler)
     {
         if (IsBattlerAlly(foe, battler)
          || !IsBattlerAlive(foe)
-         || !HasNature(foe, NATURE_TERRITORIAL))
+         || !HasNature(foe, NATURE_OLD_TERRITORIAL))
             continue;
 
         SetPassiveDamageAmount(battler, GetNonDynamaxMaxHP(battler) / 12);
@@ -1681,7 +1683,7 @@ static void ChargeBitterAfterMoveHealing(enum BattlerId healedBattler, s32 healA
         if (battler == healedBattler
          || IsBattlerAlly(battler, healedBattler)
          || !IsBattlerAlive(battler)
-         || !HasNature(battler, NATURE_BITTER))
+         || !HasNature(battler, NATURE_OLD_BITTER))
             continue;
 
         gBattleStruct->battlerState[battler].bitterBoostCharge = TRUE;
@@ -1840,7 +1842,17 @@ static void MoveDamageDataHpUpdate(enum BattlerId battler, u32 scriptBattler, co
 
             hpLost = hpBefore - gBattleMons[battler].hp;
             if (hpLost != 0)
+            {
                 gBattleStruct->innardsOutHpLost[battler] += hpLost;
+
+                // --- Custom Archetype nature: Unforgiving ---
+                // Arm only after actual critical-hit damage was suffered and
+                // the target survived it. Substitute/disguise damage never arms it.
+                if (gBattleMons[battler].hp != 0
+                 && gSpecialStatuses[battler].criticalHit
+                 && HasNature(battler, NATURE_UNFORGIVING))
+                    gBattleStruct->battlerState[battler].unforgivingCritReady = TRUE;
+            }
 
             gProtectStructs[battler].assuranceDoubled = TRUE;
             gProtectStructs[battler].revengeDoubled |= 1u << gBattlerAttacker;
@@ -2363,13 +2375,19 @@ static void TrySynchronizeActivation(enum BattlerId battlerAtk, enum BattlerId e
         return;
 
     enum Ability effectAbility = GetBattlerAbility(effectBattler);
-    if (effectAbility != ABILITY_SYNCHRONIZE)
+    bool32 bitter = HasNature(effectBattler, NATURE_BITTER);
+
+    if (effectAbility != ABILITY_SYNCHRONIZE && !bitter)
         return;
 
-    if (effect == MOVE_EFFECT_POISON
+    if ((effect == MOVE_EFFECT_POISON
      || effect == MOVE_EFFECT_TOXIC
      || effect == MOVE_EFFECT_PARALYSIS
-     || effect == MOVE_EFFECT_BURN)
+     || effect == MOVE_EFFECT_BURN
+     || (bitter && (effect == MOVE_EFFECT_SLEEP
+                 || effect == MOVE_EFFECT_FREEZE
+                 || effect == MOVE_EFFECT_FROSTBITE)))
+     && GetBattlerSide(battlerAtk) != GetBattlerSide(effectBattler))
     {
         if (CanSetNonVolatileStatus(
                 effectBattler,
@@ -2380,6 +2398,7 @@ static void TrySynchronizeActivation(enum BattlerId battlerAtk, enum BattlerId e
                 CHECK_TRIGGER))
         {
             gBattleStruct->synchronizeState = SYNCH_STATE_START;
+            gBattleStruct->battlerState[effectBattler].bitterReflection = bitter;
             gBattlerAbility = effectBattler;
             gBattleScripting.savedBattler = battlerAtk;
         }
@@ -2389,6 +2408,89 @@ static void TrySynchronizeActivation(enum BattlerId battlerAtk, enum BattlerId e
             gBattlerAbility = effectBattler;
         }
     }
+}
+
+enum BitterVolatileEffect
+{
+    BITTER_VOLATILE_CONFUSION,
+    BITTER_VOLATILE_FLINCH,
+    BITTER_VOLATILE_INFATUATION,
+    BITTER_VOLATILE_DISABLE,
+    BITTER_VOLATILE_ENCORE,
+    BITTER_VOLATILE_TAUNT,
+    BITTER_VOLATILE_TORMENT,
+};
+
+static void TryReflectBitterVolatile(enum BattlerId source, enum BattlerId bitter, enum BitterVolatileEffect effect)
+{
+    s32 moveSlot;
+
+    if (!HasNature(bitter, NATURE_BITTER)
+     || !IsBattlerAlive(source)
+     || IsBattlerAlly(source, bitter))
+        return;
+
+    switch (effect)
+    {
+    case BITTER_VOLATILE_CONFUSION:
+        if (gBattleMons[source].volatiles.confusionTurns != 0)
+            return;
+        gBattleMons[source].volatiles.confusionTurns = gBattleMons[bitter].volatiles.confusionTurns;
+        break;
+    case BITTER_VOLATILE_FLINCH:
+        if (gBattleMons[source].volatiles.flinched
+         || HasBattlerActedThisTurn(source)
+         || GetActiveGimmick(source) == GIMMICK_DYNAMAX)
+            return;
+        gBattleMons[source].volatiles.flinched = TRUE;
+        break;
+    case BITTER_VOLATILE_INFATUATION:
+        if (gBattleMons[source].volatiles.infatuation)
+            return;
+        gBattleMons[source].volatiles.infatuation = INFATUATED_WITH(bitter);
+        break;
+    case BITTER_VOLATILE_DISABLE:
+        if (gBattleMons[source].volatiles.disabledMove != MOVE_NONE)
+            return;
+        for (moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
+        {
+            if (gBattleMons[source].moves[moveSlot] == gLastMoves[source])
+                break;
+        }
+        if (moveSlot == MAX_MON_MOVES || gBattleMons[source].pp[moveSlot] == 0)
+            return;
+        gBattleMons[source].volatiles.disabledMove = gBattleMons[source].moves[moveSlot];
+        gBattleMons[source].volatiles.disableTimer = gBattleMons[bitter].volatiles.disableTimer;
+        break;
+    case BITTER_VOLATILE_ENCORE:
+        if (gBattleMons[source].volatiles.encoredMove != MOVE_NONE)
+            return;
+        for (moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
+        {
+            if (gBattleMons[source].moves[moveSlot] == gLastMoves[source])
+                break;
+        }
+        if (moveSlot == MAX_MON_MOVES || gBattleMons[source].pp[moveSlot] == 0 || IsMoveEncoreBanned(gLastMoves[source]))
+            return;
+        gBattleMons[source].volatiles.encoredMove = gBattleMons[source].moves[moveSlot];
+        gBattleMons[source].volatiles.encoredMovePos = moveSlot;
+        gBattleMons[source].volatiles.encoreTimer = gBattleMons[bitter].volatiles.encoreTimer;
+        break;
+    case BITTER_VOLATILE_TAUNT:
+        if (gBattleMons[source].volatiles.tauntTimer != 0)
+            return;
+        gBattleMons[source].volatiles.tauntTimer = gBattleMons[bitter].volatiles.tauntTimer;
+        break;
+    case BITTER_VOLATILE_TORMENT:
+        if (gBattleMons[source].volatiles.torment)
+            return;
+        gBattleMons[source].volatiles.torment = TRUE;
+        gBattleMons[source].volatiles.tormentTimer = gBattleMons[bitter].volatiles.tormentTimer;
+        break;
+    }
+
+    gBattleScripting.showNaturePopup = TRUE;
+    gBattleScripting.naturePopupId = NATURE_BITTER;
 }
 
 static void SetNonVolatileStatus(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum MoveEffect effect, const u8 *battleScript, enum StatusTrigger trigger)
@@ -2438,6 +2540,13 @@ static void SetNonVolatileStatus(enum BattlerId battlerAtk, enum BattlerId effec
         break;
     default:
         break;
+    }
+
+    if (effect == MOVE_EFFECT_SLEEP && HasNature(effectBattler, NATURE_STOIC))
+    {
+        u32 turns = gBattleMons[effectBattler].status1 & STATUS1_SLEEP;
+        gBattleMons[effectBattler].status1 &= ~STATUS1_SLEEP;
+        gBattleMons[effectBattler].status1 |= STATUS1_SLEEP_TURN(max(1, (turns + 1) / 2));
     }
 
     BtlController_EmitSetMonData(effectBattler, B_COMM_TO_CONTROLLER, REQUEST_STATUS_BATTLE, 0, sizeof(gBattleMons[effectBattler].status1), &gBattleMons[effectBattler].status1);
@@ -2581,12 +2690,12 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         else
         {
             if (moveEffect == MOVE_EFFECT_FROSTBITE
-             && HasNature(effectBattler, NATURE_CALLOUS)
+             && HasNature(effectBattler, NATURE_OLD_CALLOUS)
              && !(gBattleMons[effectBattler].status1 & STATUS1_ICY_ANY))
             {
                 gBattleScripting.battler = effectBattler;
                 gBattleScripting.showNaturePopup = TRUE;
-                gBattleScripting.naturePopupId = NATURE_CALLOUS;
+                gBattleScripting.naturePopupId = NATURE_OLD_CALLOUS;
                 BattleScriptPush(battleScript);
                 gBattlescriptCurrInstr = BattleScript_AbilityPopUpScripting;
             }
@@ -2600,11 +2709,11 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         if (!CanBeConfused(battlerAtk, effectBattler))
         {
             // --- Custom Archetype nature: Level-Headed ---
-            if (HasNature(effectBattler, NATURE_LEVEL_HEADED))
+            if (HasNature(effectBattler, NATURE_STALWART))
             {
                 gBattleScripting.battler = effectBattler;
                 gBattleScripting.showNaturePopup = TRUE;
-                gBattleScripting.naturePopupId = NATURE_LEVEL_HEADED;
+                gBattleScripting.naturePopupId = NATURE_STALWART;
                 BattleScriptPush(battleScript);
                 gBattlescriptCurrInstr = BattleScript_AbilityPopUpScripting;
             }
@@ -2616,6 +2725,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         else
         {
             gBattleMons[effectBattler].volatiles.confusionTurns = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(effectBattler, RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS))); // 2-5 turns
+            TryReflectBitterVolatile(gBattlerAttacker, effectBattler, BITTER_VOLATILE_CONFUSION);
             BattleScriptPush(battleScript);
             gBattlescriptCurrInstr = BattleScript_MoveEffectConfusion;
         }
@@ -2635,11 +2745,11 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
                 gBattlescriptCurrInstr = battleScript;
             }
         }
-        else if (HasNature(effectBattler, NATURE_LEVEL_HEADED))
+        else if (HasNature(effectBattler, NATURE_STALWART))
         {
             gBattleScripting.battler = effectBattler;
             gBattleScripting.showNaturePopup = TRUE;
-            gBattleScripting.naturePopupId = NATURE_LEVEL_HEADED;
+            gBattleScripting.naturePopupId = NATURE_STALWART;
             BattleScriptPush(battleScript);
             gBattlescriptCurrInstr = BattleScript_AbilityPopUpScripting;
         }
@@ -2651,6 +2761,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
               && GetActiveGimmick(effectBattler) != GIMMICK_DYNAMAX)
         {
             gBattleMons[effectBattler].volatiles.flinched = TRUE;
+            TryReflectBitterVolatile(gBattlerAttacker, effectBattler, BITTER_VOLATILE_FLINCH);
             gBattlescriptCurrInstr = battleScript;
         }
         else
@@ -2890,7 +3001,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
           || (B_INCINERATE_GEMS >= GEN_6 && GetBattlerHoldEffect(effectBattler) == HOLD_EFFECT_GEMS))
          && abilities[effectBattler] != ABILITY_STICKY_HOLD
          // --- Custom Archetype nature: Stubborn ---
-         && !HasNature(effectBattler, NATURE_STUBBORN))
+         && !HasNature(effectBattler, NATURE_OLD_STUBBORN))
         {
             gLastUsedItem = gBattleMons[effectBattler].item;
             gBattleMons[effectBattler].item = ITEM_NONE;
@@ -2911,7 +3022,7 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
         else if (GetItemPocket(gBattleMons[effectBattler].item) == POCKET_BERRIES
             && abilities[effectBattler] != ABILITY_STICKY_HOLD
             // --- Custom Archetype nature: Stubborn ---
-            && !HasNature(effectBattler, NATURE_STUBBORN))
+            && !HasNature(effectBattler, NATURE_OLD_STUBBORN))
         {
             // target loses their berry
             gLastUsedItem = gBattleMons[effectBattler].item;
@@ -3063,11 +3174,11 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
     {
         enum BattlerId battler = IsAbilityOnSide(effectBattler, ABILITY_AROMA_VEIL);
 
-        if (HasNature(effectBattler, NATURE_REBELLIOUS))
+        if (HasNature(effectBattler, NATURE_OLD_REBELLIOUS))
         {
             gBattleScripting.battler = effectBattler;
             gBattleScripting.showNaturePopup = TRUE;
-            gBattleScripting.naturePopupId = NATURE_REBELLIOUS;
+            gBattleScripting.naturePopupId = NATURE_OLD_REBELLIOUS;
             BattleScriptPush(battleScript);
             gBattlescriptCurrInstr = BattleScript_RebelliousProtectsRet;
         }
@@ -4039,7 +4150,7 @@ static void Cmd_jumpifability(void)
         break;
     case BS_TARGET_SIDE:
         if (ability == ABILITY_AROMA_VEIL
-         && HasNature(gBattlerTarget, NATURE_REBELLIOUS))
+         && HasNature(gBattlerTarget, NATURE_OLD_REBELLIOUS))
         {
             enum BattleMoveEffects effect = GetMoveEffect(gCurrentMove);
 
@@ -4069,7 +4180,7 @@ static void Cmd_jumpifability(void)
     {
         gBattleScripting.battler = battler;
         gBattleScripting.showNaturePopup = TRUE;
-        gBattleScripting.naturePopupId = NATURE_REBELLIOUS;
+        gBattleScripting.naturePopupId = NATURE_OLD_REBELLIOUS;
         gBattlerAbility = battler;
         gBattlescriptCurrInstr = BattleScript_RebelliousProtects;
     }
@@ -7673,7 +7784,7 @@ static void Cmd_forcerandomswitch(void)
     // actually the battler being forced out.
     {
         enum BattlerId forcedBattler = (gBattleScripting.switchCase == B_SWITCH_RED_CARD) ? gBattlerAttacker : gBattlerTarget;
-        if (HasNature(forcedBattler, NATURE_STUBBORN))
+        if (HasNature(forcedBattler, NATURE_OLD_STUBBORN))
         {
             gBattlescriptCurrInstr = cmd->failInstr;
             return;
@@ -8060,6 +8171,7 @@ static void Cmd_tryinfatuating(void)
         else
         {
             gBattleMons[gBattlerTarget].volatiles.infatuation = INFATUATED_WITH(gBattlerAttacker);
+            TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_INFATUATION);
             gBattlescriptCurrInstr = cmd->nextInstr;
         }
     }
@@ -8335,6 +8447,7 @@ static void Cmd_disablelastusedattack(void)
             gBattleMons[gBattlerTarget].volatiles.disableTimer = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(gBattlerTarget, (Random()) & 3) + B_DISABLE_TIMER); // 4-7 turns
         else
             gBattleMons[gBattlerTarget].volatiles.disableTimer = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(gBattlerTarget, (Random()) & 3) + 2); // 2-5 turns
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_DISABLE);
         gBattlescriptCurrInstr = cmd->nextInstr;
     }
     else
@@ -8404,6 +8517,7 @@ static void Cmd_trysetencore(void)
         }
 
         gBattleMons[gBattlerTarget].volatiles.encoreTimer = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(gBattlerTarget, turns));
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_ENCORE);
         gBattlescriptCurrInstr = cmd->nextInstr;
     }
 }
@@ -9241,6 +9355,7 @@ static void Cmd_settorment(void)
     else
     {
         gBattleMons[gBattlerTarget].volatiles.torment = TRUE;
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_TORMENT);
         gBattlescriptCurrInstr = cmd->nextInstr;
     }
 }
@@ -9276,6 +9391,7 @@ static void Cmd_settaunt(void)
         }
 
         gBattleMons[gBattlerTarget].volatiles.tauntTimer = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(gBattlerTarget, turns));
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_TAUNT);
         gBattlescriptCurrInstr = cmd->nextInstr;
     }
     else
@@ -9357,8 +9473,8 @@ static void Cmd_tryswapitems(void)
         }
         // --- Custom Archetype nature: Stubborn ---
         // Prevents loss of held items - blocks the swap if either side has it.
-        else if (HasNature(gBattlerAttacker, NATURE_STUBBORN)
-              || HasNature(gBattlerTarget, NATURE_STUBBORN))
+        else if (HasNature(gBattlerAttacker, NATURE_OLD_STUBBORN)
+              || HasNature(gBattlerTarget, NATURE_OLD_STUBBORN))
         {
             gBattlescriptCurrInstr = cmd->failInstr;
         }
@@ -10008,7 +10124,7 @@ bool32 IsSubstituteProtected(enum BattlerId battlerAtk, enum BattlerId battlerDe
     else if (IsAbilityAndRecord(battlerAtk, abilityAtk, ABILITY_INFILTRATOR))
         return FALSE;
     // --- Custom Archetype nature: Pugnacious ---
-    else if (HasNature(battlerAtk, NATURE_PUGNACIOUS))
+    else if (HasNature(battlerAtk, NATURE_OLD_PUGNACIOUS))
         return FALSE;
     else
         return TRUE;
@@ -10472,8 +10588,6 @@ static u32 ComputeCaptureOdds(u32 wildMonBattler, u32 playerBattler)
     case OPTIONS_EASIER_CATCH_3X:
         odds *= 3;
         break;
-    case OPTIONS_EASIER_CATCH_255X:
-        return CAPTURE_GUARANTEED;
     }
 
     return odds;
@@ -11170,6 +11284,9 @@ static void Cmd_tryoverwriteability(void)
 
 static u32 GetMoveEffectFromStatus(enum BattlerId battler)
 {
+    if (gBattleMons[battler].status1 & STATUS1_SLEEP)
+        return MOVE_EFFECT_SLEEP;
+
     switch (gBattleMons[battler].status1)
     {
     case STATUS1_POISON:
@@ -11180,6 +11297,10 @@ static u32 GetMoveEffectFromStatus(enum BattlerId battler)
         return MOVE_EFFECT_PARALYSIS;
     case STATUS1_BURN:
         return MOVE_EFFECT_BURN;
+    case STATUS1_FREEZE:
+        return MOVE_EFFECT_FREEZE;
+    case STATUS1_FROSTBITE:
+        return MOVE_EFFECT_FROSTBITE;
     default:
         return MOVE_EFFECT_NONE;
     }
@@ -11197,7 +11318,8 @@ static void Cmd_trysynchronize(void)
         break;
     case SYNCH_STATE_START:
         synchStatus = GetMoveEffectFromStatus(gBattlerAbility);
-        RecordAbilityBattle(gBattlerAbility, ABILITY_SYNCHRONIZE);
+        if (!gBattleStruct->battlerState[gBattlerAbility].bitterReflection)
+            RecordAbilityBattle(gBattlerAbility, ABILITY_SYNCHRONIZE);
 
         if (GetConfig(B_SYNCHRONIZE_TOXIC) < GEN_5 && synchStatus == MOVE_EFFECT_TOXIC)
             synchStatus = MOVE_EFFECT_POISON;
@@ -11206,8 +11328,18 @@ static void Cmd_trysynchronize(void)
         gEffectBattler = gBattleScripting.savedBattler;
         gBattleScripting.moveEffect = synchStatus;
         gBattleStruct->synchronizeState = SYNCH_STATE_SET_STATUS;
-        PREPARE_ABILITY_BUFFER(gBattleTextBuff1, ABILITY_SYNCHRONIZE);
-        BattleScriptCall(BattleScript_SynchronizeActivates);
+        if (gBattleStruct->battlerState[gBattlerAbility].bitterReflection)
+        {
+            gBattleScripting.battler = gBattlerAbility;
+            gBattleScripting.showNaturePopup = TRUE;
+            gBattleScripting.naturePopupId = NATURE_BITTER;
+            BattleScriptCall(BattleScript_BitterSynchronizes);
+        }
+        else
+        {
+            PREPARE_ABILITY_BUFFER(gBattleTextBuff1, ABILITY_SYNCHRONIZE);
+            BattleScriptCall(BattleScript_SynchronizeActivates);
+        }
         break;
     case SYNCH_STATE_SHOW_ABILITY_POPUP: // Synchronize ability pop up still shows up even if status fails
         gBattleStruct->synchronizeState = SYNCH_STATE_END;
@@ -11219,6 +11351,7 @@ static void Cmd_trysynchronize(void)
         break;
     case SYNCH_STATE_END:
         gBattleStruct->synchronizeState = SYNCH_STATE_NONE;
+        gBattleStruct->battlerState[gBattlerAbility].bitterReflection = FALSE;
         gEffectBattler = gBattlerAbility; // Restore effect battler that was previously set to the synchronize battler
         gBattlescriptCurrInstr = cmd->nextInstr;
         break;
@@ -12753,6 +12886,7 @@ void BS_TrySetConfusion(void)
     if (CanBeConfused(gBattlerAttacker, gBattlerTarget))
     {
         gBattleMons[gBattlerTarget].volatiles.confusionTurns = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(gBattlerTarget, RandomUniform(RNG_CONFUSION_TURNS, 2, B_CONFUSION_TURNS))); // 2-5 turns
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_CONFUSION);
         gBattleCommunication[MULTIUSE_STATE] = 1;
         gEffectBattler = gBattlerTarget;
         gBattlescriptCurrInstr = cmd->nextInstr;
@@ -12782,6 +12916,7 @@ void BS_TrySetInfatuation(void)
         && !IsAbilityOnSide(gBattlerTarget, ABILITY_AROMA_VEIL))
     {
         gBattleMons[gBattlerTarget].volatiles.infatuation = INFATUATED_WITH(gBattlerAttacker);
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_INFATUATION);
         gBattleCommunication[MULTIUSE_STATE] = 2;
         gEffectBattler = gBattlerTarget;
         gBattlescriptCurrInstr = cmd->nextInstr;
@@ -12813,11 +12948,11 @@ void BS_TrySetTorment(void)
 {
     NATIVE_ARGS(const u8 *failInstr);
 
-    if (HasNature(gBattlerTarget, NATURE_REBELLIOUS))
+    if (HasNature(gBattlerTarget, NATURE_OLD_REBELLIOUS))
     {
         gBattleScripting.battler = gBattlerTarget;
         gBattleScripting.showNaturePopup = TRUE;
-        gBattleScripting.naturePopupId = NATURE_REBELLIOUS;
+        gBattleScripting.naturePopupId = NATURE_OLD_REBELLIOUS;
         BattleScriptPush(cmd->failInstr);
         gBattlescriptCurrInstr = BattleScript_RebelliousProtectsRet;
     }
@@ -12826,6 +12961,7 @@ void BS_TrySetTorment(void)
     {
         gBattleMons[gBattlerTarget].volatiles.torment = TRUE;
         gBattleMons[gBattlerTarget].volatiles.tormentTimer = GetPersuasiveInflictedDuration(gBattlerAttacker, GetGullibleVolatileDuration(gBattlerTarget, B_TORMENT_TIMER));
+        TryReflectBitterVolatile(gBattlerAttacker, gBattlerTarget, BITTER_VOLATILE_TORMENT);
         gEffectBattler = gBattlerTarget;
         gBattlescriptCurrInstr = cmd->nextInstr;
     }

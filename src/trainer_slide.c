@@ -40,6 +40,8 @@
 #include "trainer_slide.h"
 #include "battle_message.h"
 
+const u8 *const gText_BirchSentretTrainerSlide = COMPOUND_STRING("Ah, this Sentret seems\nto be Pugnacious-natured!{PAUSE_UNTIL_PRESS}\pNATURE POPUPS setting should\nhelp in identifying Natures!\p{PAUSE_UNTIL_PRESS}");
+
 static u32 BattlerHPPercentage(enum BattlerId battler, u32 operation, u32 threshold);
 static u32 GetPartyMonCount(u32 lastId, struct Pokemon *party, bool32 onlyAlive);
 static bool32 DoesTrainerHaveSlideMessage(enum DifficultyLevel difficulty, u32 trainerId, u32 slideId);

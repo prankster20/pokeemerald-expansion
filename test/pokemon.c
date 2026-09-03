@@ -90,6 +90,76 @@ TEST("Shininess independent from PID and OTID")
     EXPECT_EQ(!isShiny, GetMonData(&mon, MON_DATA_IS_SHINY));
 }
 
+TEST("Curated Hoenn Dex gender codes have a 30-35-35 distribution")
+{
+    u32 genderless = 0;
+    u32 female = 0;
+    u32 male = 0;
+
+    for (u32 percentile = 0; percentile < 100; percentile++)
+    {
+        u32 personality = ((u64)percentile << 32) / 100;
+
+        switch (GetGenderFromSpeciesAndPersonality(SPECIES_SENTRET, personality))
+        {
+        case MON_GENDERLESS: genderless++; break;
+        case MON_FEMALE: female++; break;
+        case MON_MALE: male++; break;
+        }
+    }
+    EXPECT_EQ(genderless, 30);
+    EXPECT_EQ(female, 35);
+    EXPECT_EQ(male, 35);
+}
+
+TEST("Changing curated Hoenn Dex gender can preserve Persona code and natural Nature")
+{
+    static const u8 sGenders[] = {MON_MALE, MON_FEMALE, MON_GENDERLESS};
+    u32 original = 12345;
+    u32 changed;
+    u32 nature = GetNatureFromPersonality(original);
+
+    for (u32 i = 0; i < ARRAY_COUNT(sGenders); i++)
+    {
+        u32 gender = sGenders[i];
+
+        EXPECT(FindPersonalityForCode(SPECIES_SENTRET, gender, nature,
+                                      GetPersonalityCode(original), UINT32_MAX, &changed));
+        EXPECT_EQ(GetPersonalityCode(changed), GetPersonalityCode(original));
+        EXPECT_EQ(GetNatureFromPersonality(changed), nature);
+        EXPECT_EQ(GetGenderFromSpeciesAndPersonality(SPECIES_SENTRET, changed), gender);
+    }
+}
+
+TEST("Gender changes preserve Tandemaus evolution form and stored shininess")
+{
+    static const enum Species sMausholdFamily[] =
+    {
+        SPECIES_TANDEMAUS,
+        SPECIES_MAUSHOLD_THREE,
+        SPECIES_MAUSHOLD_FOUR,
+    };
+    u32 original = 0; // Outside-code quotient % 100 == 0: Family of Three.
+    u32 changed;
+    bool32 shiny = TRUE;
+    struct Pokemon mon;
+
+    for (u32 i = 0; i < ARRAY_COUNT(sMausholdFamily); i++)
+    {
+        EXPECT(FindPersonalityForCode(sMausholdFamily[i], MON_FEMALE,
+                                      GetNatureFromPersonality(original), GetPersonalityCode(original),
+                                      original, &changed));
+        EXPECT_EQ(((original / PERSONALITY_CODE_MODULUS) % 100) == 0,
+                  ((changed / PERSONALITY_CODE_MODULUS) % 100) == 0);
+    }
+
+    CreateMon(&mon, SPECIES_TANDEMAUS, 20, original, OTID_STRUCT_PLAYER_ID);
+    SetMonData(&mon, MON_DATA_IS_SHINY, &shiny);
+    UpdateMonPersonality(&mon.box, changed);
+    EXPECT(IsMonShiny(&mon));
+    EXPECT_EQ(GetMonGender(&mon), MON_FEMALE);
+}
+
 TEST("Shininess set on an Egg persists after hatching")
 {
     u32 personality = SHINY_ODDS;

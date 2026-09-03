@@ -806,6 +806,8 @@ u32 CountBoxMonMovesInCategory(struct BoxPokemon *boxMon, enum DamageCategory ca
 u32 SanitizeBoxMonMovesForNature(struct BoxPokemon *boxMon);
 bool32 SanitizeBoxMonHeldItemForNature(struct BoxPokemon *boxMon);
 void TryFastidiousCleanPartyStatusAfterBattle(void);
+void TryPugnaciousPartySparring(void);
+void ApplyWayfaringStepRecovery(void);
 u32 ApplyMintedNature(struct Pokemon *mon, u32 nature);
 void ApplyInnocentFriendshipRule(struct Pokemon *mon);
 bool32 IsNatureExcludedFromRandomAcquisition(u32 nature);
@@ -926,9 +928,15 @@ s32 GetNatureStatModifierPercent(u8 nature, enum Stat statIndex, u32 personality
 s32 GetImpressionableStatBoostPercent(const struct Pokemon *mon, enum Stat stat);
 u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex);
 u32 GetSupportiveBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex);
-s32 GetPompousWeightPercent(const struct Pokemon *mon); // pranks / jimh
+s32 GetPompousWeightPercent(const struct Pokemon *mon); // Signed offset from 100; currently +100 (2x weight).
+const u8 *GetPompousTitle(u32 personality);
 // pranks / jimh - Custom Archetype nature: Devoted
 u32 GetDevotedBondData(const struct Pokemon *devotedMon, s32 *outBondIndex);
+u32 GetPersonalityCode(u32 personality);
+u8 GetPersonaGender(u32 personality);
+u32 GetQuirkyStatBoostPercent(u32 personality, enum Stat stat);
+void GetVibrantColorParameters(u32 personality, s32 *hueShift, s32 *brightnessShift);
+bool32 FindPersonalityForCode(enum Species species, u32 gender, u32 naturalNature, u32 code, u32 excludedPersonality, u32 *result);
 u32 GetLoyalBoostPercent(u32 level, u32 metLevel);
 s32 ApplyHealingNatureBoostsOverworld(struct Pokemon *mon, s32 healAmount);
 void AdjustFriendship(struct Pokemon *mon, u8 event);
@@ -947,8 +955,10 @@ void PlayBattleBGM(void);
 void PlayMapChosenOrBattleBGM(u16 songId);
 void CreateTask_PlayMapChosenOrBattleBGM(u16 songId);
 const u16 *GetMonFrontSpritePal(struct Pokemon *mon);
+const u16 *ApplyPersonalityColorToPalette(const u16 *source, u32 personality, u8 nature, bool32 isEgg);
 const u16 *GetMonSpritePalFromSpeciesAndPersonality(enum Species species, bool32 isShiny, u32 personality);
 const u16 *GetMonSpritePalFromSpeciesAndPersonalityIsEgg(enum Species species, bool32 isShiny, u32 personality, bool32 isEgg);
+const u16 *GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(enum Species species, bool32 isShiny, u32 personality, u8 nature, bool32 isEgg);
 const u16 *GetMonSpritePalFromSpecies(enum Species species, bool32 isShiny, bool32 isFemale);
 const u16 *GetMonSpritePalFromSpeciesIsEgg(enum Species species, bool32 isShiny, bool32 isFemale, bool32 isEgg);
 bool32 IsMoveHM(enum Move move);

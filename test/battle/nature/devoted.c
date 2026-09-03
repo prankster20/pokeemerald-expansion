@@ -6,7 +6,7 @@ ASSUMPTIONS
     ASSUME(GetMoveCategory(MOVE_TACKLE) == DAMAGE_CATEGORY_PHYSICAL);
 }
 
-SINGLE_BATTLE_TEST("pranks Devoted boosts own Atk by 10% in battle when closely bonded", s16 damage)
+SINGLE_BATTLE_TEST("pranks Devoted boosts own Atk by 6% in battle when closely bonded", s16 damage)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
@@ -24,6 +24,6 @@ SINGLE_BATTLE_TEST("pranks Devoted boosts own Atk by 10% in battle when closely 
     } SCENE {
         HP_BAR(opponent, captureDamage: &results[i].damage);
     } FINALLY {
-        EXPECT_MUL_EQ(results[0].damage, Q_4_12(1.1), results[1].damage);
+        EXPECT_MUL_EQ(results[0].damage, Q_4_12(1.06), results[1].damage);
     }
 }

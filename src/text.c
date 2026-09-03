@@ -2014,6 +2014,47 @@ s32 GetStringWidth(u8 fontId, const u8 *str, s16 letterSpacing)
     return width;
 }
 
+// Copies a string while replacing spaces or existing line breaks with line
+// breaks wherever the next word would exceed maxWidth.
+void FormatTextByWidth(u8 *result, s32 maxWidth, u8 fontId, const u8 *str, s16 letterSpacing)
+{
+    u8 *end = result;
+    u8 *ptr;
+    u8 *curLine;
+    u8 *lastSpace;
+
+    while (*str != EOS)
+    {
+        if (*str == CHAR_SPACE || *str == CHAR_NEWLINE)
+            *end = EOS;
+        else
+            *end = *str;
+
+        end++;
+        str++;
+    }
+    *end = EOS;
+
+    ptr = result;
+    curLine = ptr;
+    while (*ptr != EOS)
+        ptr++;
+
+    while (ptr != end)
+    {
+        lastSpace = ptr++;
+        *lastSpace = CHAR_SPACE;
+        if (GetStringWidth(fontId, curLine, letterSpacing) > maxWidth)
+        {
+            *lastSpace = CHAR_NEWLINE;
+            curLine = ptr;
+        }
+
+        while (*ptr != EOS)
+            ptr++;
+    }
+}
+
 s32 GetStringLineWidth(u8 fontId, const u8 *str, s16 letterSpacing, u32 lineNum, u32 strSize)
 {
     u32 strWidth = 0, strLen, currLine;

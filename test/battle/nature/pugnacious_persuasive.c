@@ -16,7 +16,7 @@ SINGLE_BATTLE_TEST("pranks Pugnacious ignores Reflect when attacking", s16 damag
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
-    PARAMETRIZE { nature = NATURE_PUGNACIOUS; }
+    PARAMETRIZE { nature = NATURE_OLD_PUGNACIOUS; }
     GIVEN {
         WITH_CONFIG(B_TAUNT_TURNS, GEN_5);
         PLAYER(SPECIES_MIENFOO) { Level(50); Attack(100); }
@@ -38,7 +38,7 @@ SINGLE_BATTLE_TEST("pranks Pugnacious ignores Substitute when attacking")
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_SUBSTITUTE); MaxHP(100); HP(100); }
-        u32 nature = NATURE_PUGNACIOUS;
+        u32 nature = NATURE_OLD_PUGNACIOUS;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(opponent, MOVE_SUBSTITUTE); MOVE(player, MOVE_CONFUSE_RAY); }

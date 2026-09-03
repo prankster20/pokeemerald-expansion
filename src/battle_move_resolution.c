@@ -324,7 +324,8 @@ static enum CancelerResult CancelerFlinch(struct BattleCalcValues *cv)
 
 static enum CancelerResult CancelerDisabled(struct BattleCalcValues *cv)
 {
-    if (GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE
+    if (!gBattleStruct->battlerState[cv->battlerAtk].rebelliousDefyingThisMove
+     && GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE
      && gBattleMons[cv->battlerAtk].volatiles.disabledMove == cv->move
      && gBattleMons[cv->battlerAtk].volatiles.disabledMove != MOVE_NONE)
     {
@@ -340,7 +341,8 @@ static enum CancelerResult CancelerVolatileBlocked(struct BattleCalcValues *cv)
 {
     enum CancelerResult result = CANCELER_RESULT_SUCCESS;
 
-    if (GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE
+    if (!gBattleStruct->battlerState[cv->battlerAtk].rebelliousDefyingThisMove
+     && GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE
      && IsHealBlockPreventingMove(cv->battlerAtk, cv->move))
     {
         gBattleScripting.battler = cv->battlerAtk;
@@ -370,7 +372,8 @@ static enum CancelerResult CancelerVolatileBlocked(struct BattleCalcValues *cv)
 
 static enum CancelerResult CancelerTaunted(struct BattleCalcValues *cv)
 {
-    if (GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE
+    if (!gBattleStruct->battlerState[cv->battlerAtk].rebelliousDefyingThisMove
+     && GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE
      && gBattleMons[cv->battlerAtk].volatiles.tauntTimer
      && IsBattleMoveStatus(cv->move)
      && (GetConfig(B_TAUNT_ME_FIRST) < GEN_5 || cv->moveEffect != EFFECT_ME_FIRST))
@@ -384,7 +387,8 @@ static enum CancelerResult CancelerTaunted(struct BattleCalcValues *cv)
 
 static enum CancelerResult CancelerImprisoned(struct BattleCalcValues *cv)
 {
-    if (GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE && GetImprisonedMovesCount(cv->battlerAtk, cv->move))
+    if (!gBattleStruct->battlerState[cv->battlerAtk].rebelliousDefyingThisMove
+     && GetActiveGimmick(cv->battlerAtk) != GIMMICK_Z_MOVE && GetImprisonedMovesCount(cv->battlerAtk, cv->move))
     {
         CancelMultiTurnMoves(cv->battlerAtk);
         gBattlescriptCurrInstr = BattleScript_MoveUsedIsImprisoned;
@@ -453,9 +457,11 @@ static enum CancelerResult CancelerGhost(struct BattleCalcValues *cv) // GHOST i
 
 static enum CancelerResult CancelerParalyzed(struct BattleCalcValues *cv)
 {
+    u32 actionChance = HasNature(cv->battlerAtk, NATURE_STOIC) ? 88 : 75;
+
     if (gBattleMons[cv->battlerAtk].status1 & STATUS1_PARALYSIS
         && !(B_MAGIC_GUARD == GEN_4 && IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD))
-        && !RandomPercentage(RNG_PARALYSIS, 75))
+        && !RandomPercentage(RNG_PARALYSIS, actionChance))
     {
         CancelMultiTurnMoves(gBattlerAttacker);
         gBattlescriptCurrInstr = BattleScript_MoveUsedIsParalyzed;
@@ -467,6 +473,11 @@ static enum CancelerResult CancelerParalyzed(struct BattleCalcValues *cv)
 static enum CancelerResult CancelerInfatuation(struct BattleCalcValues *cv)
 {
     // Infatuation now lowers offensive damage instead of preventing actions.
+    // The vanilla 50% immobilization roll and its failure script are intentionally
+    // disabled:
+    // if (gBattleMons[cv->battlerAtk].volatiles.infatuation
+    //  && RandomChance(RNG_INFATUATION, 1, 2))
+    //     return CANCELER_RESULT_FAILURE;
     (void)cv;
     return CANCELER_RESULT_SUCCESS;
 }
@@ -801,7 +812,7 @@ bool32 IsAffectedByFollowMe(enum BattlerId battlerAtk, enum BattleSide defSide, 
         || effect == EFFECT_SKY_DROP
         || IsAbilityAndRecord(battlerAtk, ability, ABILITY_PROPELLER_TAIL)
         || IsAbilityAndRecord(battlerAtk, ability, ABILITY_STALWART)
-        || HasNature(battlerAtk, NATURE_LEVEL_HEADED))
+        || HasNature(battlerAtk, NATURE_STALWART))
         return FALSE;
 
     if (effect == EFFECT_PURSUIT && IsPursuitTargetSet())
@@ -865,7 +876,7 @@ static bool32 HandleMoveTargetRedirection(struct BattleCalcValues *cv, enum Move
                 && GetBattlerTurnOrderNum(battler) < redirectorOrderNum
                 && !IsAbilityAndRecord(cv->battlerAtk, abilityAtk, ABILITY_PROPELLER_TAIL)
                 && !IsAbilityAndRecord(cv->battlerAtk, abilityAtk, ABILITY_STALWART)
-                && !HasNature(cv->battlerAtk, NATURE_LEVEL_HEADED))
+                && !HasNature(cv->battlerAtk, NATURE_STALWART))
             {
                 redirectorOrderNum = GetBattlerTurnOrderNum(battler);
             }
@@ -2501,6 +2512,12 @@ enum CancelerResult DoAttackCanceler(void)
 
 static enum MoveEndResult MoveEndSetValues(struct BattleCalcValues *cv)
 {
+    gBattleStruct->battlerState[cv->battlerAtk].rebelliousDefyingThisMove = FALSE;
+    if (gBattleStruct->battlerState[cv->battlerAtk].unforgivingCritSpentThisMove)
+    {
+        gBattleStruct->battlerState[cv->battlerAtk].unforgivingCritReady = FALSE;
+        gBattleStruct->battlerState[cv->battlerAtk].unforgivingCritSpentThisMove = FALSE;
+    }
     if (gBattleStruct->battlerState[cv->battlerAtk].bitterBoostSpentThisMove)
     {
         gBattleStruct->battlerState[cv->battlerAtk].bitterBoostCharge = FALSE;
@@ -2669,7 +2686,7 @@ static enum MoveEndResult MoveEndAbsorb(struct BattleCalcValues *cv)
          && !gSpecialStatuses[cv->battlerAtk].mindBlownRecoil
          && !IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD)
          // --- Custom Archetype nature: Rugged ---
-         && !HasNature(cv->battlerAtk, NATURE_RUGGED))
+         && !HasNature(cv->battlerAtk, NATURE_OLD_RUGGED))
         {
             s32 recoil = (GetNonDynamaxMaxHP(cv->battlerAtk) + 1) / 2; // Half of Max HP Rounded UP
             SetPassiveDamageAmount(cv->battlerAtk, recoil);
@@ -3412,7 +3429,7 @@ static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
          && IsBattlerUnaffectedByMove(cv->battlerDef)
          && !gBattleStruct->unableToUseMove
          // --- Custom Archetype nature: Rugged ---
-         && !HasNature(cv->battlerAtk, NATURE_RUGGED))
+         && !HasNature(cv->battlerAtk, NATURE_OLD_RUGGED))
         {
             s32 recoil = 0;
             if (B_CRASH_IF_TARGET_IMMUNE == GEN_4 && gBattleStruct->moveResultFlags[cv->battlerDef] & MOVE_RESULT_DOESNT_AFFECT_FOE)
@@ -3453,7 +3470,7 @@ static enum MoveEndResult MoveEndMoveBlockRecoil(struct BattleCalcValues *cv)
             if (IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_ROCK_HEAD)
              || IsAbilityAndRecord(cv->battlerAtk, cv->abilities[cv->battlerAtk], ABILITY_MAGIC_GUARD)
              // --- Custom Archetype nature: Rugged ---
-             || HasNature(cv->battlerAtk, NATURE_RUGGED))
+             || HasNature(cv->battlerAtk, NATURE_OLD_RUGGED))
                 break;
 
             if (cv->moveEffect == EFFECT_CHLOROBLAST)
@@ -3506,7 +3523,7 @@ static enum MoveEndResult MoveEndMoveBlock(struct BattleCalcValues *cv)
          && !DoesSubstituteBlockMove(cv->battlerAtk, cv->battlerDef, cv->move)
          && CanBattlerGetOrLoseItem(cv->battlerDef, cv->battlerAtk, gBattleMons[cv->battlerDef].item)
          // --- Custom Archetype nature: Stubborn ---
-         && !HasNature(cv->battlerDef, NATURE_STUBBORN)
+         && !HasNature(cv->battlerDef, NATURE_OLD_STUBBORN)
          && !NoAliveMonsForEitherParty())
         {
             enum BattleSide side = GetBattlerSide(cv->battlerDef);
@@ -3548,7 +3565,7 @@ static enum MoveEndResult MoveEndMoveBlock(struct BattleCalcValues *cv)
          || gBattleMons[cv->battlerDef].item == ITEM_NONE
          || !IsBattlerAlive(cv->battlerAtk)
          // --- Custom Archetype nature: Stubborn ---
-         || HasNature(cv->battlerDef, NATURE_STUBBORN)
+         || HasNature(cv->battlerDef, NATURE_OLD_STUBBORN)
          || !CanStealItem(cv->battlerAtk, cv->battlerDef, gBattleMons[cv->battlerDef].item))
         {
             result = MOVEEND_RESULT_CONTINUE;
@@ -4032,7 +4049,7 @@ static enum MoveEndResult MoveEndPickpocket(struct BattleCalcValues *cv)
               && IsBattlerAlive(battlerDef)
               && gBattleMons[battlerDef].item == ITEM_NONE
               // --- Custom Archetype nature: Stubborn ---
-              && !HasNature(cv->battlerAtk, NATURE_STUBBORN)
+              && !HasNature(cv->battlerAtk, NATURE_OLD_STUBBORN)
               && CanStealItem(battlerDef, cv->battlerAtk, gBattleMons[cv->battlerAtk].item))
             {
                 gBattlerTarget = gBattlerAbility = battlerDef;

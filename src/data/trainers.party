@@ -26,6 +26,7 @@ Optional (but still recommended) fields for trainers:
     - Mugshot (enable Mugshots during battle transition
                set to one of Purple, Green, Pink, Blue or Yellow)
     - Starting Status (see include/constants/battle.h for values)
+    - Badges (Player/Inherit/Automatic, or a number from 0 to 8; defaults to Player)
     - Multi Party   (Half reduces two-trainer battle sides to 3 Pokemon each)
                     (defaults to Full but requires B_MULTI_HALF_TEAMS to be FALSE)
 
@@ -37,13 +38,15 @@ Required fields for Pokemon:
       This line also specifies Gender, Nickname and Held item.
       Alfred (Abra) (M) @ Eviolite
       Roberta (SPECIES_ABRA) (F) @ ITEM_CHOICE_SPECS
-      Both lines are valid. Gender (M) or (F) must use a capital letter.
+      Both lines are valid. Gender may be (M), (F), or (Genderless).
       Nickname length is limited to 10 characters using standard letters.
       With narrow font it's increased to 12. Longer strings will be silently shortened.
 
 Optional fields for Pokemon:
     - Level (Number between 1 and 100, defaults to 100)
+    - Met Level (Number between 1 and 100; defaults to the Pokémon's current Level)
     - Ability (Ability Name or ABILITY_ABILITY_NAME)
+    - Gender (Male/Female/Genderless; overrides a gender on the header line)
     - IVs (0 HP / 1 Atk / 2 Def / 3 SpA / 4 SpD / 5 Spe, defaults to all 31)
           (Order does not matter)
     - EVs (252 HP / 128 Spe / 48 Def, defaults to all 0, is not capped at 512 total)
@@ -4309,35 +4312,30 @@ Class: Leader
 Pic: Leader Roxanne
 Gender: Female
 Music: Female
+Items: Potion / Potion
 Double Battle: No
-AI: Basic Trainer / AI_FLAG_ACE_POKEMON
+AI: Basic Trainer
 
-Tirtouga
+Geodude
+Level: 12
+- Tackle
+- Defense Curl
+- Rock Throw
+- Rock Tomb
+
+Geodude
+Level: 12
+- Tackle
+- Defense Curl
+- Rock Throw
+- Rock Tomb
+
+Nosepass @ Oran Berry
 Level: 15
-Nature: Serious
-EVs: 32 HP / 32 Def
-- Aqua Ring
+- Block
 - Harden
+- Tackle
 - Rock Tomb
-- Aqua Jet
-
-Anorith
-Level: 15
-Nature: Old-Fashioned
-EVs: 32 HP / 32 Atk
-- Cut
-- Rock Tomb
-- Infestation
-- Bulldoze
-
-Lileep @ Oran Berry
-Level: 15
-Nature: Perfectionist
-EVs: 64 HP / 32 Atk / 64 Def / 32 SpA / 64 SpD
-- Mega Drain
-- Rock Tomb
-- Bind
-- Leech Seed
 
 === TRAINER_BRAWLY_1 ===
 Name: BRAWLY

@@ -320,8 +320,18 @@ void CreateFacilityMon(const struct TrainerMon *fmon, u16 level, u8 fixedIV, u32
     {
         personality = GeneratePersonalityForGender(MON_FEMALE, fmon->species);
     }
+    else if (fmon->gender == TRAINER_MON_GENDERLESS)
+    {
+        personality = GeneratePersonalityForGender(MON_GENDERLESS, fmon->species);
+    }
 
     ModifyPersonalityForNature(&personality, fmon->nature);
+    if (fmon->gender == TRAINER_MON_MALE)
+        ModifyPersonalityForGender(&personality, MON_MALE, fmon->species);
+    else if (fmon->gender == TRAINER_MON_FEMALE)
+        ModifyPersonalityForGender(&personality, MON_FEMALE, fmon->species);
+    else if (fmon->gender == TRAINER_MON_GENDERLESS)
+        ModifyPersonalityForGender(&personality, MON_GENDERLESS, fmon->species);
     CreateMonWithIVs(dst, fmon->species, level, personality, OTID_STRUCT_PRESET(otID), fixedIV);
 
     friendship = MAX_FRIENDSHIP;

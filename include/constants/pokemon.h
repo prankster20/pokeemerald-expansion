@@ -91,13 +91,13 @@ enum __attribute__((packed)) Type
 #define NATURE_CALLOUS          36
 #define NATURE_AFFECTIONATE     37
 #define NATURE_CANTANKEROUS     38
-#define NATURE_CHARITABLE       39
+#define NATURE_ADORABLE         39
 #define NATURE_CHILDISH         40
 #define NATURE_ECLECTIC         41
 #define NATURE_COWARDLY         42
 #define NATURE_DECEITFUL        43
 #define NATURE_DELICATE         44
-#define NATURE_IMPRESSIONABLE   45
+#define NATURE_UNDERHANDED      45
 #define NATURE_NOSTALGIC        46
 #define NATURE_DREAMY           47
 #define NATURE_ECCENTRIC        48
@@ -113,7 +113,7 @@ enum __attribute__((packed)) Type
 #define NATURE_HEDONISTIC       58
 #define NATURE_HUMBLE           59
 #define NATURE_OLD_FASHIONED    60
-#define NATURE_PACK_RAT         61
+#define NATURE_VIBRANT          61
 #define NATURE_LAZY             62
 #define NATURE_LOYAL            63
 #define NATURE_INNOCENT         64
@@ -129,18 +129,18 @@ enum __attribute__((packed)) Type
 #define NATURE_PRODIGIOUS       74
 #define NATURE_PROUD            75
 #define NATURE_RELENTLESS       76
-#define NATURE_LEVEL_HEADED     77
+#define NATURE_STALWART         77
 #define NATURE_RESOLUTE         78
 #define NATURE_DEVOTED          79
 #define NATURE_ANXIOUS          80
-#define NATURE_RESOURCEFUL      81
+#define NATURE_INTROSPECTIVE    81
 #define NATURE_SCHOLARLY        82
 #define NATURE_SCROUNGER        83
 #define NATURE_SHORTSIGHTED     84
 #define NATURE_REBELLIOUS       85
 #define NATURE_SOFT_HEARTED     86
 #define NATURE_INDOMITABLE      87
-#define NATURE_STUBBORN         88
+#define NATURE_UNFORGIVING      88
 #define NATURE_AMBIENT          89
 #define NATURE_TERRITORIAL      90
 #define NATURE_DIPLOMATIC       91
@@ -162,6 +162,23 @@ enum __attribute__((packed)) Type
 // seven-bit BoxPokemon nature field has a valid NatureInfo entry.
 #define NATURE_RESERVED_START   103
 #define NATURE_RESERVED_END     127
+#define NATURE_OLD_ARROGANT     103
+#define NATURE_OLD_BITTER       104
+#define NATURE_OLD_CALLOUS      105
+#define NATURE_OLD_ENERGETIC    106
+#define NATURE_OLD_IMPRESSIONABLE 107
+#define NATURE_OLD_LEVEL_HEADED 108
+#define NATURE_OLD_RESOURCEFUL  109
+#define NATURE_OLD_REBELLIOUS   110
+#define NATURE_OLD_FORGIVING    111
+#define NATURE_OLD_RUGGED       112
+#define NATURE_OLD_STUBBORN     113
+#define NATURE_OLD_CHARITABLE   114
+#define NATURE_OLD_PUGNACIOUS   115
+#define NATURE_OLD_STOIC        116
+#define NATURE_OLD_TERRITORIAL  117
+#define NATURE_OLD_WAYFARING    118
+#define NATURE_PACK_RAT         127 // Dormant legacy implementation; no longer assigned to an obtainable Nature slot.
 
 // Separate legacy mechanics that currently share a numeric slot with a
 // displayed Nature. Keep these identifiers distinct until one side is given
@@ -417,6 +434,8 @@ enum EvolutionConditions {
     IF_PID_MODULO_100_GT,               // The Pokémon's personality value's modulo by 100 is greater than the defined value.
     IF_PID_MODULO_100_EQ,               // The Pokémon's personality value's modulo by 100 is equal than the defined value.
     IF_PID_MODULO_100_LT,               // The Pokémon's personality value's modulo by 100 is lower than the defined value.
+    IF_PID_OUTSIDE_CODE_MODULO_100_GT,  // Uses the portion of personality outside the displayed five-digit code.
+    IF_PID_OUTSIDE_CODE_MODULO_100_EQ,
     IF_MIN_OVERWORLD_STEPS,             // The Player has taken a specific amount of steps in the overworld with the Pokémon following them or in the first slot of the party.
     IF_BAG_ITEM_COUNT,                  // The Player has the specific amount of an item in the bag. It then removes those items.
     IF_REGION,                          // The Player is in the specific region.

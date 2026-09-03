@@ -201,6 +201,9 @@ static void InitSpriteForFigure8Anim(struct Sprite *);
 static bool8 AnimateSpriteInFigure8(struct Sprite *);
 enum Direction GetDirectionToFace(s16 x1, s16 y1, s16 x2, s16 y2);
 static u32 LoadDynamicFollowerPalette(enum Species species, bool32 shiny, bool32 female);
+static const u16 *GetFollowerPaletteData(enum Species species, bool32 shiny, bool32 female);
+static void LoadFollowerPersonalityPalette(u32 paletteNum, enum Species species, bool32 shiny, bool32 female);
+static void ApplyFollowerPersonalityPalette(struct ObjectEvent *objEvent, enum Species species, bool32 shiny, bool32 female);
 static void FollowerSetGraphics(struct ObjectEvent *objEvent, enum Species species, bool32 shiny, bool32 female);
 static void ObjectEventSetGraphics(struct ObjectEvent *, const struct ObjectEventGraphicsInfo *);
 static void SpriteCB_VirtualObject(struct Sprite *);
@@ -2185,8 +2188,8 @@ static u32 LoadDynamicFollowerPalette(enum Species species, bool32 shiny, bool32
     u32 paletteNum;
     // Use standalone palette, unless entry is OOB or NULL (fallback to front-sprite-based)
 #if OW_POKEMON_OBJECT_EVENTS == TRUE && OW_PKMN_OBJECTS_SHARE_PALETTES == FALSE
-    if ((shiny && gSpeciesInfo[species].overworldPalette)
-    || (!shiny && gSpeciesInfo[species].overworldShinyPalette))
+    if ((shiny && gSpeciesInfo[species].overworldShinyPalette)
+    || (!shiny && gSpeciesInfo[species].overworldPalette))
     {
         struct SpritePalette spritePalette;
         u16 palTag = species + OBJ_EVENT_MON + (shiny ? OBJ_EVENT_MON_SHINY : 0);
@@ -2196,7 +2199,10 @@ static u32 LoadDynamicFollowerPalette(enum Species species, bool32 shiny, bool32
     #endif
         // palette already loaded
         if ((paletteNum = IndexOfSpritePaletteTag(palTag)) < 16)
+        {
+            LoadFollowerPersonalityPalette(paletteNum, species, shiny, female);
             return paletteNum;
+        }
         spritePalette.tag = palTag;
     #if P_GENDER_DIFFERENCES
         if (female && gSpeciesInfo[species].overworldPaletteFemale != NULL)
@@ -2225,16 +2231,70 @@ static u32 LoadDynamicFollowerPalette(enum Species species, bool32 shiny, bool32
         const u16 *palette = GetMonSpritePalFromSpecies(species, shiny, female); //ETODO
         // palette already loaded
         if ((paletteNum = IndexOfSpritePaletteTag(species)) < 16)
+        {
+            LoadFollowerPersonalityPalette(paletteNum, species, shiny, female);
             return paletteNum;
+        }
         // Use matching front sprite's normal/shiny palettes
         // Load compressed palette
         LoadSpritePaletteWithTag(palette, species);
         paletteNum = IndexOfSpritePaletteTag(species); // Tag is always present
     }
 
-    if (gWeatherPtr->currWeather != WEATHER_FOG_HORIZONTAL) // don't want to weather blend in fog
-        UpdateSpritePaletteWithWeather(paletteNum, FALSE);
+    LoadFollowerPersonalityPalette(paletteNum, species, shiny, female);
     return paletteNum;
+}
+
+static const u16 *GetFollowerPaletteData(enum Species species, bool32 shiny, bool32 female)
+{
+#if OW_POKEMON_OBJECT_EVENTS == TRUE && OW_PKMN_OBJECTS_SHARE_PALETTES == FALSE
+#if P_GENDER_DIFFERENCES
+    if (female)
+    {
+        if (shiny && gSpeciesInfo[species].overworldShinyPaletteFemale != NULL)
+            return gSpeciesInfo[species].overworldShinyPaletteFemale;
+        if (!shiny && gSpeciesInfo[species].overworldPaletteFemale != NULL)
+            return gSpeciesInfo[species].overworldPaletteFemale;
+    }
+#endif
+    if (shiny && gSpeciesInfo[species].overworldShinyPalette != NULL)
+        return gSpeciesInfo[species].overworldShinyPalette;
+    if (!shiny && gSpeciesInfo[species].overworldPalette != NULL)
+        return gSpeciesInfo[species].overworldPalette;
+#endif
+    return GetMonSpritePalFromSpecies(species, shiny, female);
+}
+
+// Dynamic follower palettes are reloaded while constructing every map. Apply
+// the personality palette here, rather than relying only on a later follower
+// refresh, so a warp can never restore the species' unmodified colors.
+static void LoadFollowerPersonalityPalette(u32 paletteNum, enum Species species, bool32 shiny, bool32 female)
+{
+    struct Pokemon *mon = GetFirstLiveMon();
+    const u16 *palette = GetFollowerPaletteData(species, shiny, female);
+
+    if (mon != NULL)
+    {
+        palette = ApplyPersonalityColorToPalette(palette,
+                                                 GetMonData(mon, MON_DATA_PERSONALITY),
+                                                 GetMonData(mon, MON_DATA_HIDDEN_NATURE),
+                                                 FALSE);
+    }
+
+    LoadPalette(palette, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
+    if (gWeatherPtr->currWeather != WEATHER_FOG_HORIZONTAL)
+        UpdateSpritePaletteWithWeather(paletteNum, FALSE);
+}
+
+static void ApplyFollowerPersonalityPalette(struct ObjectEvent *objEvent, enum Species species, bool32 shiny, bool32 female)
+{
+    const struct ObjectEventGraphicsInfo *graphicsInfo = SpeciesToGraphicsInfo(species, shiny, female);
+
+    if (graphicsInfo != NULL && graphicsInfo->paletteTag == OBJ_EVENT_PAL_TAG_DYNAMIC)
+    {
+        struct Sprite *sprite = &gSprites[objEvent->spriteId];
+        LoadFollowerPersonalityPalette(sprite->oam.paletteNum, species, shiny, female);
+    }
 }
 
 // Set graphics & sprite for a follower object event by species & shininess.
@@ -2409,6 +2469,7 @@ void UpdateFollowingPokemon(void)
         FollowerSetGraphics(objEvent, species, shiny, female);
         objEvent->invisible = TRUE;
     }
+    ApplyFollowerPersonalityPalette(objEvent, species, shiny, female);
     sprite->data[6] = 0; // set animation data
 }
 

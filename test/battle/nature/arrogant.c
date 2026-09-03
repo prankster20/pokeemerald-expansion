@@ -14,7 +14,7 @@ SINGLE_BATTLE_TEST("pranks Arrogant does not boost damage against equal or lower
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Level(50); Attack(100); }
         OPPONENT(SPECIES_WOBBUFFET) { Level(targetLevel); Defense(100); MaxHP(999); HP(999); }
-        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_ARROGANT});
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_ARROGANT});
     } WHEN {
         TURN { MOVE(player, MOVE_TACKLE); }
     } SCENE {
@@ -34,7 +34,7 @@ SINGLE_BATTLE_TEST("pranks Arrogant boosts damage dealt by 10% vs higher-level t
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_SCRATCH); Level(50); Speed(2); Attack(100); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); Level(level); Speed(1); Defense(50); MaxHP(100); HP(100); }
-        u32 nature = NATURE_ARROGANT;
+        u32 nature = NATURE_OLD_ARROGANT;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_SCRATCH); MOVE(opponent, MOVE_CELEBRATE); }

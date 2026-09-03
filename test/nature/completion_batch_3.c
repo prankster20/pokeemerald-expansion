@@ -37,7 +37,7 @@ TEST("pranks Innocent friendship is reset while other natures are left alone")
     EXPECT_EQ(GetMonData(&hardy, MON_DATA_FRIENDSHIP), 150);
 }
 
-TEST("pranks Pompous nickname weight scaling covers both extremes and the midpoint jump")
+TEST("pranks Pompous always doubles weight regardless of nickname")
 {
     struct Pokemon mon;
     u8 oneChar[] = _("A");
@@ -47,13 +47,13 @@ TEST("pranks Pompous nickname weight scaling covers both extremes and the midpoi
 
     CreateNatureMon(&mon, SPECIES_WOBBUFFET, 50, NATURE_POMPOUS);
     SetMonData(&mon, MON_DATA_NICKNAME, oneChar);
-    EXPECT_EQ(GetPompousWeightPercent(&mon), -60);
+    EXPECT_EQ(GetPompousWeightPercent(&mon), 100);
     SetMonData(&mon, MON_DATA_NICKNAME, sixChars);
-    EXPECT_EQ(GetPompousWeightPercent(&mon), -10);
+    EXPECT_EQ(GetPompousWeightPercent(&mon), 100);
     SetMonData(&mon, MON_DATA_NICKNAME, sevenChars);
-    EXPECT_EQ(GetPompousWeightPercent(&mon), 10);
+    EXPECT_EQ(GetPompousWeightPercent(&mon), 100);
     SetMonData(&mon, MON_DATA_NICKNAME, tenChars);
-    EXPECT_EQ(GetPompousWeightPercent(&mon), 40);
+    EXPECT_EQ(GetPompousWeightPercent(&mon), 100);
 }
 
 TEST("pranks Supportive ignores empty slots eggs and the recipient itself")
@@ -64,8 +64,8 @@ TEST("pranks Supportive ignores empty slots eggs and the recipient itself")
     EXPECT_EQ(GetSupportiveBoostPercent(party, PARTY_SIZE, 0), 0);
 
     CreateNatureMon(&party[1], SPECIES_WYNAUT, 50, NATURE_SUPPORTIVE);
-    EXPECT_EQ(GetSupportiveBoostPercent(party, PARTY_SIZE, 0), 6);
-    EXPECT_EQ(GetSupportiveBoostPercent(party, PARTY_SIZE, 1), 6);
+    EXPECT_EQ(GetSupportiveBoostPercent(party, PARTY_SIZE, 0), 5);
+    EXPECT_EQ(GetSupportiveBoostPercent(party, PARTY_SIZE, 1), 5);
 }
 
 TEST("pranks Proud leaves all stats unchanged when highest and lowest are tied")
@@ -98,7 +98,7 @@ TEST("pranks Devoted's closest bonded partner receives the same boost tier")
     devotedPersonality = GetMonData(devoted, MON_DATA_PERSONALITY);
     CreateMon(&gParties[B_TRAINER_PLAYER][1], SPECIES_KIRLIA, 20, devotedPersonality + 9, OTID_STRUCT_PLAYER_ID);
 
-    EXPECT_EQ(GetDevotedBondData(devoted, &bondSlot), 10);
+    EXPECT_EQ(GetDevotedBondData(devoted, &bondSlot), 6);
     EXPECT_EQ(bondSlot, 1);
 }
 
@@ -114,14 +114,14 @@ TEST("pranks Youthful is inactive before its evolution level and active at it")
 
 TEST("pranks Charitable alone receives the Care Package party action")
 {
-    EXPECT(TestNatureHasCarePackageAction(NATURE_CHARITABLE));
-    EXPECT(!TestNatureHasCarePackageAction(NATURE_WAYFARING));
+    EXPECT(TestNatureHasCarePackageAction(NATURE_OLD_CHARITABLE));
+    EXPECT(!TestNatureHasCarePackageAction(NATURE_OLD_WAYFARING));
     EXPECT(!TestNatureHasCarePackageAction(NATURE_HARDY));
 }
 
 TEST("pranks Wayfaring alone receives the Head Home party action")
 {
-    EXPECT(TestNatureHasHeadHomeAction(NATURE_WAYFARING));
-    EXPECT(!TestNatureHasHeadHomeAction(NATURE_CHARITABLE));
+    EXPECT(TestNatureHasHeadHomeAction(NATURE_OLD_WAYFARING));
+    EXPECT(!TestNatureHasHeadHomeAction(NATURE_OLD_CHARITABLE));
     EXPECT(!TestNatureHasHeadHomeAction(NATURE_HARDY));
 }

@@ -536,6 +536,7 @@ gSpecials::
 	def_special GetBattlePyramidHint
 	def_special LoadLinkContestPlayerPalettes
 	def_special ShowTrainerHillRecords, waitstate=1
+	def_special ShowEncounterSign, waitstate=1
 	def_special PlayerFaceTrainerAfterBattle
 	def_special ResetHealLocationFromDewford
 	def_special IsLastMonThatKnowsSurf

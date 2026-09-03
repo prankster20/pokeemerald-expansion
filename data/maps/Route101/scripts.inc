@@ -212,7 +212,10 @@ Route101_EventScript_Boy::
 	end
 
 Route101_EventScript_RouteSign::
-	msgbox Route101_Text_RouteSign, MSGBOX_SIGN
+	lockall
+	setvar VAR_0x8004, ENCOUNTER_SIGN_ROUTE_101
+	special ShowEncounterSign
+	releaseall
 	end
 
 Route101_EventScript_BirchsBag::
@@ -295,4 +298,3 @@ Route101_Text_WildPokemonInTallGrass:
 Route101_Text_RouteSign:
 	.string "ROUTE 101\n"
 	.string "{UP_ARROW} OLDALE TOWN$"
-

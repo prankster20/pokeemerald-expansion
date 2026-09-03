@@ -4138,7 +4138,7 @@ void Task_DisplayCaughtMonDexPageHGSS(u8 taskId)
     case 4:
     {
         u32 personality = ((u16)gTasks[taskId].tPersonalityHi << 16) | (u16)gTasks[taskId].tPersonalityLo;
-        const u16 *paletteData = GetMonSpritePalFromSpeciesAndPersonality(species, FALSE, personality);
+        const u16 *paletteData = GetMonSpritePalFromSpecies(species, FALSE, IsPersonalityFemale(species, personality));
 
         spriteId = Pokedex_CreateCaughtMonSprite(species, MON_PAGE_X, MON_PAGE_Y);
         LoadPalette(paletteData, OBJ_PLTT_ID(gSprites[spriteId].oam.paletteNum), PLTT_SIZE_4BPP);
@@ -4200,7 +4200,6 @@ static void Task_ExitCaughtMonPage(u8 taskId)
     if (!gPaletteFade.active)
     {
         enum Species species;
-        u32 otId;
         u32 personality;
         u8 paletteNum;
         const u16 *paletteData;
@@ -4216,10 +4215,9 @@ static void Task_ExitCaughtMonPage(u8 taskId)
             Free(buffer);
 
         species = gTasks[taskId].tSpecies;
-        otId = ((u16)gTasks[taskId].tOtIdHi << 16) | (u16)gTasks[taskId].tOtIdLo;
         personality = ((u16)gTasks[taskId].tPersonalityHi << 16) | (u16)gTasks[taskId].tPersonalityLo;
         paletteNum = gSprites[gTasks[taskId].tMonSpriteId].oam.paletteNum;
-        paletteData = GetMonSpritePalFromSpeciesAndPersonality(species, otId, personality);
+        paletteData = GetMonSpritePalFromSpecies(species, FALSE, IsPersonalityFemale(species, personality));
         LoadPalette(paletteData, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
 
         if (sPokedexView)
@@ -4529,7 +4527,13 @@ static u32 GetPokedexMonPersonality(enum Species species)
 static u16 CreateMonSpriteFromNationalDexNumberHGSS(u16 nationalNum, s16 x, s16 y, u16 paletteSlot)
 {
     enum Species species = NationalPokedexNumToSpeciesHGSS(nationalNum);
-    return CreateMonPicSprite(species, FALSE, GetPokedexMonPersonality(species), TRUE, x, y, paletteSlot, TAG_NONE);
+    u32 personality = GetPokedexMonPersonality(species);
+    u16 spriteId = CreateMonPicSprite(species, FALSE, personality, TRUE, x, y, paletteSlot, TAG_NONE);
+
+    LoadPalette(GetMonSpritePalFromSpecies(species, FALSE, IsPersonalityFemale(species, personality)),
+                OBJ_PLTT_ID(paletteSlot),
+                PLTT_SIZE_4BPP);
+    return spriteId;
 }
 
 static u16 GetPokemonScaleFromNationalDexNumber(u16 nationalNum)
@@ -5394,7 +5398,7 @@ static void PrintStatsScreen_Left(u8 taskId)
     u8 total_x = 93;
     u8 strEV[25];
     u8 strBase[14];
-    u8 EVs[6] = {sPokedexView->sPokemonStats.evYield_HP, sPokedexView->sPokemonStats.evYield_Speed, sPokedexView->sPokemonStats.evYield_Attack, sPokedexView->sPokemonStats.evYield_SpAttack, sPokedexView->sPokemonStats.evYield_Defense, sPokedexView->sPokemonStats.evYield_SpDefense};
+    u8 EVs[6] = {sPokedexView->sPokemonStats.evYield_HP*2, sPokedexView->sPokemonStats.evYield_Speed*2, sPokedexView->sPokemonStats.evYield_Attack*2, sPokedexView->sPokemonStats.evYield_SpAttack*2, sPokedexView->sPokemonStats.evYield_Defense*2, sPokedexView->sPokemonStats.evYield_SpDefense*2};
     u8 differentEVs = 0;
 
     //Base stats
@@ -6764,11 +6768,15 @@ static void PrintEvolutionTargetSpeciesAndMethod(u8 taskId, enum Species species
                 case IF_PID_MODULO_100_GT:
                 case IF_PID_MODULO_100_EQ:
                 case IF_PID_MODULO_100_LT:
+                case IF_PID_OUTSIDE_CODE_MODULO_100_GT:
+                case IF_PID_OUTSIDE_CODE_MODULO_100_EQ:
                     arg = evolutions[i].params[j].arg1;
-                        if (condition == IF_PID_MODULO_100_GT
+                        if ((condition == IF_PID_MODULO_100_GT
+                          || condition == IF_PID_OUTSIDE_CODE_MODULO_100_GT)
                             && arg < 100 && arg >= 0)
                             arg = 99 - arg;
-                        else if (condition == IF_PID_MODULO_100_EQ
+                        else if ((condition == IF_PID_MODULO_100_EQ
+                               || condition == IF_PID_OUTSIDE_CODE_MODULO_100_EQ)
                                  && arg < 100 && arg >= 0)
                             arg = 1;
                     ConvertIntToDecimalStringN(gStringVar2, arg, STR_CONV_MODE_LEFT_ALIGN, 3);

@@ -13,7 +13,7 @@ SINGLE_BATTLE_TEST("pranks Callous has a 1/8 chance to inflict Frostbite when at
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_TACKLE); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
-        u32 nature = NATURE_CALLOUS;
+        u32 nature = NATURE_OLD_CALLOUS;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_TACKLE); }
@@ -29,7 +29,7 @@ SINGLE_BATTLE_TEST("pranks Callous is immune to Frostbite")
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_TACKLE); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
-        u32 nature = NATURE_CALLOUS;
+        u32 nature = NATURE_OLD_CALLOUS;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
         SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {

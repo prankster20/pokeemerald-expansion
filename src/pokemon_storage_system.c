@@ -7037,7 +7037,11 @@ static void SetDisplayMonData(void *pokemon, u8 mode)
             sStorage->displayMonMarkings = GetBoxMonData(boxMon, MON_DATA_MARKINGS);
             sStorage->displayMonPersonality = GetBoxMonData(boxMon, MON_DATA_PERSONALITY);
             sStorage->displayMonIsEgg = GetBoxMonData(boxMon, MON_DATA_IS_EGG);
-            sStorage->displayMonPalette = GetMonSpritePalFromSpeciesAndPersonalityIsEgg(sStorage->displayMonSpecies, isShiny, sStorage->displayMonPersonality, sStorage->displayMonIsEgg);
+            sStorage->displayMonPalette = GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(sStorage->displayMonSpecies,
+                                                                                              isShiny,
+                                                                                              sStorage->displayMonPersonality,
+                                                                                              GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE),
+                                                                                              sStorage->displayMonIsEgg);
             gender = GetGenderFromSpeciesAndPersonality(sStorage->displayMonSpecies, sStorage->displayMonPersonality);
             sStorage->displayMonItemId = GetBoxMonData(boxMon, MON_DATA_HELD_ITEM);
         }
@@ -10099,7 +10103,11 @@ void UpdateSpeciesSpritePSS(struct BoxPokemon *boxMon)
 
     // Update front sprite
     sStorage->displayMonSpecies = species;
-    sStorage->displayMonPalette = GetMonSpritePalFromSpeciesAndPersonalityIsEgg(species, isShiny, pid, isEgg);
+    sStorage->displayMonPalette = GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(species,
+                                                                                      isShiny,
+                                                                                      pid,
+                                                                                      GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE),
+                                                                                      isEgg);
     sStorage->displayMonIsEgg = isEgg;
     if (!sJustOpenedBag)
     {

@@ -51,7 +51,7 @@ TEST("pranks Fastidious cleans every non-Egg party member after battle")
 
 TEST("pranks Energetic makes Eggs lose two cycles per hatch step")
 {
-    CreateTestNatureMon(&gParties[B_TRAINER_PLAYER][0], SPECIES_WOBBUFFET, 50, NATURE_ENERGETIC);
+    CreateTestNatureMon(&gParties[B_TRAINER_PLAYER][0], SPECIES_WOBBUFFET, 50, NATURE_OLD_ENERGETIC);
     EXPECT_EQ(GetEggCyclesToSubtract(), 2);
 
     SetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_HARDY});

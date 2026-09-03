@@ -9,7 +9,7 @@ ASSUMPTIONS
     ASSUME(GetSpeciesType(SPECIES_SQUIRTLE, 1) == TYPE_WATER);
 }
 
-SINGLE_BATTLE_TEST("pranks Zealous makes a primary-type weakness three-times effective", s16 damage)
+SINGLE_BATTLE_TEST("pranks Zealous makes a primary-type weakness 2.4-times effective", s16 damage)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
@@ -23,11 +23,11 @@ SINGLE_BATTLE_TEST("pranks Zealous makes a primary-type weakness three-times eff
     } SCENE {
         HP_BAR(opponent, captureDamage: &results[i].damage);
     } FINALLY {
-        EXPECT_MUL_EQ(results[0].damage, Q_4_12(1.5), results[1].damage);
+        EXPECT_MUL_EQ(results[0].damage, Q_4_12(1.2), results[1].damage);
     }
 }
 
-SINGLE_BATTLE_TEST("pranks Zealous makes a primary-type resistance one-third effective", s16 damage)
+SINGLE_BATTLE_TEST("pranks Zealous makes a primary-type resistance 0.4-times effective", s16 damage)
 {
     u32 nature;
     PARAMETRIZE { nature = NATURE_DOCILE; }
@@ -41,6 +41,6 @@ SINGLE_BATTLE_TEST("pranks Zealous makes a primary-type resistance one-third eff
     } SCENE {
         HP_BAR(opponent, captureDamage: &results[i].damage);
     } FINALLY {
-        EXPECT_MUL_EQ(results[0].damage, Q_4_12(2.0 / 3.0), results[1].damage);
+        EXPECT_MUL_EQ(results[0].damage, Q_4_12(0.8), results[1].damage);
     }
 }

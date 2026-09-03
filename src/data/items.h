@@ -2981,6 +2981,100 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_CatchUpCandy,
     },
 
+    [ITEM_PERSONALITY_MINT] =
+    {
+        .name = ITEM_NAME("Persona Random Mint"),
+        .price = (I_PRICE >= GEN_9) ? 20000 : 20,
+        .description = COMPOUND_STRING(
+            "Can be smelled. It\n"
+            "changes a Pokémon's\n"
+            "hidden personality."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_PersonalityMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
+    [ITEM_PERSONALITY_SELECTOR_MINT] =
+    {
+        .name = ITEM_NAME("Persona Select Mint"),
+        .price = (I_PRICE >= GEN_9) ? 20000 : 20,
+        .description = COMPOUND_STRING(
+            "Can be smelled. It\n"
+            "sets a Pokémon's\n"
+            "5-digit personality code."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_PersonalitySelectorMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
+#define GROUP_MINT_ITEM(itemId, itemName, groupName, grade, priceGen9, priceOld, effectText) \
+    [itemId] =                                                                                 \
+    {                                                                                          \
+        .name = ITEM_NAME(itemName),                                                           \
+        .price = (I_PRICE >= GEN_9) ? priceGen9 : priceOld,                                    \
+        .description = COMPOUND_STRING("Can be smelled. It\n" effectText "\nfrom its Nature group."), \
+        .pocket = POCKET_ITEMS,                                                                \
+        .sortType = ITEM_TYPE_NATURE_MINT,                                                     \
+        .type = ITEM_USE_PARTY_MENU,                                                           \
+        .fieldUseFunc = ItemUseOutOfBattle_GroupMint,                                          \
+        .secondaryId = GROUP_MINT_SECONDARY_ID(MINT_GROUP_##groupName, MINT_GRADE_##grade),    \
+        .flingPower = 10,                                                                      \
+        .iconPic = gItemIcon_Mint,                                                             \
+        .iconPalette = gItemIconPalette_PurpleMint,                                            \
+    },
+
+    GROUP_MINT_ITEM(ITEM_BEGINNER_RANDOM_MINT, "Beginner Rand. Mint", BEGINNER, RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_BEGINNER_SPLIT_MINT,  "Beginner Split Mint",  BEGINNER, SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_BEGINNER_SELECT_MINT, "Beginner Sel. Mint", BEGINNER, SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_EXPERT_RANDOM_MINT,   "Expert Random Mint",   EXPERT,   RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_EXPERT_SPLIT_MINT,    "Expert Split Mint",    EXPERT,   SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_EXPERT_SELECT_MINT,   "Expert Select Mint",   EXPERT,   SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_RISKY_RANDOM_MINT,    "Risky Random Mint",    RISKY,    RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_RISKY_SPLIT_MINT,     "Risky Split Mint",     RISKY,    SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_RISKY_SELECT_MINT,    "Risky Select Mint",    RISKY,    SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_OG25_RANDOM_MINT,     "OG25 Random Mint",     OG25,     RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_OG25_SPLIT_MINT,      "OG25 Split Mint",      OG25,     SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_OG25_SELECT_MINT,     "OG25 Select Mint",     OG25,     SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_CUTE_RANDOM_MINT,     "Cute Random Mint",     CUTE,     RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_CUTE_SPLIT_MINT,      "Cute Split Mint",      CUTE,     SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_CUTE_SELECT_MINT,     "Cute Select Mint",     CUTE,     SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_MEAN_RANDOM_MINT,     "Mean Random Mint",     MEAN,     RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_MEAN_SPLIT_MINT,      "Mean Split Mint",      MEAN,     SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_MEAN_SELECT_MINT,     "Mean Select Mint",     MEAN,     SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_SILLY_RANDOM_MINT,    "Silly Random Mint",    SILLY,    RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_SILLY_SPLIT_MINT,     "Silly Split Mint",     SILLY,    SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_SILLY_SELECT_MINT,    "Silly Select Mint",    SILLY,    SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_ELITE_RANDOM_MINT,    "Elite Random Mint",    ELITE,    RANDOM, 10000, 10, "gives a random Nature")
+    GROUP_MINT_ITEM(ITEM_ELITE_SPLIT_MINT,     "Elite Split Mint",     ELITE,    SPLIT,  20000, 20, "offers two random Natures")
+    GROUP_MINT_ITEM(ITEM_ELITE_SELECT_MINT,    "Elite Select Mint",    ELITE,    SELECT, 30000, 30, "lets you select a Nature")
+
+#undef GROUP_MINT_ITEM
+
+    [ITEM_GENDER_SELECT_MINT] =
+    {
+        .name = ITEM_NAME("Gender Select Mint"),
+        .price = (I_PRICE >= GEN_9) ? 20000 : 20,
+        .description = COMPOUND_STRING(
+            "Can be smelled. It\n"
+            "lets you select a\n"
+            "Pokémon's gender."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_GenderSelectMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
     [ITEM_NUGGET] =
     {
         .name = ITEM_NAME("Nugget"),
@@ -13715,9 +13809,9 @@ const struct ItemInfo gItemsInfo[] =
         .name = ITEM_NAME("HM01"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Attacks the foe\n"
-            "with sharp blades\n"
-            "or claws."),
+            "Slashes the foe\n"
+            "with sharp claws, etc.\n"
+            "+2 crit ratio. Contact. Slice."),
         .importance = 1,
         .pocket = POCKET_TM_HM,
         .type = ITEM_USE_PARTY_MENU,

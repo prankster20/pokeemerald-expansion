@@ -58,6 +58,7 @@
 #include "pokerus.h"
 #include "random.h"
 #include "region_map.h"
+#include "reset_rtc_screen.h"
 #include "reshow_battle_screen.h"
 #include "scanline_effect.h"
 #include "script.h"
@@ -83,6 +84,7 @@
 #include "constants/party_menu.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#include "config/personality_colors.h"
 
 enum {
     MENU_SUMMARY,
@@ -2982,9 +2984,9 @@ static void SetPartyMonSelectionActions(struct Pokemon *mons, u8 slotId, u8 acti
 
 static u8 GetNaturePartyMenuAction(u32 nature)
 {
-    if (nature == NATURE_CHARITABLE)
+    if (nature == NATURE_OLD_CHARITABLE)
         return MENU_CARE_PACKAGE;
-    if (nature == NATURE_WAYFARING)
+    if (nature == NATURE_OLD_WAYFARING)
         return MENU_HEAD_HOME;
     return 0xFF;
 }
@@ -5559,6 +5561,383 @@ void ItemUseCB_RandomMint(u8 taskId, TaskFunc task)
     gTasks[taskId].func = Task_Mint;
 }
 
+static void StartMintTaskWithNature(u8 taskId, u32 nature)
+{
+    s16 *data = gTasks[taskId].data;
+
+    tState = 0;
+    tMonId = gPartyMenu.slotId;
+    tOldNature = GetMonData(&gParties[B_TRAINER_PLAYER][tMonId], MON_DATA_HIDDEN_NATURE);
+    tNewNature = nature;
+    SetWordTaskArg(taskId, tOldFunc, (uintptr_t)gTasks[taskId].func);
+    gTasks[taskId].func = Task_Mint;
+}
+
+static const u8 sText_PersonalityMintWorked[] =
+    _("{STR_VAR_1}'s personality code\nwas changed to {STR_VAR_2}!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_PersonalityMintRerolled[] =
+    _("{STR_VAR_1}'s personality value\nwas rerolled!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_PersonalityCodePrompt[] = _("Personality Code");
+static const u8 sText_PersonalityCodeHelp[] = _("A: Set   B: Cancel");
+static const u8 sText_PersonalityQuirky[] = _("Quirky: ");
+static const u8 sText_PersonalityVibrant[] = _("Vibrant: Hue ");
+static const u8 sText_PersonalityBright[] = _("  Bright ");
+static const u8 sText_PersonalityPompous[] = _("Pompous:");
+static const u8 sText_PersonalityDevoted[] = _("Devoted bond code: ");
+static const u8 sText_Slash[] = _("/");
+static const u8 sText_Plus[] = _("+");
+static const u8 sText_PersonalityCodeFailed[] =
+    _("That code cannot preserve this\nPokémon's Nature and gender.{PAUSE_UNTIL_PRESS}");
+
+static bool32 HasSameWurmpleEvolutionPath(u32 oldPersonality, u32 newPersonality)
+{
+    return ((oldPersonality >> 16) % 10 > 4) == ((newPersonality >> 16) % 10 > 4);
+}
+
+static bool32 HasSameMausholdEvolutionPath(u32 oldPersonality, u32 newPersonality)
+{
+    return (((oldPersonality / PERSONALITY_CODE_MODULUS) % 100) == 0)
+        == (((newPersonality / PERSONALITY_CODE_MODULUS) % 100) == 0);
+}
+
+void ItemUseCB_PersonalityMint(u8 taskId, TaskFunc task)
+{
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
+    enum Species species = GetMonData(mon, MON_DATA_SPECIES);
+    u32 oldPersonality = GetMonData(mon, MON_DATA_PERSONALITY);
+    u32 oldNaturalNature = GetNatureFromPersonality(oldPersonality);
+    u32 gender = GetMonGender(mon);
+    u32 personality;
+
+    do
+    {
+        personality = Random32();
+    } while (personality == oldPersonality
+          || GetNatureFromPersonality(personality) != oldNaturalNature
+          || GetGenderFromSpeciesAndPersonality(species, personality) != gender
+          || (species >= SPECIES_UNOWN && species <= SPECIES_UNOWN_QUESTION
+           && GetUnownSpeciesId(personality) != GetUnownSpeciesId(oldPersonality))
+          || (species == SPECIES_WURMPLE && !HasSameWurmpleEvolutionPath(oldPersonality, personality))
+          || ((species == SPECIES_TANDEMAUS || species == SPECIES_MAUSHOLD_THREE || species == SPECIES_MAUSHOLD_FOUR)
+           && !HasSameMausholdEvolutionPath(oldPersonality, personality)));
+
+    UpdateMonPersonality(&mon->box, personality);
+    CalculateMonStats(mon);
+    RemoveBagItem(gSpecialVar_ItemId, 1);
+    gPartyMenuUseExitCallback = TRUE;
+    PlaySE(SE_USE_ITEM);
+    GetMonNickname(mon, gStringVar1);
+    StringExpandPlaceholders(gStringVar4, sText_PersonalityMintRerolled);
+    DisplayPartyMenuMessage(gStringVar4, TRUE);
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+}
+
+#define tPersonalityCursor  data[5]
+#define tPersonalityWindow  data[6]
+#define tPersonalityMonId   data[7]
+#define tPersonalityOldFunc 8
+#define tPersonalityArrowUp data[10]
+#define tPersonalityArrowDown data[11]
+
+static void ClosePersonalityCodeWindow(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+
+    ClearStdWindowAndFrameToTransparent(tPersonalityWindow, FALSE);
+    ClearWindowTilemap(tPersonalityWindow);
+    RemoveWindow(tPersonalityWindow);
+    if (tPersonalityArrowUp != SPRITE_NONE)
+        DestroySpriteAndFreeResources(&gSprites[tPersonalityArrowUp]);
+    if (tPersonalityArrowDown != SPRITE_NONE)
+        DestroySpriteAndFreeResources(&gSprites[tPersonalityArrowDown]);
+    ScheduleBgCopyTilemapToVram(2);
+}
+
+static void DrawPersonalityCodeWindow(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+    u8 digitText[2];
+    u8 text[64];
+    u8 number[12];
+    u32 code = 0;
+    s32 hueShift;
+    s32 brightnessShift;
+    static const enum Stat sQuirkyStats[] = {STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED};
+
+    for (u32 i = 0; i < 5; i++)
+        code = code * 10 + data[i];
+
+    FillWindowPixelBuffer(tPersonalityWindow, PIXEL_FILL(1));
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_NORMAL, sText_PersonalityCodePrompt,
+                                GetStringCenterAlignXOffset(FONT_NORMAL, sText_PersonalityCodePrompt, 17 * 8), 3,
+                                TEXT_SKIP_DRAW, NULL);
+    for (u32 i = 0; i < 5; i++)
+    {
+        digitText[0] = CHAR_0 + data[i];
+        digitText[1] = EOS;
+        AddTextPrinterParameterized(tPersonalityWindow, FONT_NORMAL, digitText, 53 + i * 6, 22, TEXT_SKIP_DRAW, NULL);
+    }
+
+    StringCopy(text, sText_PersonalityQuirky);
+    for (u32 i = 0; i < ARRAY_COUNT(sQuirkyStats); i++)
+    {
+        ConvertIntToDecimalStringN(number, GetQuirkyStatBoostPercent(code, sQuirkyStats[i]), STR_CONV_MODE_LEFT_ALIGN, 2);
+        StringAppend(text, number);
+        if (i + 1 != ARRAY_COUNT(sQuirkyStats))
+            StringAppend(text, sText_Slash);
+    }
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 49, TEXT_SKIP_DRAW, NULL);
+
+    GetVibrantColorParameters(code, &hueShift, &brightnessShift);
+    StringCopy(text, sText_PersonalityVibrant);
+    ConvertIntToDecimalStringN(number, (hueShift * 360 + 768) / 1536, STR_CONV_MODE_LEFT_ALIGN, 3);
+    StringAppend(text, number);
+    StringAppend(text, sText_PersonalityBright);
+    if (brightnessShift >= 0)
+        StringAppend(text, sText_Plus);
+    ConvertIntToDecimalStringN(number, brightnessShift, STR_CONV_MODE_LEFT_ALIGN, 2);
+    StringAppend(text, number);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 61, TEXT_SKIP_DRAW, NULL);
+
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, sText_PersonalityPompous, 6, 73, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, GetPompousTitle(code), 14, 85, TEXT_SKIP_DRAW, NULL);
+
+    StringCopy(text, sText_PersonalityDevoted);
+    ConvertIntToDecimalStringN(number, code % 100, STR_CONV_MODE_LEADING_ZEROS, 2);
+    StringAppend(text, number);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 99, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, sText_PersonalityCodeHelp,
+                                GetStringCenterAlignXOffset(FONT_SMALL, sText_PersonalityCodeHelp, 17 * 8), 115,
+                                TEXT_SKIP_DRAW, NULL);
+    CopyWindowToVram(tPersonalityWindow, COPYWIN_GFX);
+}
+
+static u32 GetSelectedPersonalityCode(s16 *data)
+{
+    u32 code = 0;
+
+    for (u32 i = 0; i < 5; i++)
+        code = code * 10 + data[i];
+    return code;
+}
+
+static void Task_HandlePersonalityCodeInput(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+
+    if (JOY_NEW(DPAD_LEFT))
+    {
+        if (tPersonalityCursor != 0)
+        {
+            tPersonalityCursor--;
+            gSprites[tPersonalityArrowUp].x2 -= 6;
+            gSprites[tPersonalityArrowDown].x2 -= 6;
+            PlaySE(SE_SELECT);
+        }
+    }
+    else if (JOY_NEW(DPAD_RIGHT))
+    {
+        if (tPersonalityCursor != 4)
+        {
+            tPersonalityCursor++;
+            gSprites[tPersonalityArrowUp].x2 += 6;
+            gSprites[tPersonalityArrowDown].x2 += 6;
+            PlaySE(SE_SELECT);
+        }
+    }
+    else if (JOY_NEW(DPAD_UP | DPAD_DOWN))
+    {
+        s32 direction = JOY_NEW(DPAD_UP) ? 1 : -1;
+        s32 digit = tPersonalityCursor;
+
+        while (digit >= 0)
+        {
+            data[digit] += direction;
+            if (data[digit] > 9)
+                data[digit] = 0;
+            else if (data[digit] < 0)
+                data[digit] = 9;
+            else
+                break;
+            digit--;
+        }
+        PlaySE(SE_SELECT);
+        DrawPersonalityCodeWindow(taskId);
+    }
+    else if (JOY_NEW(B_BUTTON))
+    {
+        PlaySE(SE_SELECT);
+        ClosePersonalityCodeWindow(taskId);
+        gPartyMenuUseExitCallback = FALSE;
+        DisplayPartyMenuStdMessage(PARTY_MSG_USE_ON_WHICH_MON);
+        gTasks[taskId].func = (TaskFunc)GetWordTaskArg(taskId, tPersonalityOldFunc);
+    }
+    else if (JOY_NEW(A_BUTTON))
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][tPersonalityMonId];
+        u32 code = GetSelectedPersonalityCode(data);
+        u32 personality;
+
+        ClosePersonalityCodeWindow(taskId);
+        if (!FindPersonalityForCode(GetMonData(mon, MON_DATA_SPECIES), GetMonGender(mon),
+                                    GetNatureFromPersonality(GetMonData(mon, MON_DATA_PERSONALITY)),
+                                    code, GetMonData(mon, MON_DATA_PERSONALITY), &personality))
+        {
+            gPartyMenuUseExitCallback = FALSE;
+            PlaySE(SE_SELECT);
+            DisplayPartyMenuMessage(sText_PersonalityCodeFailed, TRUE);
+            ScheduleBgCopyTilemapToVram(2);
+            gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+            return;
+        }
+
+        UpdateMonPersonality(&mon->box, personality);
+        CalculateMonStats(mon);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+        gPartyMenuUseExitCallback = TRUE;
+        PlaySE(SE_USE_ITEM);
+        GetMonNickname(mon, gStringVar1);
+        ConvertIntToDecimalStringN(gStringVar2, code, STR_CONV_MODE_LEADING_ZEROS, 5);
+        StringExpandPlaceholders(gStringVar4, sText_PersonalityMintWorked);
+        DisplayPartyMenuMessage(gStringVar4, TRUE);
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+    }
+}
+
+void ItemUseCB_PersonalitySelectorMint(u8 taskId, TaskFunc task)
+{
+    s16 *data = gTasks[taskId].data;
+    u32 code = GetPersonalityCode(GetMonData(&gParties[B_TRAINER_PLAYER][gPartyMenu.slotId], MON_DATA_PERSONALITY));
+
+    for (s32 i = 4; i >= 0; i--)
+    {
+        data[i] = code % 10;
+        code /= 10;
+    }
+    tPersonalityCursor = 0;
+    tPersonalityMonId = gPartyMenu.slotId;
+    SetWordTaskArg(taskId, tPersonalityOldFunc, (uintptr_t)gTasks[taskId].func);
+    tPersonalityWindow = AddWindow(&sPersonalityCodeWindowTemplate);
+    DrawStdFrameWithCustomTileAndPalette(tPersonalityWindow, FALSE, 0x4F, 13);
+    LoadSpritePalette(&gSpritePalette_Arrow);
+    tPersonalityArrowUp = CreateSprite(&gSpriteTemplate_Arrow, 153, 26, 0);
+    tPersonalityArrowDown = CreateSprite(&gSpriteTemplate_Arrow, 153, 50, 0);
+    gSprites[tPersonalityArrowDown].animNum = 1;
+    DrawPersonalityCodeWindow(taskId);
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = Task_HandlePersonalityCodeInput;
+}
+
+#define tGenderMonId    data[0]
+#define tGenderWindowId data[1]
+#define tGenderOldFunc  2
+
+static const u8 sText_GenderMale[] = _("Male");
+static const u8 sText_GenderFemale[] = _("Female");
+static const u8 sText_Genderless[] = _("Genderless");
+static const u8 sText_GenderChanged[] = _("{STR_VAR_1}'s gender was\nchanged!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_GenderChangeFailed[] = _("That gender could not be set.\nNothing was changed.{PAUSE_UNTIL_PRESS}");
+
+static const u8 *const sGenderSelectNames[] =
+{
+    sText_GenderMale,
+    sText_GenderFemale,
+    sText_Genderless,
+};
+
+static const u8 sGenderSelectValues[] =
+{
+    MON_MALE,
+    MON_FEMALE,
+    MON_GENDERLESS,
+};
+
+static void CloseGenderSelectWindow(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+
+    ClearStdWindowAndFrameToTransparent(tGenderWindowId, FALSE);
+    ClearWindowTilemap(tGenderWindowId);
+    RemoveWindow(tGenderWindowId);
+    ScheduleBgCopyTilemapToVram(2);
+}
+
+static void Task_HandleGenderSelectInput(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+    s8 input = Menu_ProcessInputNoWrap();
+
+    if (input == MENU_NOTHING_CHOSEN)
+        return;
+    if (input == MENU_B_PRESSED)
+    {
+        PlaySE(SE_SELECT);
+        CloseGenderSelectWindow(taskId);
+        gPartyMenuUseExitCallback = FALSE;
+        DisplayPartyMenuStdMessage(PARTY_MSG_USE_ON_WHICH_MON);
+        gTasks[taskId].func = (TaskFunc)GetWordTaskArg(taskId, tGenderOldFunc);
+        return;
+    }
+
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][tGenderMonId];
+        u32 oldPersonality = GetMonData(mon, MON_DATA_PERSONALITY);
+        u32 personality;
+
+        CloseGenderSelectWindow(taskId);
+        if (!FindPersonalityForCode(GetMonData(mon, MON_DATA_SPECIES), sGenderSelectValues[input],
+                                    GetNatureFromPersonality(oldPersonality), GetPersonalityCode(oldPersonality),
+                                    oldPersonality, &personality))
+        {
+            PlaySE(SE_SELECT);
+            DisplayPartyMenuMessage(sText_GenderChangeFailed, TRUE);
+        }
+        else
+        {
+            UpdateMonPersonality(&mon->box, personality);
+            CalculateMonStats(mon);
+            RemoveBagItem(gSpecialVar_ItemId, 1);
+            PlaySE(SE_USE_ITEM);
+            GetMonNickname(mon, gStringVar1);
+            StringExpandPlaceholders(gStringVar4, sText_GenderChanged);
+            DisplayPartyMenuMessage(gStringVar4, TRUE);
+        }
+        gPartyMenuUseExitCallback = TRUE;
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+    }
+}
+
+void ItemUseCB_GenderSelectMint(u8 taskId, TaskFunc task)
+{
+    s16 *data = gTasks[taskId].data;
+
+    tGenderMonId = gPartyMenu.slotId;
+    SetWordTaskArg(taskId, tGenderOldFunc, (uintptr_t)gTasks[taskId].func);
+    tGenderWindowId = AddWindow(&sGenderSelectWindowTemplate);
+    DrawStdFrameWithCustomTileAndPalette(tGenderWindowId, FALSE, 0x4F, 13);
+    FillWindowPixelBuffer(tGenderWindowId, PIXEL_FILL(1));
+    for (u32 i = 0; i < ARRAY_COUNT(sGenderSelectNames); i++)
+        AddTextPrinterParameterized(tGenderWindowId, FONT_NORMAL, sGenderSelectNames[i], 8, i * 16 + 1, TEXT_SKIP_DRAW, NULL);
+    InitMenuInUpperLeftCornerNormal(tGenderWindowId, ARRAY_COUNT(sGenderSelectNames), 0);
+    CopyWindowToVram(tGenderWindowId, COPYWIN_GFX);
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = Task_HandleGenderSelectInput;
+}
+
+#undef tGenderMonId
+#undef tGenderWindowId
+#undef tGenderOldFunc
+
+#undef tPersonalityCursor
+#undef tPersonalityWindow
+#undef tPersonalityMonId
+#undef tPersonalityOldFunc
+#undef tPersonalityArrowUp
+#undef tPersonalityArrowDown
+
 #undef tState
 #undef tMonId
 #undef tOldNature
@@ -5573,6 +5952,101 @@ void ItemUseCB_RandomMint(u8 taskId, TaskFunc task)
 // shows the highlighted nature's description, right box is the scrollable
 // alphabetical list, bottom bar shows the prompt - reusing that screen's
 // real windows (RELEARNERWIN_*) rather than hand-rolled ones.
+
+struct NatureMintPool
+{
+    const u8 *natures;
+    u32 count;
+};
+
+static const u8 sBeginnerMintNatures[] =
+{
+    NATURE_AFFABLE, NATURE_AMBITIOUS, NATURE_ARROGANT, NATURE_BASHFUL, NATURE_CHILDISH,
+    NATURE_DIPLOMATIC, NATURE_DOCILE, NATURE_DREAMY, NATURE_ENERGETIC, NATURE_VIBRANT, NATURE_FLIGHTY,
+    NATURE_FLIRTY, NATURE_GREEDY, NATURE_HARDY, NATURE_INDOMITABLE, NATURE_LAZY,
+    NATURE_STALWART, NATURE_NOBLE, NATURE_OBSERVANT, NATURE_PRODIGIOUS, NATURE_PROUD,
+    NATURE_REBELLIOUS, NATURE_RESOLUTE, NATURE_RUGGED, NATURE_SERIOUS, NATURE_UNFORGIVING,
+    NATURE_SUPPORTIVE, NATURE_WAYFARING,
+};
+
+static const u8 sExpertMintNatures[] =
+{
+    NATURE_ABRASIVE, NATURE_AMBIENT, NATURE_APATHETIC, NATURE_BAD_TEMPERED, NATURE_CALCULATING,
+    NATURE_COMMUNAL, NATURE_COWARDLY, NATURE_DECEITFUL, NATURE_DELICATE, NATURE_DEVOTED,
+    NATURE_DREAMY, NATURE_ECLECTIC, NATURE_FINICKY, NATURE_UNDERHANDED, NATURE_NOSTALGIC,
+    NATURE_OLD_FASHIONED, NATURE_PERFECTIONIST, NATURE_PERSUASIVE, NATURE_POMPOUS,
+    NATURE_RELENTLESS, NATURE_INTROSPECTIVE, NATURE_SCHOLARLY, NATURE_TACTICAL, NATURE_TERRITORIAL,
+    NATURE_VIGILANT, NATURE_VORACIOUS, NATURE_WORLDLY, NATURE_YOUTHFUL, NATURE_ZEALOUS,
+};
+
+static const u8 sRiskyMintNatures[] =
+{
+    NATURE_ANXIOUS, NATURE_BAD_TEMPERED, NATURE_BITTER, NATURE_CANTANKEROUS, NATURE_CAPRICIOUS,
+    NATURE_CHILDISH, NATURE_COWARDLY, NATURE_DELICATE, NATURE_DEVOTED, NATURE_ECLECTIC,
+    NATURE_FINICKY, NATURE_FLIGHTY, NATURE_FORGIVING, NATURE_FRIVOLOUS, NATURE_FRUGAL,
+    NATURE_HEDONISTIC, NATURE_HUMBLE, NATURE_NOSTALGIC, NATURE_PERFECTIONIST, NATURE_POMPOUS,
+    NATURE_RELENTLESS, NATURE_SHORTSIGHTED, NATURE_SOFT_HEARTED, NATURE_STOIC, NATURE_VAIN,
+    NATURE_YOUTHFUL, NATURE_ZEALOUS,
+};
+
+// Docile deliberately appears six times. Random and Split preserve that
+// weighting; Select lists each distinct Nature only once.
+static const u8 sOg25MintNatures[] =
+{
+    NATURE_ADAMANT, NATURE_BASHFUL, NATURE_BOLD, NATURE_BRAVE, NATURE_CALM, NATURE_CAREFUL,
+    NATURE_DOCILE, NATURE_DOCILE, NATURE_DOCILE, NATURE_DOCILE, NATURE_DOCILE, NATURE_DOCILE,
+    NATURE_GENTLE, NATURE_HARDY, NATURE_HASTY, NATURE_IMPISH, NATURE_JOLLY, NATURE_LAX,
+    NATURE_LONELY, NATURE_MILD, NATURE_MODEST, NATURE_NAIVE, NATURE_NAUGHTY, NATURE_QUIET,
+    NATURE_QUIRKY, NATURE_RASH, NATURE_RELAXED, NATURE_SASSY, NATURE_SERIOUS, NATURE_TIMID,
+};
+
+static const u8 sCuteMintNatures[] =
+{
+    NATURE_AFFABLE, NATURE_AFFECTIONATE, NATURE_BASHFUL, NATURE_BENEVOLENT, NATURE_ADORABLE,
+    NATURE_CHILDISH, NATURE_COMMUNAL, NATURE_DEVOTED, NATURE_DIPLOMATIC, NATURE_DOCILE,
+    NATURE_DREAMY, NATURE_VIBRANT, NATURE_FLIRTY, NATURE_FORGIVING, NATURE_GENTLE,
+    NATURE_HUMBLE, NATURE_UNDERHANDED, NATURE_INDOMITABLE, NATURE_INNOCENT, NATURE_JOLLY,
+    NATURE_LOYAL, NATURE_NOBLE, NATURE_RESOLUTE, NATURE_SOFT_HEARTED, NATURE_SUPPORTIVE,
+    NATURE_YOUTHFUL,
+};
+
+static const u8 sMeanMintNatures[] =
+{
+    NATURE_ABRASIVE, NATURE_APATHETIC, NATURE_ARROGANT, NATURE_BAD_TEMPERED, NATURE_BITTER,
+    NATURE_CALLOUS, NATURE_CANTANKEROUS, NATURE_DECEITFUL, NATURE_FINICKY, NATURE_GREEDY,
+    NATURE_NAUGHTY, NATURE_POMPOUS, NATURE_PROUD, NATURE_PUGNACIOUS, NATURE_REBELLIOUS,
+    NATURE_RELENTLESS, NATURE_SHORTSIGHTED, NATURE_TERRITORIAL, NATURE_VAIN, NATURE_ZEALOUS,
+};
+
+static const u8 sSillyMintNatures[] =
+{
+    NATURE_CAPRICIOUS, NATURE_CHILDISH, NATURE_DOCILE, NATURE_DREAMY, NATURE_ECCENTRIC,
+    NATURE_FLIRTY, NATURE_FRIVOLOUS, NATURE_GREEDY, NATURE_INNOCENT, NATURE_LAZY,
+    NATURE_OLD_FASHIONED, NATURE_POMPOUS, NATURE_QUIRKY, NATURE_SCROUNGER,
+    NATURE_SERIOUS, NATURE_VORACIOUS, NATURE_WAYFARING, NATURE_WORLDLY,
+};
+
+static const u8 sEliteMintNatures[] =
+{
+    NATURE_AMBIENT, NATURE_CALCULATING, NATURE_COMMUNAL, NATURE_DECEITFUL, NATURE_DEVOTED,
+    NATURE_DIPLOMATIC, NATURE_HARDY, NATURE_INDOMITABLE, NATURE_STALWART, NATURE_LOYAL,
+    NATURE_NOSTALGIC, NATURE_OLD_FASHIONED, NATURE_PERFECTIONIST, NATURE_PERSUASIVE,
+    NATURE_REBELLIOUS, NATURE_RELENTLESS, NATURE_RUGGED, NATURE_SCHOLARLY, NATURE_UNFORGIVING,
+    NATURE_TACTICAL, NATURE_TERRITORIAL, NATURE_VIGILANT, NATURE_VORACIOUS, NATURE_YOUTHFUL,
+    NATURE_ZEALOUS,
+};
+
+static const struct NatureMintPool sNatureMintPools[] =
+{
+    [MINT_GROUP_BEGINNER] = {sBeginnerMintNatures, ARRAY_COUNT(sBeginnerMintNatures)},
+    [MINT_GROUP_EXPERT]   = {sExpertMintNatures,   ARRAY_COUNT(sExpertMintNatures)},
+    [MINT_GROUP_RISKY]    = {sRiskyMintNatures,    ARRAY_COUNT(sRiskyMintNatures)},
+    [MINT_GROUP_OG25]     = {sOg25MintNatures,     ARRAY_COUNT(sOg25MintNatures)},
+    [MINT_GROUP_CUTE]     = {sCuteMintNatures,     ARRAY_COUNT(sCuteMintNatures)},
+    [MINT_GROUP_MEAN]     = {sMeanMintNatures,     ARRAY_COUNT(sMeanMintNatures)},
+    [MINT_GROUP_SILLY]    = {sSillyMintNatures,    ARRAY_COUNT(sSillyMintNatures)},
+    [MINT_GROUP_ELITE]    = {sEliteMintNatures,    ARRAY_COUNT(sEliteMintNatures)},
+};
 
 struct UniversalMintMenuData
 {
@@ -5622,6 +6096,47 @@ static u32 BuildSortedNatureList(struct ListMenuItem *items)
         items[j] = key;
     }
 
+    return count;
+}
+
+static u32 BuildSortedNatureListFromPool(struct ListMenuItem *items, const struct NatureMintPool *pool)
+{
+    u32 count = 0;
+
+    for (u32 i = 0; i < pool->count; i++)
+    {
+        u32 nature = pool->natures[i];
+        bool32 alreadyAdded = FALSE;
+
+        if (IsNatureExcludedFromRandomAcquisition(nature))
+            continue;
+        for (u32 j = 0; j < count; j++)
+        {
+            if (items[j].id == nature)
+            {
+                alreadyAdded = TRUE;
+                break;
+            }
+        }
+        if (!alreadyAdded)
+        {
+            items[count].name = gNaturesInfo[nature].name;
+            items[count].id = nature;
+            count++;
+        }
+    }
+
+    for (u32 i = 1; i < count; i++)
+    {
+        struct ListMenuItem key = items[i];
+        u32 j = i;
+        while (j > 0 && StringCompare(items[j - 1].name, key.name) > 0)
+        {
+            items[j] = items[j - 1];
+            j--;
+        }
+        items[j] = key;
+    }
     return count;
 }
 
@@ -6165,6 +6680,100 @@ void ItemUseCB_SplitMint(u8 taskId, TaskFunc task)
     StringAppend(gStringVar2, gNaturesInfo[displayedCurrentNature].name);
     StringAppend(gStringVar2, COMPOUND_STRING("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}"));
     StringExpandPlaceholders(sUniversalMintMenu->promptText, COMPOUND_STRING("Choose a Nature to replace\n{STR_VAR_1}'s {STR_VAR_2}."));
+
+    ResetTasks();
+    gMain.state = 0;
+    CreateTask(Task_UniversalMint_Init, 0);
+    SetMainCallback2(CB2_UniversalMintMain);
+}
+
+void ItemUseCB_GroupMint(u8 taskId, TaskFunc task)
+{
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
+    u32 currentNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    u32 displayedCurrentNature = GetMonData(mon, MON_DATA_MERCURIAL_NATURE)
+                               ? NATURE_CAPRICIOUS
+                               : currentNature;
+    u32 secondaryId = GetItemSecondaryId(gSpecialVar_ItemId);
+    u32 group = secondaryId / NUM_MINT_GRADES;
+    u32 grade = secondaryId % NUM_MINT_GRADES;
+    const struct NatureMintPool *pool;
+
+    if (group >= ARRAY_COUNT(sNatureMintPools))
+        return;
+    pool = &sNatureMintPools[group];
+
+    if (grade == MINT_GRADE_RANDOM)
+    {
+        u32 chosenNature;
+        do
+        {
+            chosenNature = pool->natures[RandomUniform(RNG_MINT, 0, pool->count - 1)];
+        } while (chosenNature == currentNature
+              || chosenNature == displayedCurrentNature
+              || IsNatureExcludedFromRandomAcquisition(chosenNature));
+        StartMintTaskWithNature(taskId, chosenNature);
+        return;
+    }
+
+    sUniversalMintMenu = Alloc(sizeof(*sUniversalMintMenu));
+    sUniversalMintMenu->partyMonId = gPartyMenu.slotId;
+    sUniversalMintMenu->isSplitMint = (grade == MINT_GRADE_SPLIT);
+    sUniversalMintMenu->selectedCurrentNature = FALSE;
+    sUniversalMintMenu->currentNature = currentNature;
+    sUniversalMintMenu->displayedCurrentNature = displayedCurrentNature;
+
+    if (grade == MINT_GRADE_SPLIT)
+    {
+        u32 firstNature;
+        u32 secondNature;
+
+        do
+        {
+            firstNature = pool->natures[RandomUniform(RNG_MINT, 0, pool->count - 1)];
+        } while (firstNature == currentNature
+              || firstNature == displayedCurrentNature
+              || IsNatureExcludedFromRandomAcquisition(firstNature));
+        do
+        {
+            secondNature = pool->natures[RandomUniform(RNG_MINT, 0, pool->count - 1)];
+        } while (secondNature == currentNature
+              || secondNature == displayedCurrentNature
+              || secondNature == firstNature
+              || IsNatureExcludedFromRandomAcquisition(secondNature));
+
+        sUniversalMintMenu->totalItems = 3;
+        sUniversalMintMenu->items[0].name = gNaturesInfo[firstNature].name;
+        sUniversalMintMenu->items[0].id = firstNature;
+        sUniversalMintMenu->items[1].name = gNaturesInfo[secondNature].name;
+        sUniversalMintMenu->items[1].id = secondNature;
+        StringCopy(sUniversalMintMenu->currentNatureLabel, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+        StringAppend(sUniversalMintMenu->currentNatureLabel, gNaturesInfo[displayedCurrentNature].name);
+        sUniversalMintMenu->items[2].name = sUniversalMintMenu->currentNatureLabel;
+        sUniversalMintMenu->items[2].id = MINT_CURRENT_NATURE_ID;
+    }
+    else
+    {
+        sUniversalMintMenu->totalItems = BuildSortedNatureListFromPool(sUniversalMintMenu->items, pool);
+        for (u32 i = 0; i < sUniversalMintMenu->totalItems; i++)
+        {
+            if (sUniversalMintMenu->items[i].id == displayedCurrentNature)
+            {
+                StringCopy(sUniversalMintMenu->currentNatureLabel, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+                StringAppend(sUniversalMintMenu->currentNatureLabel, gNaturesInfo[displayedCurrentNature].name);
+                sUniversalMintMenu->items[i].name = sUniversalMintMenu->currentNatureLabel;
+                sUniversalMintMenu->items[i].id = MINT_CURRENT_NATURE_ID;
+                break;
+            }
+        }
+    }
+
+    GetMonNickname(mon, gStringVar1);
+    StringCopy(gStringVar2, COMPOUND_STRING("{COLOR BLUE}{SHADOW LIGHT_BLUE}"));
+    StringAppend(gStringVar2, gNaturesInfo[displayedCurrentNature].name);
+    StringAppend(gStringVar2, COMPOUND_STRING("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}"));
+    StringExpandPlaceholders(sUniversalMintMenu->promptText,
+                             COMPOUND_STRING("Choose a Nature to replace\n{STR_VAR_1}'s {STR_VAR_2}."));
 
     ResetTasks();
     gMain.state = 0;

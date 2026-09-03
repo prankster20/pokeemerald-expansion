@@ -577,6 +577,7 @@ EWRAM_DATA struct BagMenu *gBagMenu = 0;
 EWRAM_DATA struct BagPosition gBagPosition = {0};
 static EWRAM_DATA struct ListBuffer1 *sListBuffer1 = 0;
 static EWRAM_DATA struct ListBuffer2 *sListBuffer2 = 0;
+static EWRAM_DATA u8 sWrappedItemDescription[512] = {0};
 EWRAM_DATA u16 gSpecialVar_ItemId = 0;
 static EWRAM_DATA struct TempWallyBag *sTempWallyBag = 0;
 
@@ -1035,8 +1036,13 @@ static void PrintItemDescription(int itemIndex)
         StringExpandPlaceholders(gStringVar4, gText_ReturnToVar1);
         str = gStringVar4;
     }
+    FormatTextByWidth(sWrappedItemDescription,
+                      WindowWidthPx(WIN_DESCRIPTION) - 10,
+                      FONT_SMALL,
+                      str,
+                      0);
     FillWindowPixelBuffer(WIN_DESCRIPTION, PIXEL_FILL(0));
-    BagMenu_Print(WIN_DESCRIPTION, FONT_SMALL, str, 3, 0, 0, 0, 0, COLORID_NORMAL);
+    BagMenu_Print(WIN_DESCRIPTION, FONT_SMALL, sWrappedItemDescription, 3, 0, 0, 0, 0, COLORID_NORMAL);
 }
 
 static void BagMenu_PrintCursor(u8 listTaskId, u8 colorIndex)

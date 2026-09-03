@@ -1396,8 +1396,8 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
 
     [ABILITY_PARENTAL_BOND] =
     {
-        .name = _("Parental Bond"),
-        .description = COMPOUND_STRING("Moves hit twice."),
+        .name = _("Tandem Bond"),
+        .description = COMPOUND_STRING("Single-target single-strike moves hit twice, with the second hit at 25% power."),
         .aiRating = 10,
     },
 

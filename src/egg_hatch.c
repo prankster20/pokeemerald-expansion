@@ -966,7 +966,7 @@ u8 GetEggCyclesToSubtract(void)
             if (ability == ABILITY_MAGMA_ARMOR
              || ability == ABILITY_FLAME_BODY
              || ability == ABILITY_STEAM_ENGINE
-             || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_ENERGETIC)
+             || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_OLD_ENERGETIC)
                 return 2;
         }
     }

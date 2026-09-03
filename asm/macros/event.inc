@@ -2146,7 +2146,9 @@
 	.macro giveitem item:req, amount=1
 	setorcopyvar VAR_0x8000, \item
 	setorcopyvar VAR_0x8001, \amount
+	setvar VAR_UNUSED_0x8014, 0xAD01 @ Marks an NPC/scripted gift for Adorable.
 	callstd STD_OBTAIN_ITEM
+	setvar VAR_UNUSED_0x8014, 0
 	.endm
 
 	@ For picking up items in the overworld. Similar to giveitem, but with different language and

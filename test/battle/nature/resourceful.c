@@ -6,7 +6,7 @@ SINGLE_BATTLE_TEST("pranks Resourceful makes Leftovers twenty-five percent more 
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_LEFTOVERS); MaxHP(160); HP(1); }
         OPPONENT(SPECIES_WOBBUFFET);
-        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_RESOURCEFUL});
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_RESOURCEFUL});
     } WHEN {
         TURN { }
     } SCENE {
@@ -22,7 +22,7 @@ SINGLE_BATTLE_TEST("pranks Resourceful makes healing Berries twenty-five percent
         ASSUME(gItemsInfo[ITEM_ORAN_BERRY].holdEffect == HOLD_EFFECT_RESTORE_HP);
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_ORAN_BERRY); MaxHP(100); HP(1); }
         OPPONENT(SPECIES_WOBBUFFET);
-        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_RESOURCEFUL});
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_RESOURCEFUL});
     } WHEN {
         TURN { }
     } SCENE {
@@ -39,7 +39,7 @@ SINGLE_BATTLE_TEST("pranks Resourceful makes Shell Bell twenty-five percent more
         ASSUME(GetMoveFixedHPDamage(MOVE_DRAGON_RAGE) == 40);
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_SHELL_BELL); MaxHP(100); HP(1); }
         OPPONENT(SPECIES_WOBBUFFET) { MaxHP(100); HP(100); }
-        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_RESOURCEFUL});
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &(u32){NATURE_OLD_RESOURCEFUL});
     } WHEN {
         TURN { MOVE(player, MOVE_DRAGON_RAGE); }
     } SCENE {

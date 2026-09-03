@@ -11,7 +11,7 @@ SINGLE_BATTLE_TEST("pranks Level-Headed prevents Confusion")
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
-        u32 nature = NATURE_LEVEL_HEADED;
+        u32 nature = NATURE_STALWART;
         SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_CONFUSE_RAY); }
@@ -28,7 +28,7 @@ SINGLE_BATTLE_TEST("pranks Level-Headed prevents flinching")
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_SCRATCH); }
-        u32 nature = NATURE_LEVEL_HEADED;
+        u32 nature = NATURE_STALWART;
         SetMonData(&OPPONENT_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_FAKE_OUT); MOVE(opponent, MOVE_SCRATCH); }
@@ -47,7 +47,7 @@ DOUBLE_BATTLE_TEST("pranks Level-Headed ignores Follow Me redirection")
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WOBBUFFET);
-        u32 nature = NATURE_LEVEL_HEADED;
+        u32 nature = NATURE_STALWART;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN {
@@ -71,7 +71,7 @@ DOUBLE_BATTLE_TEST("pranks Level-Headed ignores ability redirection")
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_RAICHU) { Ability(ABILITY_LIGHTNING_ROD); }
         OPPONENT(SPECIES_WOBBUFFET);
-        u32 nature = NATURE_LEVEL_HEADED;
+        u32 nature = NATURE_STALWART;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(playerLeft, MOVE_SPARK, target: opponentRight); }

@@ -323,7 +323,8 @@ static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler)
 {
     u32 nature;
 
-    if (!gSaveBlock2Ptr->optionsAnnounceNatures)
+    if (!gSaveBlock2Ptr->optionsAnnounceNatures
+     && !(gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE))
         return FALSE;
     if (!gBattleStruct->battlerState[battler].switchIn)
         return FALSE;
@@ -345,7 +346,7 @@ static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler)
 // PassiveDataHpUpdate. Rugged remains fully immune to entry hazards here.
 static inline s32 ApplyHazardDamageNatureMultiplier(enum BattlerId battler, s32 damage)
 {
-    if (HasNature(battler, NATURE_RUGGED))
+    if (HasNature(battler, NATURE_OLD_RUGGED))
         return 0;
     return damage;
 }
@@ -419,7 +420,7 @@ static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability,
          // --- Custom Archetype nature: Rugged ---
          // (checked here, not via the damage multiplier below, since
          // SetPassiveDamageAmount clamps a 0 value up to 1)
-         && !HasNature(battler, NATURE_RUGGED))
+         && !HasNature(battler, NATURE_OLD_RUGGED))
         {
             s32 spikesDmg = GetNonDynamaxMaxHP(battler) / ((5 - gSideTimers[side].spikesAmount) * 2);
             SetPassiveDamageAmount(battler, ApplyHazardDamageNatureMultiplier(battler, spikesDmg));

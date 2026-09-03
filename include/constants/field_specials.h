@@ -1,6 +1,10 @@
 #ifndef GUARD_CONSTANTS_FIELD_SPECIALS_H
 #define GUARD_CONSTANTS_FIELD_SPECIALS_H
 
+// Encounter sign data IDs (src/encounter_sign.c)
+#define ENCOUNTER_SIGN_ROUTE_101 0
+#define ENCOUNTER_SIGN_COUNT     1
+
 // PC Locations
 enum PCLocation
 {

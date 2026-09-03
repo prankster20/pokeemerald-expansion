@@ -415,7 +415,9 @@ static void OpponentHandleDrawTrainerPic(enum BattlerId battler)
 
 void OpponentHandleTrainerSlide(enum BattlerId battler)
 {
-    enum TrainerPicID trainerPicId = OpponentGetTrainerPicId(battler);
+    enum TrainerPicID trainerPicId = (gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE)
+                                   ? TRAINER_PIC_PROF_BIRCH
+                                   : OpponentGetTrainerPicId(battler);
     BtlController_HandleTrainerSlide(battler, trainerPicId);
 }
 

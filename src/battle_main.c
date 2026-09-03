@@ -1816,21 +1816,30 @@ static u32 GeneratePartyHash(const struct Trainer *trainer, u32 i)
 
 void ModifyPersonalityForNature(u32 *personality, u32 newNature)
 {
-    // Nature occupies bits 8-14 of the personality. Preserve the low byte so
-    // forcing a Nature does not unexpectedly alter gender or ability slot.
+    // Nature occupies bits 8-14 of the personality. Preserve the low byte and
+    // other personality-derived properties; an explicit trainer gender is
+    // reapplied separately after this modification.
     *personality &= ~(0x7F << 8);
     *personality |= newNature << 8;
 }
 
 u32 GeneratePersonalityForGender(u32 gender, enum Species species)
 {
-    const struct SpeciesInfo *speciesInfo = &gSpeciesInfo[species];
-    if (gender == MON_GENDERLESS)
-        return 0;
-    else if (gender == MON_MALE)
-        return ((255 - speciesInfo->genderRatio) / 2) + speciesInfo->genderRatio;
-    else
-        return speciesInfo->genderRatio / 2;
+    u32 personality;
+
+    do
+        personality = Random32();
+    while (GetGenderFromSpeciesAndPersonality(species, personality) != gender);
+    return personality;
+}
+
+void ModifyPersonalityForGender(u32 *personality, u32 gender, enum Species species)
+{
+    u32 adjusted;
+
+    if (FindPersonalityForCode(species, gender, GetNatureFromPersonality(*personality),
+                               GetPersonalityCode(*personality), UINT32_MAX, &adjusted))
+        *personality = adjusted;
 }
 
 void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct TrainerMon *partyEntry)
@@ -1901,12 +1910,18 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
 
             personalityValue += personalityHash << 8;
             if (partyData[monIndex].gender == TRAINER_MON_MALE)
-                personalityValue = (personalityValue & 0xFFFFFF00) | GeneratePersonalityForGender(MON_MALE, partyData[monIndex].species);
+                ModifyPersonalityForGender(&personalityValue, MON_MALE, partyData[monIndex].species);
             else if (partyData[monIndex].gender == TRAINER_MON_FEMALE)
-                personalityValue = (personalityValue & 0xFFFFFF00) | GeneratePersonalityForGender(MON_FEMALE, partyData[monIndex].species);
-            else if (partyData[monIndex].gender == TRAINER_MON_RANDOM_GENDER)
-                personalityValue = (personalityValue & 0xFFFFFF00) | GeneratePersonalityForGender(Random() & 1 ? MON_MALE : MON_FEMALE, partyData[monIndex].species);
+                ModifyPersonalityForGender(&personalityValue, MON_FEMALE, partyData[monIndex].species);
+            else if (partyData[monIndex].gender == TRAINER_MON_GENDERLESS)
+                ModifyPersonalityForGender(&personalityValue, MON_GENDERLESS, partyData[monIndex].species);
             ModifyPersonalityForNature(&personalityValue, partyData[monIndex].nature);
+            if (partyData[monIndex].gender == TRAINER_MON_MALE)
+                ModifyPersonalityForGender(&personalityValue, MON_MALE, partyData[monIndex].species);
+            else if (partyData[monIndex].gender == TRAINER_MON_FEMALE)
+                ModifyPersonalityForGender(&personalityValue, MON_FEMALE, partyData[monIndex].species);
+            else if (partyData[monIndex].gender == TRAINER_MON_GENDERLESS)
+                ModifyPersonalityForGender(&personalityValue, MON_GENDERLESS, partyData[monIndex].species);
             if (partyData[monIndex].isShiny)
             {
                 otId.method = OT_ID_PRESET;
@@ -1956,6 +1971,12 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
             }
             SetMonData(&party[i], MON_DATA_ABILITY_NUM, &abilityNum);
             SetMonData(&party[i], MON_DATA_FRIENDSHIP, &(partyData[monIndex].friendship));
+            {
+                u32 metLevel = partyData[monIndex].metLevel != 0
+                             ? partyData[monIndex].metLevel
+                             : partyData[monIndex].lvl;
+                SetMonData(&party[i], MON_DATA_MET_LEVEL, &metLevel);
+            }
             if (partyData[monIndex].ball < POKEBALL_COUNT)
             {
                 ball = partyData[monIndex].ball;
@@ -3809,7 +3830,12 @@ static void TryDoEventsBeforeFirstTurn(void)
         gBattleStruct->eventState.beforeFirstTurn++;
         break;
     case FIRST_TURN_EVENTS_TRAINER_SLIDE_A:
-        if (ShouldDoTrainerSlide(GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT), TRAINER_SLIDE_BEFORE_FIRST_TURN))
+        if (gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE)
+        {
+            gBattleStruct->trainerSlideMsg = gText_BirchSentretTrainerSlide;
+            BattleScriptExecute(BattleScript_TrainerASlideMsgEnd2);
+        }
+        else if (ShouldDoTrainerSlide(GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT), TRAINER_SLIDE_BEFORE_FIRST_TURN))
             BattleScriptExecute(BattleScript_TrainerASlideMsgEnd2);
         gBattleStruct->eventState.beforeFirstTurn++;
         break;
@@ -4739,8 +4765,13 @@ u32 GetBattlerTotalSpeedStat(enum BattlerId battler, enum Ability ability, enum 
     // --- Custom Archetype nature: Stoic ---
     if (gBattleMons[battler].status1 & STATUS1_PARALYSIS
      && ability != ABILITY_QUICK_FEET
-     && !HasNature(battler, NATURE_STOIC))
-        speed /= GetConfig(B_PARALYSIS_SPEED) >= GEN_7 ? 2 : 4;
+     && !HasNature(battler, NATURE_OLD_STOIC))
+    {
+        if (HasNature(battler, NATURE_STOIC))
+            speed = speed * 3 / 4;
+        else
+            speed /= GetConfig(B_PARALYSIS_SPEED) >= GEN_7 ? 2 : 4;
+    }
 
     if (gSideStatuses[GetBattlerSide(battler)] & SIDE_STATUS_SWAMP)
         speed /= 4;
@@ -5631,6 +5662,13 @@ static void HandleEndTurn_FinishBattle(void)
                                | BATTLE_TYPE_SAFARI
                                | BATTLE_TYPE_CATCH_TUTORIAL)))
             TryFastidiousCleanPartyStatusAfterBattle();
+
+        if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK
+                               | BATTLE_TYPE_RECORDED_LINK
+                               | BATTLE_TYPE_SAFARI
+                               | BATTLE_TYPE_CATCH_TUTORIAL))
+            && (gBattleOutcome == B_OUTCOME_WON || gBattleOutcome == B_OUTCOME_CAUGHT))
+            TryPugnaciousPartySparring();
 
         for (u32 i = 0; i < PARTY_SIZE; i++)
         {

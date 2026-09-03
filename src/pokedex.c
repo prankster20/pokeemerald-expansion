@@ -4025,7 +4025,9 @@ u8 DisplayCaughtMonDexPage(enum Species species, bool32 isShiny, u32 personality
 
 static void LoadDexMonPalette(u32 taskId, bool32 isShiny)
 {
-    const u16 *paletteData = GetMonSpritePalFromSpeciesAndPersonality(gTasks[taskId].tSpecies, isShiny, GetWordTaskArg(taskId, tPersonalityLo));
+    enum Species species = gTasks[taskId].tSpecies;
+    u32 personality = GetWordTaskArg(taskId, tPersonalityLo);
+    const u16 *paletteData = GetMonSpritePalFromSpecies(species, isShiny, IsPersonalityFemale(species, personality));
     u32 paletteNum = gSprites[gTasks[taskId].tMonSpriteId].oam.paletteNum;
     LoadPalette(paletteData, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
 }
@@ -4905,7 +4907,13 @@ static u32 GetPokedexMonPersonality(enum Species species)
 u16 CreateMonSpriteFromNationalDexNumber(enum NationalDexOrder nationalNum, s16 x, s16 y, u16 paletteSlot)
 {
     enum Species species = NationalPokedexNumToSpecies(nationalNum);
-    return CreateMonPicSprite(species, FALSE, GetPokedexMonPersonality(species), TRUE, x, y, paletteSlot, TAG_NONE);
+    u32 personality = GetPokedexMonPersonality(species);
+    u16 spriteId = CreateMonPicSprite(species, FALSE, personality, TRUE, x, y, paletteSlot, TAG_NONE);
+
+    LoadPalette(GetMonSpritePalFromSpecies(species, FALSE, IsPersonalityFemale(species, personality)),
+                OBJ_PLTT_ID(paletteSlot),
+                PLTT_SIZE_4BPP);
+    return spriteId;
 }
 
 static u16 GetPokemonScaleFromNationalDexNumber(u16 nationalNum)

@@ -150,8 +150,12 @@ void SetUpBattleVarsAndBirchZigzagoon(void)
     BattleAI_SetupItems();
     BattleAI_SetupFlags();
 
-    if (!IS_FRLG && gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE)
+    if (!IS_FRLG && gBattleTypeFlags & BATTLE_TYPE_FIRST_BATTLE) {
+        u32 nature = NATURE_PUGNACIOUS;
         CreateWildMon(SPECIES_SENTRET, 2);
+        SetMonData(&gParties[B_TRAINER_OPPONENT_A][0], MON_DATA_HIDDEN_NATURE, &nature);
+        CalculateMonStats(&gParties[B_TRAINER_OPPONENT_A][0]);
+    }
 }
 
 void InitBattleControllers(void)

@@ -67,10 +67,18 @@ void FillPartnerParty(u16 trainerId)
 
             personality = Random32();
             if (partyData[i].gender == TRAINER_MON_MALE)
-                personality = (personality & 0xFFFFFF00) | GeneratePersonalityForGender(MON_MALE, partyData[i].species);
+                ModifyPersonalityForGender(&personality, MON_MALE, partyData[i].species);
             else if (partyData[i].gender == TRAINER_MON_FEMALE)
-                personality = (personality & 0xFFFFFF00) | GeneratePersonalityForGender(MON_FEMALE, partyData[i].species);
+                ModifyPersonalityForGender(&personality, MON_FEMALE, partyData[i].species);
+            else if (partyData[i].gender == TRAINER_MON_GENDERLESS)
+                ModifyPersonalityForGender(&personality, MON_GENDERLESS, partyData[i].species);
             ModifyPersonalityForNature(&personality, partyData[i].nature);
+            if (partyData[i].gender == TRAINER_MON_MALE)
+                ModifyPersonalityForGender(&personality, MON_MALE, partyData[i].species);
+            else if (partyData[i].gender == TRAINER_MON_FEMALE)
+                ModifyPersonalityForGender(&personality, MON_FEMALE, partyData[i].species);
+            else if (partyData[i].gender == TRAINER_MON_GENDERLESS)
+                ModifyPersonalityForGender(&personality, MON_GENDERLESS, partyData[i].species);
             CreateMon(&gParties[B_TRAINER_PARTNER][i], partyData[i].species, partyData[i].lvl, personality, OTID_STRUCT_PRESET(otID));
             j = partyData[i].isShiny;
             SetMonData(&gParties[B_TRAINER_PARTNER][i], MON_DATA_IS_SHINY, &j);

@@ -523,6 +523,15 @@ struct BattlerState
     u32 bitterBoostCharge:1;
     u32 bitterBoostSpentThisMove:1;
     u32 moveHealingThisUpdate:1;
+    // --- Custom Archetype nature: Rebellious ---
+    // Its one move-choice defiance has been consumed for this battle.
+    u32 rebelliousDefianceSpent:1;
+    u32 rebelliousDefyingThisMove:1;
+    u32 bitterReflection:1;
+    // --- Custom Archetype nature: Unforgiving ---
+    // Armed after surviving a critical hit; consumed by the next attack.
+    u32 unforgivingCritReady:1;
+    u32 unforgivingCritSpentThisMove:1;
     // --- Custom Archetype nature: Indomitable ---
     // If lethal move damage would KO this battler before it acts, it hangs
     // on only long enough to complete its pending action, then faints.

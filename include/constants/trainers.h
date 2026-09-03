@@ -17,6 +17,25 @@
 #define TRAINER_LINK_OPPONENT               0xFF01
 #define TRAINER_UNION_ROOM                  0xFF02
 
+// Ambitious Nature badge progression for NPC trainers. Zero is deliberately
+// the default/inherit value so hand-written Trainer initializers follow the
+// player's progress unless told otherwise.
+enum TrainerBadgeCount
+{
+    TRAINER_BADGES_PLAYER,
+    TRAINER_BADGES_0,
+    TRAINER_BADGES_1,
+    TRAINER_BADGES_2,
+    TRAINER_BADGES_3,
+    TRAINER_BADGES_4,
+    TRAINER_BADGES_5,
+    TRAINER_BADGES_6,
+    TRAINER_BADGES_7,
+    TRAINER_BADGES_8,
+};
+
+#define TRAINER_BADGES_COUNT(count) (TRAINER_BADGES_0 + (count))
+
 enum __attribute__((packed)) TrainerPicID
 {
     TRAINER_PIC_NONE,
@@ -177,6 +196,7 @@ enum __attribute__((packed)) TrainerPicID
     TRAINER_PIC_CRUSH_GIRL_FRLG,
     TRAINER_PIC_POKEMON_BREEDER_FRLG,
     TRAINER_PIC_PAINTER_FRLG,
+    TRAINER_PIC_PROF_BIRCH,
     TRAINER_PIC_COUNT,
 };
 
@@ -547,5 +567,6 @@ enum TrainerClassID
 #define TRAINER_MON_MALE          1
 #define TRAINER_MON_FEMALE        2
 #define TRAINER_MON_RANDOM_GENDER 3
+#define TRAINER_MON_GENDERLESS    4
 
 #endif  // GUARD_TRAINERS_H

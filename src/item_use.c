@@ -979,6 +979,30 @@ void ItemUseOutOfBattle_SplitMint(u8 taskId)
     SetUpItemUseCallback(taskId);
 }
 
+void ItemUseOutOfBattle_GroupMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_GroupMint;
+    SetUpItemUseCallback(taskId);
+}
+
+void ItemUseOutOfBattle_PersonalityMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_PersonalityMint;
+    SetUpItemUseCallback(taskId);
+}
+
+void ItemUseOutOfBattle_PersonalitySelectorMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_PersonalitySelectorMint;
+    SetUpItemUseCallback(taskId);
+}
+
+void ItemUseOutOfBattle_GenderSelectMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_GenderSelectMint;
+    SetUpItemUseCallback(taskId);
+}
+
 void ItemUseOutOfBattle_ResetEVs(u8 taskId)
 {
     gItemUseCB = ItemUseCB_ResetEVs;

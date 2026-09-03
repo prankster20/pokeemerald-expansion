@@ -1698,7 +1698,6 @@ static s32 AI_CheckBadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef,
             ADJUST_SCORE(-10);
         if (HasDamagingMove(battlerDef) && !(gBattleMons[battlerAtk].volatiles.substitute
          || IsBattlerIncapacitated(battlerDef, abilityDef)
-         || gBattleMons[battlerDef].volatiles.infatuation
          || gBattleMons[battlerDef].volatiles.confusionTurns))
             ADJUST_SCORE(-10);
         if (HasMoveWithEffect(battlerAtk, EFFECT_SUBSTITUTE) && !gBattleMons[battlerAtk].volatiles.substitute)
@@ -1708,7 +1707,6 @@ static s32 AI_CheckBadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef,
         break;
     case EFFECT_REFLECT_DAMAGE:
         if (IsBattlerIncapacitated(battlerDef, aiData->abilities[battlerDef])
-        || gBattleMons[battlerDef].volatiles.infatuation
         || gBattleMons[battlerDef].volatiles.confusionTurns > 0)
             ADJUST_SCORE(-1);
         if ((incomingMove == MOVE_NONE || GetBattleMoveCategory(incomingMove) == DAMAGE_CATEGORY_STATUS
@@ -6444,7 +6442,6 @@ static s32 AI_PredictSwitch(enum BattlerId battlerAtk, enum BattlerId battlerDef
                 ADJUST_SCORE(10);
             if (HasDamagingMove(battlerDef) && !(gBattleMons[battlerAtk].volatiles.substitute
              || IsBattlerIncapacitated(battlerDef, aiData->abilities[battlerDef])
-             || gBattleMons[battlerDef].volatiles.infatuation
              || gBattleMons[battlerDef].volatiles.confusionTurns > 0))
                 ADJUST_SCORE(10);
         }

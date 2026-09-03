@@ -32,6 +32,7 @@
 #include "pokedex.h"
 #include "apprentice.h"
 #include "frontier_util.h"
+#include "constants/global.h"
 #include "pokedex.h"
 #include "save.h"
 #include "link_rfu.h"
@@ -111,8 +112,9 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsNatureTitles = OPTIONS_NATURE_TITLES_ON;
     gSaveBlock2Ptr->optionsShinyOdds = OPTIONS_SHINY_ODDS_4096;
     gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
-    gSaveBlock2Ptr->optionsLevelCaps = OPTIONS_LEVEL_CAPS_SOFT;
+    gSaveBlock2Ptr->optionsLevelCaps = OPTIONS_LEVEL_CAPS_OFF;
     gSaveBlock2Ptr->optionsEasierCatch = OPTIONS_EASIER_CATCH_1X;
+    gSaveBlock2Ptr->optionsPersonalityColors = OPTIONS_PERSONALITY_COLORS_ON;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
 }
 

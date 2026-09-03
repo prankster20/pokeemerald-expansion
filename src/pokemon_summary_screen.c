@@ -4639,7 +4639,11 @@ static u8 LoadMonGfxAndSprite(struct Pokemon *mon, s16 *state)
         (*state)++;
         return 0xFF;
     case 1:
-        LoadSpritePaletteWithTag(GetMonSpritePalFromSpeciesAndPersonalityIsEgg(summary->species, summary->isShiny, summary->pid, summary->isEgg), summary->species2);
+        // Force a reload: a matching species tag can already exist, in which
+        // case LoadSpritePaletteWithTag returns it without copying our newly
+        // transformed palette.
+        FreeSpritePaletteByTag(summary->species2);
+        LoadSpritePaletteWithTag(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(summary->species, summary->isShiny, summary->pid, summary->mintNature, summary->isEgg), summary->species2);
         SetMultiuseSpriteTemplateToPokemon(summary->species2, B_POSITION_OPPONENT_LEFT);
         (*state)++;
         return 0xFF;
@@ -4669,6 +4673,17 @@ static u8 CreateMonSprite(struct Pokemon *unused)
     gSprites[spriteId].callback = SpriteCB_Pokemon;
     gSprites[spriteId].oam.priority = 0;
 
+    // Force the transformed colors into the sprite's final allocated palette
+    // slot after creation; loading only by species tag can be defeated by the
+    // sprite palette cache.
+    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(summary->species,
+                                                                    summary->isShiny,
+                                                                    summary->pid,
+                                                                    summary->mintNature,
+                                                                    summary->isEgg),
+                OBJ_PLTT_ID(gSprites[spriteId].oam.paletteNum),
+                PLTT_SIZE_4BPP);
+
     if (!IsMonSpriteNotFlipped(summary->species2))
         gSprites[spriteId].hFlip = TRUE;
     else
@@ -4685,6 +4700,7 @@ static void SpriteCB_Pokemon(struct Sprite *sprite)
     {
         sprite->data[1] = IsMonSpriteNotFlipped(sprite->data[0]);
         PlayMonCry();
+
         PokemonSummaryDoMonAnimation(sprite, sprite->data[0], summary->isEgg, FALSE);
     }
 }

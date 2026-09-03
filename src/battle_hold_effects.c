@@ -537,8 +537,10 @@ static enum ItemEffect TryShellBell(enum BattlerId battlerAtk)
     {
         s32 healAmount = gBattleScripting.savedDmg / GetBattlerHoldEffectParam(battlerAtk);
 
-        if (HasNature(battlerAtk, NATURE_RESOURCEFUL))
+        if (HasNature(battlerAtk, NATURE_OLD_RESOURCEFUL))
             healAmount = healAmount * 125 / 100;
+        else if (HasNature(battlerAtk, NATURE_VORACIOUS))
+            healAmount = healAmount * 120 / 100;
 
         SetHealAmount(battlerAtk, healAmount);
         BattleScriptCall(BattleScript_ItemHealHP_Ret);
@@ -647,14 +649,14 @@ static enum ItemEffect TryLeftovers(enum BattlerId battler, enum HoldEffect hold
     {
         s32 healAmount = GetNonDynamaxMaxHP(battler) / max(1, GetBattlerHoldEffectParam(battler));
 
-        // --- Custom Archetype nature: Voracious ---
-        // Boosts Leftovers by 1.5x (not Black Sludge, which shares this function).
-        if (holdEffect == HOLD_EFFECT_LEFTOVERS && HasNature(battler, NATURE_VORACIOUS))
-            healAmount = healAmount * 3 / 2;
-
         if ((holdEffect == HOLD_EFFECT_LEFTOVERS || holdEffect == HOLD_EFFECT_BLACK_SLUDGE)
-         && HasNature(battler, NATURE_RESOURCEFUL))
-            healAmount = healAmount * 125 / 100;
+         && (HasNature(battler, NATURE_OLD_RESOURCEFUL) || HasNature(battler, NATURE_VORACIOUS)))
+        {
+            if (HasNature(battler, NATURE_OLD_RESOURCEFUL))
+                healAmount = healAmount * 125 / 100;
+            else
+                healAmount = healAmount * 120 / 100;
+        }
 
         SetHealAmount(battler, healAmount);
         RecordItemEffectBattle(battler, holdEffect);
@@ -859,8 +861,13 @@ static u32 ItemHealHp(enum BattlerId battler, enum Item itemId, enum HealAmount 
         if (ability == ABILITY_RIPEN && GetItemPocket(itemId) == POCKET_BERRIES)
             healAmount *= 2;
 
-        if (GetItemPocket(itemId) == POCKET_BERRIES && HasNature(battler, NATURE_RESOURCEFUL))
-            healAmount = healAmount * 125 / 100;
+        if (GetItemPocket(itemId) == POCKET_BERRIES)
+        {
+            if (HasNature(battler, NATURE_OLD_RESOURCEFUL))
+                healAmount = healAmount * 125 / 100;
+            else if (HasNature(battler, NATURE_VORACIOUS))
+                healAmount = healAmount * 120 / 100;
+        }
 
         SetHealAmount(battler, healAmount);
         if (GetItemPocket(itemId) == POCKET_BERRIES)

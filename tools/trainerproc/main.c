@@ -72,6 +72,9 @@ struct Pokemon
     int level;
     int level_line;
 
+    int met_level;
+    int met_level_line;
+
     struct String ball;
     int ball_line;
 
@@ -114,6 +117,10 @@ struct Trainer
     struct String items[MAX_TRAINER_ITEMS];
     int items_n;
     int items_line;
+
+    int badge_count;
+    bool badges_follow_player;
+    int badges_line;
 
     struct String class;
     int class_line;
@@ -1211,6 +1218,18 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             if (!token_human_identifiers(p, &value, trainer->items, &trainer->items_n, MAX_TRAINER_ITEMS))
                 any_error = !show_parse_error(p);
         }
+        else if (is_literal_token(&key, "Badges"))
+        {
+            if (trainer->badges_line)
+                any_error = !set_show_parse_error(p, key.location, "duplicate 'Badges'");
+            trainer->badges_line = value.location.line;
+            if (is_literal_token(&value, "Player") || is_literal_token(&value, "Inherit") || is_literal_token(&value, "Automatic"))
+                trainer->badges_follow_player = true;
+            else if (!token_int(p, &value, &trainer->badge_count))
+                any_error = !show_parse_error(p);
+            else if (trainer->badge_count < 0 || trainer->badge_count > 8)
+                any_error = !set_show_parse_error(p, value.location, "'Badges' must be Player or a number from 0 to 8");
+        }
         else if (is_literal_token(&key, "Class"))
         {
             if (trainer->class_line)
@@ -1339,7 +1358,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
         }
         else
         {
-            any_error = !set_show_parse_error(p, key.location, "expected one of 'Name', 'Class', 'Pic', 'Back Pic', 'Gender', 'Music', 'Items', 'Battle Type', 'Difficulty', 'Party Size', 'Multi Party', 'Pool Rules', 'Pool Pick Functions', 'Pool Prune' or 'AI'");
+            any_error = !set_show_parse_error(p, key.location, "expected one of 'Name', 'Class', 'Pic', 'Gender', 'Music', 'Items', 'Badges', 'Battle Type', 'Difficulty', 'Party Size', 'Multi Party', 'Pool Rules', 'Pool Pick Functions', 'Pool Prune' or 'AI'");
         }
     }
     if (!trainer->pic_line && !trainer->macro_line)
@@ -1458,6 +1477,16 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (!token_int(p, &value, &pokemon->level))
                     any_error = !show_parse_error(p);
             }
+            else if (is_literal_token(&key, "Met Level"))
+            {
+                if (pokemon->met_level_line)
+                    any_error = !set_show_parse_error(p, key.location, "duplicate 'Met Level'");
+                pokemon->met_level_line = value.location.line;
+                if (!token_int(p, &value, &pokemon->met_level))
+                    any_error = !show_parse_error(p);
+                else if (pokemon->met_level < 1 || pokemon->met_level > 100)
+                    any_error = !set_show_parse_error(p, value.location, "'Met Level' must be from 1 to 100");
+            }
             else if (is_literal_token(&key, "Ball"))
             {
                 if (pokemon->ball_line)
@@ -1521,7 +1550,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             }
             else
             {
-                any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Ability', 'Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
+                any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Ability', 'Level', 'Met Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
             }
         }
 
@@ -1878,6 +1907,15 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
             fprintf(f, " },\n");
         }
 
+        if (trainer->badges_line)
+        {
+            fprintf(f, "#line %d\n", trainer->badges_line);
+            if (trainer->badges_follow_player)
+                fprintf(f, "        .badgeCount = TRAINER_BADGES_PLAYER,\n");
+            else
+                fprintf(f, "        .badgeCount = TRAINER_BADGES_COUNT(%d),\n", trainer->badge_count);
+        }
+
         if (trainer->battle_type_line)
         {
             fprintf(f, "#line %d\n", trainer->battle_type_line);
@@ -2064,6 +2102,12 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
             {
                 fprintf(f, "#line %d\n", pokemon->level_line);
                 fprintf(f, "            .lvl = %d,\n", pokemon->level);
+            }
+
+            if (pokemon->met_level_line)
+            {
+                fprintf(f, "#line %d\n", pokemon->met_level_line);
+                fprintf(f, "            .metLevel = %d,\n", pokemon->met_level);
             }
 
             if (pokemon->ball_line)

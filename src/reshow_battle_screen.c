@@ -331,7 +331,6 @@ void CreateBattlerSprite(enum BattlerId battler)
             gSprites[gBattlerSpriteIds[battler]].callback = SpriteCallbackDummy;
             gSprites[gBattlerSpriteIds[battler]].data[0] = battler;
             gSprites[gBattlerSpriteIds[battler]].data[2] = species;
-
             StartSpriteAnim(&gSprites[gBattlerSpriteIds[battler]], 0);
         }
         else if (gBattleTypeFlags & BATTLE_TYPE_SAFARI && position == B_POSITION_PLAYER_LEFT)
@@ -371,7 +370,6 @@ void CreateBattlerSprite(enum BattlerId battler)
             gSprites[gBattlerSpriteIds[battler]].callback = SpriteCallbackDummy;
             gSprites[gBattlerSpriteIds[battler]].data[0] = battler;
             gSprites[gBattlerSpriteIds[battler]].data[2] = species;
-
             StartSpriteAnim(&gSprites[gBattlerSpriteIds[battler]], 0);
         }
 

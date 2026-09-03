@@ -66,6 +66,7 @@
 #include "constants/event_objects.h"
 #include "constants/map_types.h"
 #include "constants/party_menu.h"
+#include "constants/vars.h"
 
 typedef u16 (*SpecialFunc)(void);
 typedef void (*NativeFunc)(struct ScriptContext *ctx);
@@ -626,6 +627,20 @@ bool8 ScrCmd_additem(struct ScriptContext *ctx)
     u32 quantity = VarGet(ScriptReadHalfword(ctx));
 
     Script_RequestEffects(SCREFF_V1 | SCREFF_SAVE);
+
+    if (VarGet(VAR_UNUSED_0x8014) == 0xAD01
+     && GetItemPocket(itemId) != POCKET_KEY_ITEMS)
+    {
+        for (u32 i = 0; i < gPartiesCount[B_TRAINER_PLAYER]; i++)
+        {
+            if (GetNature(&gParties[B_TRAINER_PLAYER][i]) == NATURE_ADORABLE)
+            {
+                quantity++;
+                VarSet(VAR_0x8001, quantity);
+                break;
+            }
+        }
+    }
 
     gSpecialVar_Result = AddBagItem(itemId, quantity);
     return FALSE;

@@ -72,15 +72,15 @@ struct TrainerMon
     enum Item heldItem;
     enum Ability ability;
     u8 lvl;
+    u8 metLevel; // Defaults to lvl when omitted.
     enum PokeBall ball:8;
     u8 friendship;
     u8 nature:7; // Widened from 5 bits to fit the expanded 100-nature Archetype system (2^7=128 > 100; old 5-bit width maxed at 31 and would've truncated any custom nature).
-    bool8 gender:2;
+    bool8 gender:3;
     bool8 isShiny:1;
     enum Type teraType:5;
     bool8 gigantamaxFactor:1;
     u8 shouldUseDynamax:1;
-    u8 padding1:1;
     u8 dynamaxLevel:4;
     u8 padding2:4;
     u32 tags;
@@ -131,6 +131,7 @@ struct Trainer
     enum Item items[MAX_TRAINER_ITEMS];
     struct StartingStatuses startingStatus; // this trainer starts a battle with a given status. see include/constants/battle.h for values
     u8 trainerClass;
+    u8 badgeCount;
     u16 encounterMusic:4;
     u16 multiTeamSize:1;
     u16 gender:1;

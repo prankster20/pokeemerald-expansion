@@ -677,6 +677,28 @@ static const struct WindowTemplate sBottleCapStatWindowTemplate =
     .baseBlock = 0x2E9,
 };
 
+static const struct WindowTemplate sPersonalityCodeWindowTemplate =
+{
+    .bg = 2,
+    .tilemapLeft = 12,
+    .tilemapTop = 1,
+    .width = 17,
+    .height = 16,
+    .paletteNum = 14,
+    .baseBlock = 0x2E9,
+};
+
+static const struct WindowTemplate sGenderSelectWindowTemplate =
+{
+    .bg = 2,
+    .tilemapLeft = 18,
+    .tilemapTop = 2,
+    .width = 11,
+    .height = 8,
+    .paletteNum = 14,
+    .baseBlock = 0x2E9,
+};
+
 static const struct WindowTemplate sWindowTemplate_FirstBattleOakVoiceover =
 {
     .bg = 2,

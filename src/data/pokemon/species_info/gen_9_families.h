@@ -1252,7 +1252,7 @@ const struct SpeciesInfo gSpeciesInfoGen9[] =
         .friendship = STANDARD_FRIENDSHIP,
         .growthRate = GROWTH_FAST,
         .eggGroups = MON_EGG_GROUPS(EGG_GROUP_FIELD, EGG_GROUP_FAIRY),
-        .abilities = { ABILITY_RUN_AWAY, ABILITY_PICKUP, ABILITY_OWN_TEMPO },
+        .abilities = { ABILITY_RUN_AWAY, ABILITY_PICKUP, ABILITY_TANDEM_BOND },
         .bodyColor = BODY_COLOR_WHITE,
         .speciesName = _("Tandemaus"),
         .cryId = CRY_TANDEMAUS,
@@ -1297,8 +1297,8 @@ const struct SpeciesInfo gSpeciesInfoGen9[] =
         .levelUpLearnset = sTandemausLevelUpLearnset,
         .teachableLearnset = sTandemausTeachableLearnset,
         .eggMoveLearnset = sTandemausEggMoveLearnset,
-        .evolutions = EVOLUTION({EVO_LEVEL_BATTLE_ONLY, 25, SPECIES_MAUSHOLD_FOUR, CONDITIONS({IF_PID_MODULO_100_GT, 0})},
-                                {EVO_LEVEL_BATTLE_ONLY, 25, SPECIES_MAUSHOLD_THREE, CONDITIONS({IF_PID_MODULO_100_EQ, 0})}),
+        .evolutions = EVOLUTION({EVO_LEVEL_BATTLE_ONLY, 25, SPECIES_MAUSHOLD_FOUR, CONDITIONS({IF_PID_OUTSIDE_CODE_MODULO_100_GT, 0})},
+                                {EVO_LEVEL_BATTLE_ONLY, 25, SPECIES_MAUSHOLD_THREE, CONDITIONS({IF_PID_OUTSIDE_CODE_MODULO_100_EQ, 0})}),
     },
 
     [SPECIES_MAUSHOLD_THREE] =

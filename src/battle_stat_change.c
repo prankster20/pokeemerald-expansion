@@ -469,6 +469,28 @@ static enum StatChangeResult DecreaseStat(struct BattleCalcValues *cv, struct St
         st->script = BattleScript_DecreaseStatChangeMessage;
         TryPlayStatChangeAnimation(cv, st);
 
+        // --- Custom Archetype nature: Bitter ---
+        // Reflect foe-inflicted drops without cleansing the Bitter Pokémon.
+        // Hazards such as Sticky Web have no meaningful attacker, so they are
+        // reflected to the directly opposing battler instead.
+        if (HasNature(cv->battlerDef, NATURE_BITTER)
+         && (cv->battlerAtk != cv->battlerDef || st->stickyWeb))
+        {
+            enum BattlerId reflectedBattler = cv->battlerAtk;
+
+            if (st->stickyWeb || IsBattlerAlly(cv->battlerAtk, cv->battlerDef))
+                reflectedBattler = GetBattlerAtPosition(BATTLE_OPPOSITE(GetBattlerPosition(cv->battlerDef)));
+
+            if (IsBattlerAlive(reflectedBattler)
+             && !IsBattlerAlly(reflectedBattler, cv->battlerDef))
+            {
+                s32 reflectedStage = gBattleMons[reflectedBattler].statStages[st->stat] + st->stage;
+                gBattleMons[reflectedBattler].statStages[st->stat] = max(GetMinimumStatStage(reflectedBattler), reflectedStage);
+                gBattleScripting.showNaturePopup = TRUE;
+                gBattleScripting.naturePopupId = NATURE_BITTER;
+            }
+        }
+
         // --- Custom Archetype nature: Vain ---
         // The first successful stat drop permanently removes its 5% battle
         // stat boost and replaces this drop's message script with a wrapper
@@ -824,7 +846,7 @@ static bool32 IsAbilityBlocked(struct BattleCalcValues *cv, struct StatChange *s
 
     // --- Custom Archetype nature: Energetic ---
     // Mirrors Hyper Cutter / Big Pecks / Keen Eye for Speed.
-    if (st->stat == STAT_SPEED && HasNature(cv->battlerDef, NATURE_ENERGETIC))
+    if (st->stat == STAT_SPEED && HasNature(cv->battlerDef, NATURE_OLD_ENERGETIC))
     {
         if (!st->onlyChecking)
         {
@@ -833,7 +855,7 @@ static bool32 IsAbilityBlocked(struct BattleCalcValues *cv, struct StatChange *s
             st->script = BattleScript_NatureNoSpecificStatLoss;
             gBattleScripting.battler = cv->battlerDef;
             gBattleScripting.showNaturePopup = TRUE;
-            gBattleScripting.naturePopupId = NATURE_ENERGETIC;
+            gBattleScripting.naturePopupId = NATURE_OLD_ENERGETIC;
         }
         return TRUE;
     }

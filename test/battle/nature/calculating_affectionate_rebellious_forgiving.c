@@ -99,7 +99,7 @@ SINGLE_BATTLE_TEST("pranks Rebellious ignores Taunt and can still use status mov
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CONFUSE_RAY); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_TAUNT); }
-        u32 nature = NATURE_REBELLIOUS;
+        u32 nature = NATURE_OLD_REBELLIOUS;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_CONFUSE_RAY); MOVE(opponent, MOVE_TAUNT); }
@@ -115,7 +115,7 @@ SINGLE_BATTLE_TEST("pranks Rebellious ignores Encore and can use different moves
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_TACKLE, MOVE_SWIFT); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_ENCORE); }
-        u32 nature = NATURE_REBELLIOUS;
+        u32 nature = NATURE_OLD_REBELLIOUS;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_TACKLE); MOVE(opponent, MOVE_ENCORE); }
@@ -133,7 +133,7 @@ SINGLE_BATTLE_TEST("pranks Forgiving refuses Revenge when learning moves")
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
-        u32 nature = NATURE_FORGIVING;
+        u32 nature = NATURE_OLD_FORGIVING;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_CELEBRATE); }
@@ -148,11 +148,46 @@ SINGLE_BATTLE_TEST("pranks Forgiving refuses Destiny Bond when learning moves")
     GIVEN {
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_CELEBRATE); }
-        u32 nature = NATURE_FORGIVING;
+        u32 nature = NATURE_OLD_FORGIVING;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_CELEBRATE); }
     } THEN {
         EXPECT(DoesBoxMonNatureRefuseMove(&PLAYER_PARTY[0].box, MOVE_DESTINY_BOND));
+    }
+}
+
+SINGLE_BATTLE_TEST("pranks Forgiving cannot land even a guaranteed critical hit")
+{
+    GIVEN {
+        ASSUME(GetMoveEffect(MOVE_FROST_BREATH) == EFFECT_ALWAYS_CRITICAL_HIT);
+        PLAYER(SPECIES_MIENFOO) { Moves(MOVE_FROST_BREATH); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        u32 nature = NATURE_FORGIVING;
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
+    } WHEN {
+        TURN { MOVE(player, MOVE_FROST_BREATH); }
+    } SCENE {
+        NOT MESSAGE("A critical hit!");
+    }
+}
+
+SINGLE_BATTLE_TEST("pranks Forgiving ignores a foe's positive offensive stat stages", s16 damage)
+{
+    u32 nature;
+    PARAMETRIZE { nature = NATURE_HARDY; }
+    PARAMETRIZE { nature = NATURE_FORGIVING; }
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Defense(100); MaxHP(999); HP(999); }
+        OPPONENT(SPECIES_MIENFOO) { Moves(MOVE_SWORDS_DANCE, MOVE_SCRATCH); Attack(100); Speed(100); }
+        u32 setNature = nature;
+        SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &setNature);
+    } WHEN {
+        TURN { MOVE(opponent, MOVE_SWORDS_DANCE); }
+        TURN { MOVE(opponent, MOVE_SCRATCH); }
+    } SCENE {
+        HP_BAR(player, captureDamage: &results[i].damage);
+    } FINALLY {
+        EXPECT_GT(results[0].damage, results[1].damage);
     }
 }

@@ -65,6 +65,7 @@
 #include "constants/cries.h"
 #include "constants/event_objects.h"
 #include "constants/form_change_types.h"
+#include "constants/global.h"
 #include "constants/item_effects.h"
 #include "constants/items.h"
 #include "constants/layouts.h"
@@ -75,6 +76,7 @@
 #include "constants/trainers.h"
 #include "constants/union_room.h"
 #include "constants/weather.h"
+#include "config/personality_colors.h"
 
 extern u16 gSpecialVar_ItemId;
 
@@ -399,7 +401,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(30, 58, 30, 58), //12%, 12%
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_WEAKER,
-        .description = COMPOUND_STRING("On its first turn, takes 20% less damage from moves."),
+        .description = COMPOUND_STRING("On its first turn, takes 25% less damage from moves."),
     },
     [NATURE_RASH] =
     {
@@ -477,7 +479,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(56, 22, 56, 22), //22%, 22%
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Boosts each non-HP stat by 1% to 5% based entirely on its hidden personality value."),
+        .description = COMPOUND_STRING("Distributes a 25% boost among its non-HP stats based on personality, max 8% each."),
     },
     [NATURE_ABRASIVE] =
     {
@@ -516,7 +518,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Benefits from Badge Boosts exclusively, which boost stats by 10%."),
+        .description = COMPOUND_STRING("Benefits from Badge Boosts exclusively, which boost all non-HP stats by 5%."),
     },
     [NATURE_APATHETIC] =
     {
@@ -543,7 +545,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Deals 10% more damage to higher-level targets."),
+        .description = COMPOUND_STRING("Deals 10% more damage to taller or heavier targets."),
     },
     [NATURE_FINICKY] =
     {
@@ -595,7 +597,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("If a foe heals with a move, the next damaging move deals 20% more damage."),
+        .description = COMPOUND_STRING("Reflects status conditions and stat drops inflicted by foes."),
     },
     [NATURE_COMMUNAL] =
     {
@@ -608,7 +610,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Boosts Def and SpDef by 2% each per trait shared by another party Pokémon, max 10%."),
+        .description = COMPOUND_STRING("Boosts Def and SpDef by 2% each per trait shared by another party Pokémon, max 8%."),
     },
     [NATURE_CALCULATING] =
     {
@@ -634,7 +636,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Immune to Frostbite. Attacks have a 1/8 chance to inflict Frostbite."),
+        .description = COMPOUND_STRING("Deals 20% more damage if the target last used a status or healing move."),
     },
     [NATURE_AFFECTIONATE] =
     {
@@ -662,9 +664,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("On entry, all Pokémon (including itself and allies) take 1/16 max HP as indirect damage."),
     },
-    [NATURE_CHARITABLE] =
+    [NATURE_ADORABLE] =
     {
-        .name = COMPOUND_STRING("Charitable"),
+        .name = COMPOUND_STRING("Adorable"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 2,
@@ -673,7 +675,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Can use the move “Care Package” from the overworld, sacrificing 20% max HP to heal a party Pokémon."),
+        .description = COMPOUND_STRING("NPC gifts include 1 extra non-key item. Friendship increases 50% faster."),
     },
     [NATURE_CHILDISH] =
     {
@@ -740,9 +742,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Suffers 1.5x indirect damage. Receives 1.3x more healing."),
     },
-    [NATURE_IMPRESSIONABLE] =
+    [NATURE_UNDERHANDED] =
     {
-        .name = COMPOUND_STRING("Impressionable"),
+        .name = COMPOUND_STRING("Underhanded"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 2,
@@ -751,7 +753,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Takes after the Pokémon before it in the party, altering its non-HP stats."),
+        .description = COMPOUND_STRING("Deals 10% less damage, then chips 1/16 of the target's max HP."),
     },
     [NATURE_NOSTALGIC] =
     {
@@ -804,7 +806,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Speed cannot be lowered. Eggs hatch twice as fast."),
+        .description = COMPOUND_STRING("Adds 10% of its Speed to Atk or SpAtk while dealing damage."),
     },
     [NATURE_FASTIDIOUS] =
     {
@@ -856,7 +858,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Friendship never decreases and boosts Return by 10%. Refuses “vengeance” moves."),
+        .description = COMPOUND_STRING("Ignores foes' positive offensive stat stages while defending. Cannot crit."),
     },
     [NATURE_FRIVOLOUS] =
     {
@@ -949,9 +951,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Damaging moves use old type-based Physical/Special split. Fairy-moves are Special."),
     },
-    [NATURE_PACK_RAT] =
+    [NATURE_VIBRANT] =
     {
-        .name = COMPOUND_STRING("Pack-Rat"),
+        .name = COMPOUND_STRING("Vibrant"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -960,7 +962,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Gains 1 Hoard Counter on entry and can relearn Stockpile."),
+        .description = COMPOUND_STRING("Its personality causes a dramatically different hue and brightness."),
     },
     [NATURE_LAZY] =
     {
@@ -1004,15 +1006,15 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
     [NATURE_STOIC] =
     {
         .name = COMPOUND_STRING("Stoic"),
-        .statUp = STAT_HP, // sentinel - never matches a real non-HP stat, so nothing highlights as "up"
-        .statDown = STAT_SPEED,
+        .statUp = STAT_ATK,
+        .statDown = STAT_ATK,
         .backAnim = 2,
         .pokeBlockAnim = {ANIM_HARDY, AFFINE_NONE},
         .natureGirlMessage = BattleFrontier_Lounge5_Text_NatureGirlAttackHighAttackLow,
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Ignores the stat drops from status conditions. -5% Speed."),
+        .description = COMPOUND_STRING("Halves the duration or harmful effects of status conditions."),
     },
     [NATURE_CAPRICIOUS] =
     {
@@ -1077,7 +1079,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Its name carries weight, literally! Changes weight based on nickname length."),
+        .description = COMPOUND_STRING("Announces its grand title upon entry, and weighs twice as much."),
     },
     [NATURE_PERFECTIONIST] =
     {
@@ -1104,7 +1106,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Infiltrates while attacking, ignoring opposing Screens and Substitute."),
+        .description = COMPOUND_STRING("After battle, has a 25% chance to spar with a party member for bonus Exp. and EVs; both lose 1/16 HP."),
     },
     [NATURE_SUPPORTIVE] =
     {
@@ -1117,7 +1119,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Boosts the best stat of all other Party Pokémon by 6%. Stacking this adds 1% each."),
+        .description = COMPOUND_STRING("Boosts the best stat of all other Party Pokémon by 5%. Stacking this adds 1% each."),
     },
     [NATURE_PRODIGIOUS] =
     {
@@ -1159,9 +1161,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .description = COMPOUND_STRING("Boosts move damage and secondary effect chances by a flat 10%, but consumes 2 PP."),
         .semanticGroups = NATURE_GROUP_MOVE_EFFECT_CHANCE,
     },
-    [NATURE_LEVEL_HEADED] =
+    [NATURE_STALWART] =
     {
-        .name = COMPOUND_STRING("Level-Headed"),
+        .name = COMPOUND_STRING("Stalwart"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 0,
@@ -1196,7 +1198,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Dotes on most-similar-personality mon. Ups their defenses & own offenses by up to 10%."),
+        .description = COMPOUND_STRING("Dotes on most-similar-personality mon. Ups their defenses & own offenses by up to 6%."),
     },
     [NATURE_ANXIOUS] =
     {
@@ -1211,9 +1213,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Lowers Speed by 20% at full HP. Boosts Speed by 20% at half HP or below."),
     },
-    [NATURE_RESOURCEFUL] =
+    [NATURE_INTROSPECTIVE] =
     {
-        .name = COMPOUND_STRING("Resourceful"),
+        .name = COMPOUND_STRING("Introspective"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 1,
@@ -1222,7 +1224,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Organic Held Items are 25% more effective."),
+        .description = COMPOUND_STRING("Moves matching its Hidden Power type deal 20% more damage."),
     },
     [NATURE_SCHOLARLY] =
     {
@@ -1274,7 +1276,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Ignores Encore, Taunt, Torment, Disable and Heal Block."),
+        .description = COMPOUND_STRING("Once per battle, defies a foe's restriction on its selected move."),
     },
     [NATURE_SOFT_HEARTED] =
     {
@@ -1303,9 +1305,9 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .description = COMPOUND_STRING("If knocked out before using its move, it completes the move and then faints."),
         .semanticGroups = NATURE_GROUP_DELAYED_FAINTING,
     },
-    [NATURE_STUBBORN] =
+    [NATURE_UNFORGIVING] =
     {
-        .name = COMPOUND_STRING("Stubborn"),
+        .name = COMPOUND_STRING("Unforgiving"),
         .statUp = STAT_ATK,
         .statDown = STAT_ATK,
         .backAnim = 1,
@@ -1314,7 +1316,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Prevents loss of held items and forced switching out."),
+        .description = COMPOUND_STRING("After surviving a critical hit, its next attack is guaranteed to crit."),
     },
     [NATURE_AMBIENT] =
     {
@@ -1341,7 +1343,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Foes leaving its turf lose 1/12 max HP when switching out."),
+        .description = COMPOUND_STRING("Deals 10% more damage to Pokémon that entered the field after it."),
     },
     [NATURE_DIPLOMATIC] =
     {
@@ -1367,8 +1369,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Unaffected by recoil, crash damage or entry hazards."),
-        .semanticGroups = NATURE_GROUP_RECOIL_CRASH_HAZARDS,
+        .description = COMPOUND_STRING("Takes half damage from all indirect damage sources."),
     },
     [NATURE_VAIN] =
     {
@@ -1407,7 +1408,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Consumes pinch berries at 1/2 max HP. Boosts Leftovers by 1.5x."),
+        .description = COMPOUND_STRING("Consumes pinch Berries at 1/2 max HP. Organic Held Items are 20% more effective."),
     },
     [NATURE_WAYFARING] =
     {
@@ -1420,7 +1421,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Can use the field move “Head Home” from the overworld, teleporting to the last Pokémon Center."),
+        .description = COMPOUND_STRING("Periodically restores party HP and PP while walking."),
     },
     [NATURE_WORLDLY] =
     {
@@ -1446,7 +1447,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("+20% Atk, SpAtk and Speed if the Pokémon is past its evolution level but has not evolved."),
+        .description = COMPOUND_STRING("+20% Atk and SpAtk if the Pokémon is past its evolution level but has not evolved."),
     },
     [NATURE_ZEALOUS] =
     {
@@ -1459,7 +1460,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Enhances the Primary type. 2x weaknesses become 3x and 0.5x resistances become 0.33x."),
+        .description = COMPOUND_STRING("Enhances the Primary type. 2x weaknesses become 2.4x and 0.5x resistances become 0.4x."),
     },
     [NATURE_CYNICAL] =
     {
@@ -1500,7 +1501,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Ignores critical hits made at the base critical-hit rate. Cannot be minted into."),
     },
-    [NATURE_RESERVED_START ... NATURE_RESERVED_END] =
+    [NATURE_OLD_WAYFARING + 1 ... NATURE_PACK_RAT - 1] =
     {
         .name = COMPOUND_STRING("Reserved"),
         .statUp = STAT_ATK,
@@ -1512,6 +1513,23 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
         .description = COMPOUND_STRING("Reserved for a future Nature."),
     },
+    [NATURE_OLD_ARROGANT] = {.name = COMPOUND_STRING("Old Arrogant"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Deals 10% more damage to higher-level targets.")},
+    [NATURE_OLD_BITTER] = {.name = COMPOUND_STRING("Old Bitter"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("After a foe heals with a move, the next attack deals 20% more damage.")},
+    [NATURE_OLD_CALLOUS] = {.name = COMPOUND_STRING("Old Callous"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Immune to Frostbite. Attacks may inflict Frostbite.")},
+    [NATURE_OLD_ENERGETIC] = {.name = COMPOUND_STRING("Old Energetic"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Halves Egg cycles. Its Speed cannot be lowered.")},
+    [NATURE_OLD_IMPRESSIONABLE] = {.name = COMPOUND_STRING("Old Impressionable"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Copies the preceding party member's Nature stat effects.")},
+    [NATURE_OLD_LEVEL_HEADED] = {.name = COMPOUND_STRING("Old Level-Headed"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Ignores Confusion, Flinching and Redirection.")},
+    [NATURE_OLD_RESOURCEFUL] = {.name = COMPOUND_STRING("Old Resourceful"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Organic Held Items are 25% more effective.")},
+    [NATURE_OLD_REBELLIOUS] = {.name = COMPOUND_STRING("Old Rebellious"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Permanently ignores move-choice restrictions.")},
+    [NATURE_OLD_FORGIVING] = {.name = COMPOUND_STRING("Old Forgiving"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Preserves friendship, boosts Return and refuses vengeance moves.")},
+    [NATURE_OLD_RUGGED] = {.name = COMPOUND_STRING("Old Rugged"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Ignores recoil, crash damage and entry hazards."), .semanticGroups = NATURE_GROUP_RECOIL_CRASH_HAZARDS},
+    [NATURE_OLD_STUBBORN] = {.name = COMPOUND_STRING("Old Stubborn"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Prevents held-item loss and forced switching.")},
+    [NATURE_OLD_CHARITABLE] = {.name = COMPOUND_STRING("Old Charitable"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Can use Care Package from the overworld.")},
+    [NATURE_OLD_PUGNACIOUS] = {.name = COMPOUND_STRING("Old Pugnacious"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Ignores opposing Screens and Substitute while attacking.")},
+    [NATURE_OLD_STOIC] = {.name = COMPOUND_STRING("Old Stoic"), .statUp = STAT_HP, .statDown = STAT_SPEED, .description = COMPOUND_STRING("Ignores status-based stat drops. -5% Speed.")},
+    [NATURE_OLD_TERRITORIAL] = {.name = COMPOUND_STRING("Old Territorial"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Foes switching out lose 1/12 max HP.")},
+    [NATURE_OLD_WAYFARING] = {.name = COMPOUND_STRING("Old Wayfaring"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Can use Head Home from the overworld.")},
+    [NATURE_PACK_RAT] = {.name = COMPOUND_STRING("Pack-Rat"), .statUp = STAT_ATK, .statDown = STAT_ATK, .description = COMPOUND_STRING("Legacy Hoard Counter implementation.")},
 };
 
 #include "data/graphics/pokemon.h"
@@ -2122,6 +2140,9 @@ static bool32 IsValidGender(u32 gender)
 
 static void CleanIncompatibleGenderSpecies(enum Species species, u8 *gender)
 {
+    if (IsSpeciesInHoennDex(species))
+        return;
+
     switch (gSpeciesInfo[species].genderRatio)
     {
     case MON_MALE:
@@ -2511,7 +2532,7 @@ void CalculateMonStats(struct Pokemon *mon)
         u8 baseStat = GetSpeciesBaseStat(species, i);
         s32 n = (((2 * baseStat + iv[i] + ev[i] / 4) * level) / 100) + 5;
         n = ModifyStatByNature(nature, n, i, personality);
-        if (nature == NATURE_IMPRESSIONABLE)
+        if (nature == NATURE_OLD_IMPRESSIONABLE)
             n = n * (100 + GetImpressionableStatBoostPercent(mon, i)) / 100;
         if (nature == NATURE_LOYAL && (i == STAT_ATK || i == STAT_SPATK))
             n = n * (100 + loyalBoostPercent) / 100;
@@ -2524,7 +2545,7 @@ void CalculateMonStats(struct Pokemon *mon)
             else if (i == STAT_SPEED)
                 n = n * (100 + 5 * eclecticStatusMoves) / 100;
         }
-        if (youthfulBoost && (i == STAT_ATK || i == STAT_SPATK || i == STAT_SPEED))
+        if (youthfulBoost && (i == STAT_ATK || i == STAT_SPATK))
             n = n * 120 / 100;
         if (B_FRIENDSHIP_BOOST == TRUE)
             n = n + ((n * 10 * friendship) / (MAX_FRIENDSHIP * 100));
@@ -3036,7 +3057,7 @@ bool32 DoesBoxMonNatureRefuseMove(struct BoxPokemon *boxMon, enum Move move)
                 return TRUE;
         }
     }
-    else if (nature == NATURE_FORGIVING)
+    else if (nature == NATURE_OLD_FORGIVING)
     {
         // Banned: vengeance/resentment-flavored moves. pranks / jimh
         if (effect == EFFECT_REVENGE          // Revenge, Avalanche
@@ -3194,6 +3215,136 @@ void TryFastidiousCleanPartyStatusAfterBattle(void)
             continue;
 
         SetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_STATUS, &noStatus);
+    }
+}
+
+static bool32 IsEligiblePugnaciousSparringMon(struct Pokemon *mon)
+{
+    enum Species species = GetMonData(mon, MON_DATA_SPECIES);
+
+    return species != SPECIES_NONE
+        && species != SPECIES_EGG
+        && GetMonData(mon, MON_DATA_HP) > 0;
+}
+
+static void ApplyPugnaciousSparringRewards(struct Pokemon *mon)
+{
+    enum Species species = GetMonData(mon, MON_DATA_SPECIES);
+    u32 level = GetMonData(mon, MON_DATA_LEVEL);
+    u32 exp = GetMonData(mon, MON_DATA_EXP);
+    u32 expGain = max(1, level);
+    u32 totalEvs = GetMonEVCount(mon);
+    u32 stat = RandomUniform(RNG_NATURE_PUGNACIOUS_EV, STAT_HP, STAT_SPDEF);
+    u32 ev = GetMonData(mon, MON_DATA_HP_EV + stat);
+
+    // Sparring should reward training without silently skipping a level-up move.
+    if (level < MAX_LEVEL)
+    {
+        u32 nextLevelExp = gExperienceTables[gSpeciesInfo[species].growthRate][level + 1];
+        if (exp < nextLevelExp - 1)
+        {
+            exp = min(exp + expGain, nextLevelExp - 1);
+            SetMonData(mon, MON_DATA_EXP, &exp);
+        }
+    }
+
+    if (totalEvs < MAX_TOTAL_EVS && ev < MAX_PER_STAT_EVS)
+    {
+        ev++;
+        SetMonData(mon, MON_DATA_HP_EV + stat, &ev);
+    }
+}
+
+void TryPugnaciousPartySparring(void)
+{
+    u32 pugnaciousSlot;
+    u32 partnerSlots[PARTY_SIZE - 1];
+    u32 partnerCount;
+
+    for (pugnaciousSlot = 0; pugnaciousSlot < PARTY_SIZE; pugnaciousSlot++)
+    {
+        struct Pokemon *pugnacious = &gParties[B_TRAINER_PLAYER][pugnaciousSlot];
+
+        if (GetNature(pugnacious) != NATURE_PUGNACIOUS
+            || !IsEligiblePugnaciousSparringMon(pugnacious)
+            || !RandomPercentage(RNG_NATURE_PUGNACIOUS_SPAR, 25))
+            continue;
+
+        partnerCount = 0;
+        for (u32 slot = 0; slot < PARTY_SIZE; slot++)
+        {
+            if (slot != pugnaciousSlot && IsEligiblePugnaciousSparringMon(&gParties[B_TRAINER_PLAYER][slot]))
+                partnerSlots[partnerCount++] = slot;
+        }
+
+        if (partnerCount != 0)
+        {
+            struct Pokemon *partner = &gParties[B_TRAINER_PLAYER][partnerSlots[RandomUniform(RNG_NATURE_PUGNACIOUS_PARTNER, 0, partnerCount - 1)]];
+            struct Pokemon *sparringMons[] = {pugnacious, partner};
+
+            for (u32 i = 0; i < ARRAY_COUNT(sparringMons); i++)
+            {
+                u32 hp = GetMonData(sparringMons[i], MON_DATA_HP);
+                u32 maxHp = GetMonData(sparringMons[i], MON_DATA_MAX_HP);
+                u32 damage = max(1, maxHp / 16);
+
+                hp = max(1, (s32)hp - (s32)damage);
+                SetMonData(sparringMons[i], MON_DATA_HP, &hp);
+                ApplyPugnaciousSparringRewards(sparringMons[i]);
+            }
+        }
+    }
+}
+
+void ApplyWayfaringStepRecovery(void)
+{
+    bool32 hasWayfaringMon = FALSE;
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
+        if (GetMonData(mon, MON_DATA_SPECIES) != SPECIES_NONE && GetNature(mon) == NATURE_WAYFARING)
+        {
+            hasWayfaringMon = TRUE;
+            break;
+        }
+    }
+
+    if (!hasWayfaringMon)
+        return;
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
+        enum Species species = GetMonData(mon, MON_DATA_SPECIES);
+        u32 hp = GetMonData(mon, MON_DATA_HP);
+        u32 maxHp = GetMonData(mon, MON_DATA_MAX_HP);
+        u32 ppBonuses = GetMonData(mon, MON_DATA_PP_BONUSES);
+
+        if (species == SPECIES_NONE || species == SPECIES_EGG || hp == 0)
+            continue;
+
+        if (hp < maxHp)
+        {
+            hp = min(maxHp, hp + max(1, maxHp / 16));
+            SetMonData(mon, MON_DATA_HP, &hp);
+        }
+
+        for (u32 moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
+        {
+            enum Move move = GetMonData(mon, MON_DATA_MOVE1 + moveSlot);
+            u32 pp = GetMonData(mon, MON_DATA_PP1 + moveSlot);
+            u32 maxPp;
+
+            if (move == MOVE_NONE)
+                continue;
+            maxPp = CalculatePPWithBonusForMon(mon, move, ppBonuses, moveSlot);
+            if (pp < maxPp)
+            {
+                pp++;
+                SetMonData(mon, MON_DATA_PP1 + moveSlot, &pp);
+            }
+        }
     }
 }
 
@@ -3508,6 +3659,11 @@ u8 GetBoxMonGender(struct BoxPokemon *boxMon)
     enum Species species = GetBoxMonData(boxMon, MON_DATA_SPECIES);
     u32 personality = GetBoxMonData(boxMon, MON_DATA_PERSONALITY);
 
+    // Every species in the curated Hoenn Pokédex uses the portion of the
+    // personality value immediately above the five-digit Persona code.
+    if (IsSpeciesInHoennDex(species))
+        return GetPersonaGender(personality);
+
     switch (gSpeciesInfo[species].genderRatio)
     {
     case MON_MALE:
@@ -3524,6 +3680,9 @@ u8 GetBoxMonGender(struct BoxPokemon *boxMon)
 
 u8 GetGenderFromSpeciesAndPersonality(enum Species species, u32 personality)
 {
+    if (IsSpeciesInHoennDex(species))
+        return GetPersonaGender(personality);
+
     switch (gSpeciesInfo[species].genderRatio)
     {
     case MON_MALE:
@@ -5143,7 +5302,7 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
 
     // Each distinct trait on this Pokémon contributes at most once, no
     // matter how many teammates share it: 2 types + 2 egg groups + 4 moves
-    // + 1 ability + 1 Nature = the stated maximum of 10.
+    // + 1 ability + 1 Nature. The final bonus is capped at 8%.
     for (u32 typeSlot = 0; typeSlot < 2; typeSlot++)
     {
         bool32 shared = FALSE;
@@ -5236,8 +5395,8 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
         }
     }
 
-    boost*=2; // Each shared trait contributes 2% to the boost, for a maximum of 10%
-    return min(boost, 10);
+    boost*=2; // Each shared trait contributes 2% to the boost.
+    return min(boost, 8);
 }
 
 static bool32 IsUsablePartyMonForNatureBoost(struct Pokemon *mon)
@@ -5264,33 +5423,50 @@ u32 GetSupportiveBoostPercent(struct Pokemon *party, u32 partyCount, u32 monInde
     if (supportiveCount == 0)
         return 0;
 
-    // First Supportive teammate grants +6%; each additional one grants +1%,
+    // First Supportive teammate grants +5%; each additional one grants +1%,
     // capped at +10% total.
-    return min(6 + supportiveCount - 1, 10);
+    return min(5 + supportiveCount - 1, 10);
 }
 
 // pranks / jimh - Custom Archetype nature: Pompous
-// Weight multiplier based on nickname length:
-//   No nickname (len 0): 100%
-//   len 1..6:  40, 50, 60, 70, 80, 90%
-//   len 7..12: 110, 120, 130, 140, 150, 160%
-// Returns the signed offset from 100 (e.g. -60 for a 1-char nick, +60 for 12-char).
-// Callers add this to 100 to get the actual multiplier percent.
+static const u8 sText_PompousTitleChampionOfChampions[] = _("Champion of Champions");
+static const u8 sText_PompousTitleChosenOne[] = _("Chosen One");
+static const u8 sText_PompousTitleArbiterOfFate[] = _("Arbiter of Fate");
+static const u8 sText_PompousTitleFirstOfItsName[] = _("First of its Name");
+static const u8 sText_PompousTitleLivingLegend[] = _("Living Legend");
+static const u8 sText_PompousTitleUniversallyAdored[] = _("Universally Adored");
+static const u8 sText_PompousTitlePrideOfThePeople[] = _("Pride of the People");
+static const u8 sText_PompousTitleBaneOfKings[] = _("Bane of Kings");
+static const u8 sText_PompousTitleConquerorOfWorlds[] = _("Conqueror of Worlds");
+static const u8 sText_PompousTitleCommanderOfLegions[] = _("Commander of Legions");
+static const u8 sText_PompousTitleDefenderOfTheRealms[] = _("Defender of the Realms");
+
+static const u8 *const sPompousTitles[] =
+{
+    sText_PompousTitleChampionOfChampions,
+    sText_PompousTitleChosenOne,
+    sText_PompousTitleArbiterOfFate,
+    sText_PompousTitleFirstOfItsName,
+    sText_PompousTitleLivingLegend,
+    sText_PompousTitleUniversallyAdored,
+    sText_PompousTitlePrideOfThePeople,
+    sText_PompousTitleBaneOfKings,
+    sText_PompousTitleConquerorOfWorlds,
+    sText_PompousTitleCommanderOfLegions,
+    sText_PompousTitleDefenderOfTheRealms,
+};
+
+const u8 *GetPompousTitle(u32 personality)
+{
+    return sPompousTitles[GetPersonalityCode(personality) % ARRAY_COUNT(sPompousTitles)];
+}
+
+// Returns the signed offset from 100. Pompous Pokémon always weigh 200% of
+// their species' normal weight, so callers receive a constant +100 offset.
 s32 GetPompousWeightPercent(const struct Pokemon *mon)
 {
-    u8 nick[POKEMON_NAME_LENGTH + 1];
-    GetMonData((struct Pokemon *)mon, MON_DATA_NICKNAME, nick);
-
-    // Count printable bytes (stop at EOS or after POKEMON_NAME_LENGTH)
-    u32 len = 0;
-    for (u32 i = 0; i < POKEMON_NAME_LENGTH && nick[i] != EOS; i++)
-        len++;
-
-    if (len == 0)  return 0;     // no nickname → 100%
-    if (len <= 6)  return (s32)(len * 10) - 70;  // 1→-60, 2→-50, ..., 6→-10
-    if (len <= 12) return (s32)(len * 10) - 60;  // 7→10, 8→20, ..., 12→60
-
-    return 60; // safety cap
+    (void)mon;
+    return 100;
 }
 
 void PokemonToBattleMon(struct Pokemon *src, struct BattlePokemon *dst)
@@ -6447,6 +6623,14 @@ bool32 DoesMonMeetAdditionalConditions(struct Pokemon *mon, const struct Evoluti
             if ((personality % 100) < params[i].arg1)
                 currentCondition = TRUE;
             break;
+        case IF_PID_OUTSIDE_CODE_MODULO_100_GT:
+            if (((personality / PERSONALITY_CODE_MODULUS) % 100) > params[i].arg1)
+                currentCondition = TRUE;
+            break;
+        case IF_PID_OUTSIDE_CODE_MODULO_100_EQ:
+            if (((personality / PERSONALITY_CODE_MODULUS) % 100) == params[i].arg1)
+                currentCondition = TRUE;
+            break;
         case IF_MIN_OVERWORLD_STEPS:
             if (mon == GetFirstLiveMon() && gFollowerSteps >= params[i].arg1)
                 currentCondition = TRUE;
@@ -6959,12 +7143,9 @@ s32 GetNatureStatModifierPercent(u8 nature, enum Stat statIndex, u32 personality
         return 5;
 
     if (nature == NATURE_QUIRKY)
-    {
-        u32 personalitySlice = (personality >> ((statIndex - 1) * 3)) & 0x7;
-        return 1 + (personalitySlice % 5);
-    }
+        return GetQuirkyStatBoostPercent(personality, statIndex);
 
-    if (nature == NATURE_STOIC && statIndex == STAT_SPEED)
+    if (nature == NATURE_OLD_STOIC && statIndex == STAT_SPEED)
         return -5;
 
     if (nature == NATURE_DREAMY && statIndex == STAT_SPEED)
@@ -6987,6 +7168,111 @@ s32 GetNatureStatModifierPercent(u8 nature, enum Stat statIndex, u32 personality
         return -15;
     else
         return 0;
+}
+
+u32 GetPersonalityCode(u32 personality)
+{
+    return personality % PERSONALITY_CODE_MODULUS;
+}
+
+u8 GetPersonaGender(u32 personality)
+{
+    // Use the high-scale portion of the personality. The lower five decimal
+    // digits remain the Persona code, while Tandemaus's separate quotient
+    // condition can also be preserved when searching for another gender.
+    u32 genderCode = ((u64)personality * 100) >> 32;
+
+    if (genderCode < 30)
+        return MON_GENDERLESS;
+    if (genderCode < 65)
+        return MON_FEMALE;
+    return MON_MALE;
+}
+
+u32 GetQuirkyStatBoostPercent(u32 personality, enum Stat stat)
+{
+    static const enum Stat sCodeStats[] = {STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED};
+    u32 code = GetPersonalityCode(personality);
+    u32 weights[ARRAY_COUNT(sCodeStats)];
+    u32 boosts[ARRAY_COUNT(sCodeStats)] = {1, 1, 1, 1, 1};
+    u32 allocated = ARRAY_COUNT(sCodeStats);
+
+    // The five displayed digits are Atk/Def/SpA/SpD/Spe weights. Zero is
+    // treated as ten. Every stat receives 1%, then the other 20 percentage
+    // points are apportioned by weight. No stat can exceed 8%, and the total
+    // is exactly 25% every time.
+    for (s32 i = ARRAY_COUNT(sCodeStats) - 1; i >= 0; i--)
+    {
+        weights[i] = code % 10;
+        if (weights[i] == 0)
+            weights[i] = 10;
+        code /= 10;
+    }
+
+    // Allocate each remaining point using weighted highest averages. This
+    // preserves the five digits as relative weights while enforcing the cap.
+    while (allocated < 25)
+    {
+        u32 best = ARRAY_COUNT(sCodeStats);
+
+        for (u32 i = 0; i < ARRAY_COUNT(sCodeStats); i++)
+        {
+            if (boosts[i] >= 8)
+                continue;
+            if (best == ARRAY_COUNT(sCodeStats)
+             || weights[i] * boosts[best] > weights[best] * boosts[i])
+                best = i;
+        }
+
+        boosts[best]++;
+        allocated++;
+    }
+    for (u32 i = 0; i < ARRAY_COUNT(sCodeStats); i++)
+        if (sCodeStats[i] == stat)
+            return boosts[i];
+    return 0;
+}
+
+void GetVibrantColorParameters(u32 personality, s32 *hueShift, s32 *brightnessShift)
+{
+    u32 code = GetPersonalityCode(personality);
+    u32 hueCode = code / 100;
+    u32 brightnessCode = code % 100;
+
+    if (hueShift != NULL)
+        *hueShift = VIBRANT_COLOR_HUE_MIN
+                  + (hueCode * (VIBRANT_COLOR_HUE_MAX - VIBRANT_COLOR_HUE_MIN) + 499) / 999;
+    if (brightnessShift != NULL)
+        *brightnessShift = VIBRANT_COLOR_BRIGHTNESS_MIN
+                         + (brightnessCode * (VIBRANT_COLOR_BRIGHTNESS_MAX - VIBRANT_COLOR_BRIGHTNESS_MIN) + 49) / 99;
+}
+
+bool32 FindPersonalityForCode(enum Species species, u32 gender, u32 naturalNature, u32 code, u32 excludedPersonality, u32 *result)
+{
+    u32 maxQuotient;
+
+    if (code >= PERSONALITY_CODE_MODULUS)
+        return FALSE;
+    maxQuotient = (UINT32_MAX - code) / PERSONALITY_CODE_MODULUS;
+    for (u32 quotient = 0; quotient <= maxQuotient; quotient++)
+    {
+        u32 candidate = code + quotient * PERSONALITY_CODE_MODULUS;
+        if (candidate != excludedPersonality
+         && GetNatureFromPersonality(candidate) == naturalNature
+         && GetGenderFromSpeciesAndPersonality(species, candidate) == gender)
+        {
+            // A selector changes only the visible code. Keep Tandemaus on its
+            // pre-existing Family-of-Three/Four evolution path.
+            if ((species == SPECIES_TANDEMAUS || species == SPECIES_MAUSHOLD_THREE || species == SPECIES_MAUSHOLD_FOUR)
+             && excludedPersonality != UINT32_MAX
+             && (((candidate / PERSONALITY_CODE_MODULUS) % 100) == 0)
+             != (((excludedPersonality / PERSONALITY_CODE_MODULUS) % 100) == 0))
+                continue;
+            *result = candidate;
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 u16 ModifyStatByNature(u8 nature, u16 stat, enum Stat statIndex, u32 personality)
@@ -7064,24 +7350,34 @@ s32 GetImpressionableStatBoostPercent(const struct Pokemon *mon, enum Stat stat)
 }
 
 // pranks / jimh - Custom Archetype nature: Devoted
-// Scans the player's party for the member whose personality % 100 is closest
-// to devotedMon's own. Returns the boost tier (0/3/6/10) and optionally fills
+// Scans the Pokémon's own battle party for the member whose code's last two
+// digits are closest
+// to devotedMon's own. Returns the boost tier (0/3/6) and optionally fills
 // outBondIndex with that party slot index (-1 if alone or no boost).
 // Devoted boosts its own Atk/SpA; the bonded mon gets Def/SpDef boosted.
 u32 GetDevotedBondData(const struct Pokemon *devotedMon, s32 *outBondIndex)
 {
-    u32 devotedLast2 = GetMonData((struct Pokemon*)devotedMon, MON_DATA_PERSONALITY) % 100;
+    u32 partyId;
+    u32 devotedSlot;
+    u32 devotedLast2 = GetPersonalityCode(GetMonData((struct Pokemon*)devotedMon, MON_DATA_PERSONALITY)) % 100;
     u32 bestDiff = 100; // impossible diff, means "no partner found yet"
     s32 bestSlot = -1;
 
+    if (!FindMonInBattleParties(devotedMon, &partyId, &devotedSlot))
+    {
+        if (outBondIndex != NULL)
+            *outBondIndex = -1;
+        return 0;
+    }
+
     for (u32 i = 0; i < PARTY_SIZE; i++)
     {
-        const struct Pokemon *candidate = &gParties[B_TRAINER_PLAYER][i];
-        if (candidate == devotedMon) continue;
+        const struct Pokemon *candidate = &gParties[partyId][i];
+        if (i == devotedSlot) continue;
         if (GetMonData((struct Pokemon*)candidate, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE) continue;
         if (GetMonData((struct Pokemon*)candidate, MON_DATA_SANITY_IS_EGG)) continue;
 
-        u32 candLast2 = GetMonData((struct Pokemon*)candidate, MON_DATA_PERSONALITY) % 100;
+        u32 candLast2 = GetPersonalityCode(GetMonData((struct Pokemon*)candidate, MON_DATA_PERSONALITY)) % 100;
         u32 diff = devotedLast2 > candLast2 ? devotedLast2 - candLast2 : candLast2 - devotedLast2;
 
         if (diff < bestDiff)
@@ -7095,8 +7391,8 @@ u32 GetDevotedBondData(const struct Pokemon *devotedMon, s32 *outBondIndex)
         *outBondIndex = bestSlot;
 
     if (bestSlot == -1)  return 0;  // aloof
-    if (bestDiff <= 9)   return 10;
-    if (bestDiff <= 33)  return 5;
+    if (bestDiff <= 9)   return 6;
+    if (bestDiff <= 33)  return 3;
     return 0;
 }
 
@@ -7173,7 +7469,10 @@ void AdjustFriendship(struct Pokemon *mon, u8 event)
         }
 
         mod = sFriendshipEventModifiers[event][friendshipLevel];
-        friendship += CalculateFriendshipBonuses(mon,mod,holdEffect);
+        s32 friendshipGain = CalculateFriendshipBonuses(mon, mod, holdEffect);
+        if (friendshipGain > 0 && GetNature(mon) == NATURE_ADORABLE)
+            friendshipGain = max(1, (friendshipGain * 3 + 1) / 2);
+        friendship += friendshipGain;
 
         if (friendship < 0)
             friendship = 0;
@@ -7258,39 +7557,39 @@ void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies)
         {
         case STAT_HP:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_HP)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_HP + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_HP*2 + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_HP * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_HP*2 * multiplier;
             break;
         case STAT_ATK:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_ATK)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Attack + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Attack*2 + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Attack * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Attack*2 * multiplier;
             break;
         case STAT_DEF:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_DEF)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Defense + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Defense*2 + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Defense * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Defense*2 * multiplier;
             break;
         case STAT_SPEED:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_SPEED)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Speed + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Speed*2 + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Speed * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Speed*2 * multiplier;
             break;
         case STAT_SPATK:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_SPATK)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpAttack + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpAttack*2 + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpAttack * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpAttack*2 * multiplier;
             break;
         case STAT_SPDEF:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_SPDEF)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpDefense + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpDefense*2 + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpDefense * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpDefense*2 * multiplier;
             break;
         default:
             break;
@@ -7540,23 +7839,125 @@ static void Task_PlayMapChosenOrBattleBGM(u8 taskId)
 
 #undef tSongId
 
+#define PERSONALITY_PALETTE_BUFFER_COUNT 16
+#define MON_PALETTE_COLOR_COUNT          16
+#define HSV_HUE_CYCLE                  1536
+#define HSV_HUE_SECTION                 256
+
+EWRAM_DATA static u16 sPersonalityPaletteBuffers[PERSONALITY_PALETTE_BUFFER_COUNT][MON_PALETTE_COLOR_COUNT] = {0};
+EWRAM_DATA static u8 sPersonalityPaletteBufferId = 0;
+
+static u16 ShiftPersonalityPaletteColor(u16 color, s32 hueShift, s32 brightnessShift)
+{
+    s32 red = color & 31;
+    s32 green = (color >> 5) & 31;
+    s32 blue = (color >> 10) & 31;
+    s32 maximum = max(max(red, green), blue);
+    s32 minimum = min(min(red, green), blue);
+    s32 delta = maximum - minimum;
+    s32 hue = 0;
+    s32 saturation = maximum == 0 ? 0 : delta * 255 / maximum;
+    s32 value = maximum;
+    s32 section, remainder, p, q, t;
+
+    // Hue rotation is harmless for true neutrals and remains useful for even
+    // subtly colored pixels. Only brightness variance needs protection here:
+    // applying it to black, white, grey, or deep shadows would recolor details
+    // that should remain neutral.
+    if (maximum > PERSONALITY_COLOR_MIN_VALUE
+     && saturation > PERSONALITY_COLOR_MIN_SATURATION)
+        value = min(max(value + brightnessShift, 0), 31);
+    if (delta != 0)
+    {
+        if (maximum == red)
+            hue = HSV_HUE_SECTION * (green - blue) / delta;
+        else if (maximum == green)
+            hue = (2 * HSV_HUE_SECTION) + HSV_HUE_SECTION * (blue - red) / delta;
+        else
+            hue = (4 * HSV_HUE_SECTION) + HSV_HUE_SECTION * (red - green) / delta;
+        if (hue < 0)
+            hue += HSV_HUE_CYCLE;
+    }
+
+    hue = (hue + hueShift) % HSV_HUE_CYCLE;
+    if (hue < 0)
+        hue += HSV_HUE_CYCLE;
+    section = hue / HSV_HUE_SECTION;
+    remainder = hue % HSV_HUE_SECTION;
+    p = value * (255 - saturation) / 255;
+    q = value * (255 - saturation * remainder / HSV_HUE_SECTION) / 255;
+    t = value * (255 - saturation * (HSV_HUE_SECTION - 1 - remainder) / HSV_HUE_SECTION) / 255;
+
+    switch (section)
+    {
+    case 0: red = value; green = t;     blue = p;     break;
+    case 1: red = q;     green = value; blue = p;     break;
+    case 2: red = p;     green = value; blue = t;     break;
+    case 3: red = p;     green = q;     blue = value; break;
+    case 4: red = t;     green = p;     blue = value; break;
+    default:red = value; green = p;     blue = q;     break;
+    }
+
+    return (color & 0x8000) | red | (green << 5) | (blue << 10);
+}
+
+const u16 *ApplyPersonalityColorToPalette(const u16 *source, u32 personality, u8 nature, bool32 isEgg)
+{
+    s32 hueShift;
+    s32 brightnessShift;
+    u16 *destination;
+    u32 i;
+
+    if (source == NULL || isEgg)
+        return source;
+
+    // Vibrant's palette is the Nature's intrinsic effect. MON COLORS controls
+    // only the optional personality variance applied to every other Nature.
+    if (nature != NATURE_VIBRANT
+     && (gSaveBlock2Ptr == NULL
+      || gSaveBlock2Ptr->optionsPersonalityColors == OPTIONS_PERSONALITY_COLORS_OFF))
+        return source;
+
+    if (nature == NATURE_VIBRANT)
+        GetVibrantColorParameters(personality, &hueShift, &brightnessShift);
+    else
+    {
+        u32 code = GetPersonalityCode(personality);
+        u32 hueValueCount = 2 * PERSONALITY_COLOR_HUE_RANGE + 1;
+
+        // Ordinary MON COLORS are part of the visible Persona code. Changing
+        // hidden personality data such as gender must not change the palette.
+        hueShift = (s32)(code % hueValueCount) - PERSONALITY_COLOR_HUE_RANGE;
+        brightnessShift = (s32)((code / hueValueCount) % (2 * PERSONALITY_COLOR_BRIGHTNESS_RANGE + 1))
+                        - PERSONALITY_COLOR_BRIGHTNESS_RANGE;
+    }
+
+    destination = sPersonalityPaletteBuffers[sPersonalityPaletteBufferId++];
+    sPersonalityPaletteBufferId %= PERSONALITY_PALETTE_BUFFER_COUNT;
+    destination[0] = source[0]; // Preserve transparency.
+    for (i = 1; i < MON_PALETTE_COLOR_COUNT; i++)
+        destination[i] = ShiftPersonalityPaletteColor(source[i], hueShift, brightnessShift);
+    return destination;
+}
+
 const u16 *GetMonFrontSpritePal(struct Pokemon *mon)
 {
     enum Species species = GetMonData(mon, MON_DATA_SPECIES);
     bool32 isShiny = GetMonData(mon, MON_DATA_IS_SHINY);
     u32 personality = GetMonData(mon, MON_DATA_PERSONALITY);
     bool32 isEgg = GetMonData(mon, MON_DATA_IS_EGG);
-    return GetMonSpritePalFromSpeciesAndPersonalityIsEgg(species, isShiny, personality, isEgg);
+    return GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(species, isShiny, personality,
+                                                               GetMonData(mon, MON_DATA_HIDDEN_NATURE), isEgg);
 }
 
 const u16 *GetMonSpritePalFromSpeciesAndPersonality(enum Species species, bool32 isShiny, u32 personality)
 {
-    return GetMonSpritePalFromSpeciesIsEgg(species, isShiny, IsPersonalityFemale(species, personality), FALSE);
+    return GetMonSpritePalFromSpeciesAndPersonalityIsEgg(species, isShiny, personality, FALSE);
 }
 
 const u16 *GetMonSpritePalFromSpeciesAndPersonalityIsEgg(enum Species species, bool32 isShiny, u32 personality, bool32 isEgg)
 {
-    return GetMonSpritePalFromSpeciesIsEgg(species, isShiny, IsPersonalityFemale(species, personality), isEgg);
+    return GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(species, isShiny, personality, GetNatureFromPersonality(personality), isEgg);
 }
 
 const u16 *GetMonSpritePalFromSpecies(enum Species species, bool32 isShiny, bool32 isFemale)
@@ -7599,6 +8000,12 @@ const u16 *GetMonSpritePalFromSpeciesIsEgg(enum Species species, bool32 isShiny,
         else
             return gSpeciesInfo[SPECIES_NONE].palette;
     }
+}
+
+const u16 *GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(enum Species species, bool32 isShiny, u32 personality, u8 nature, bool32 isEgg)
+{
+    const u16 *palette = GetMonSpritePalFromSpeciesIsEgg(species, isShiny, IsPersonalityFemale(species, personality), isEgg);
+    return ApplyPersonalityColorToPalette(palette, personality, nature, isEgg);
 }
 
 #define OR_MOVE_IS_HM(_hm) || (move == MOVE_##_hm)

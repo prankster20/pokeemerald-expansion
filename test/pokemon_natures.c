@@ -46,13 +46,13 @@ TEST("pranks Ordinary custom Natures remain directly mintable")
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_INNOCENT));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_AFFECTIONATE));
     EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_CAPRICIOUS));
-    EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_LEVEL_HEADED));
+    EXPECT(!IsNatureExcludedFromRandomAcquisition(NATURE_STALWART));
 }
 
 TEST("pranks Nostalgic and Level-Headed occupy their stable IDs")
 {
     EXPECT_EQ(NATURE_NOSTALGIC, 46);
-    EXPECT_EQ(NATURE_LEVEL_HEADED, 77);
+    EXPECT_EQ(NATURE_STALWART, 77);
 }
 
 TEST("pranks Capricious minting enables persistent rerolls and chooses a different active Nature")

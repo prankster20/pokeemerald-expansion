@@ -115,6 +115,7 @@ static EWRAM_DATA struct ShopData *sShopData = NULL;
 static EWRAM_DATA struct ListMenuItem *sListMenuItems = NULL;
 static EWRAM_DATA u8 (*sItemNames)[ITEM_NAME_LENGTH + 2] = {0};
 static EWRAM_DATA u8 sPurchaseHistoryId = 0;
+static EWRAM_DATA u8 sWrappedShopDescription[512] = {0};
 EWRAM_DATA struct ItemSlot gMartPurchaseHistory[SMARTSHOPPER_NUM_ITEMS] = {0};
 
 static void Task_ShopMenu(u8 taskId);
@@ -633,8 +634,13 @@ static void BuyMenuPrintItemDescriptionAndShowItemIcon(s32 item, bool8 onInit, s
         description = gText_QuitShopping;
     }
 
+    FormatTextByWidth(sWrappedShopDescription,
+                      WindowWidthPx(WIN_ITEM_DESCRIPTION) - 10,
+                      FONT_SMALL,
+                      description,
+                      0);
     FillWindowPixelBuffer(WIN_ITEM_DESCRIPTION, PIXEL_FILL(0));
-    AddTextPrinterParameterized4(WIN_ITEM_DESCRIPTION, FONT_SMALL, 3, 1, 0, 0, sShopBuyMenuTextColors[COLORID_NORMAL], 0, description);
+    AddTextPrinterParameterized4(WIN_ITEM_DESCRIPTION, FONT_SMALL, 3, 1, 0, 0, sShopBuyMenuTextColors[COLORID_NORMAL], 0, sWrappedShopDescription);
 }
 
 static void BuyMenuPrintPriceInList(u8 windowId, u32 itemId, u8 y)

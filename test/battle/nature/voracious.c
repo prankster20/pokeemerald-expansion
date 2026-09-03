@@ -6,7 +6,7 @@ static void SetTestNature(struct Pokemon *mon, u32 nature)
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
 }
 
-SINGLE_BATTLE_TEST("pranks Voracious boosts Leftovers healing by fifty percent")
+SINGLE_BATTLE_TEST("pranks Voracious boosts Leftovers healing by twenty percent")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_LEFTOVERS); MaxHP(160); HP(1); }
@@ -15,13 +15,13 @@ SINGLE_BATTLE_TEST("pranks Voracious boosts Leftovers healing by fifty percent")
     } WHEN {
         TURN { }
     } SCENE {
-        HP_BAR(player, damage: -15);
+        HP_BAR(player, damage: -12);
     } THEN {
-        EXPECT_EQ(player->hp, 16);
+        EXPECT_EQ(player->hp, 13);
     }
 }
 
-SINGLE_BATTLE_TEST("pranks Voracious does not boost Black Sludge healing")
+SINGLE_BATTLE_TEST("pranks Voracious boosts Black Sludge healing by twenty percent")
 {
     GIVEN {
         ASSUME(GetSpeciesType(SPECIES_GRIMER, 0) == TYPE_POISON);
@@ -31,9 +31,9 @@ SINGLE_BATTLE_TEST("pranks Voracious does not boost Black Sludge healing")
     } WHEN {
         TURN { }
     } SCENE {
-        HP_BAR(player, damage: -10);
+        HP_BAR(player, damage: -12);
     } THEN {
-        EXPECT_EQ(player->hp, 11);
+        EXPECT_EQ(player->hp, 13);
     }
 }
 

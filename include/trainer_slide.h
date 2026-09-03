@@ -23,4 +23,6 @@ void InitalizeTrainerSlide(enum BattlerId battler, enum TrainerSlideType slideId
 void MarkTrainerSlideAsPlayed(enum BattlerId battler, enum TrainerSlideType slideId);
 void MarkInitializedTrainerSlidesAsPlayed(enum BattlerId battler, enum TrainerSlideType slideId);
 
+extern const u8 *const gText_BirchSentretTrainerSlide;
+
 #endif // GUARD_TRAINER_SLIDE_H
