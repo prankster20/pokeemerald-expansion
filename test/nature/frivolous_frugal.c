@@ -1,6 +1,7 @@
 #include "global.h"
 #include "pokemon.h"
 #include "item.h"
+#include "shop.h"
 #include "test/test.h"
 
 // Frivolous: 10% chance to secretly buy an extra item when purchasing.
@@ -102,6 +103,13 @@ TEST("pranks Frugal accepts all Scrounger junk")
 
     for (u32 i = 0; i < ARRAY_COUNT(sJunkItems); i++)
         EXPECT(!DoesBoxMonNatureRefuseHeldItem(&mon.box, sJunkItems[i]));
+}
+
+TEST("pranks Frugal gets a 5% discount at Marts")
+{
+    EXPECT_EQ(TestGetFrugalDiscountPrice(ITEM_POKE_BALL), (GetItemPrice(ITEM_POKE_BALL) * 19) / 20);
+    EXPECT_EQ(TestGetFrugalDiscountPrice(ITEM_POTION), (GetItemPrice(ITEM_POTION) * 19) / 20);
+    EXPECT_EQ(TestGetFrugalDiscountPrice(ITEM_MAX_REPEL), (GetItemPrice(ITEM_MAX_REPEL) * 19) / 20);
 }
 
 // ===== FRIVOLOUS =====

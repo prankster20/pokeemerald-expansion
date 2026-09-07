@@ -9,6 +9,7 @@
 #include "constants/characters.h"
 #include "constants/daycare.h"
 #include "constants/move_relearner.h"
+#include "config/personality_colors.h"
 
 TEST("Nature independent from Hidden Nature")
 {

@@ -9,6 +9,7 @@ void CreateDecorationShop2Menu(const u16 *itemsForSale);
 void CB2_ExitSellMenu(void);
 
 #if TESTING
+u32 TestGetFrugalDiscountPrice(enum Item item);
 u32 TestGetFrivolousDiscountPrice(enum Item item);
 #endif
 
