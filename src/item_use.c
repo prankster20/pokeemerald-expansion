@@ -16,6 +16,7 @@
 #include "event_scripts.h"
 #include "fieldmap.h"
 #include "field_effect.h"
+#include "field_move.h"
 #include "field_player_avatar.h"
 #include "field_screen_effect.h"
 #include "field_weather.h"
@@ -38,6 +39,7 @@
 #include "pokeblock.h"
 #include "pokemon.h"
 #include "rtc.h"
+#include "region_map.h"
 #include "script.h"
 #include "sound.h"
 #include "strings.h"
@@ -49,6 +51,7 @@
 #include "constants/event_bg.h"
 #include "constants/event_objects.h"
 #include "constants/flags.h"
+#include "constants/field_move.h"
 #include "constants/item_effects.h"
 #include "constants/items.h"
 #include "constants/rtc.h"
@@ -98,6 +101,8 @@ static const u8 sText_DaylightSaverDay[] = _("The DAYLIGHT SAVER turned!\pDaylig
 static const u8 sText_DaylightSaverNight[] = _("The DAYLIGHT SAVER turned!\pNight settled over HOENN!{PAUSE_UNTIL_PRESS}");
 static const u8 sText_RepelCharmOn[] = _("The REPEL CHARM was switched on!\pWeaker wild POKéMON will stay away.{PAUSE_UNTIL_PRESS}");
 static const u8 sText_RepelCharmOff[] = _("The REPEL CHARM was switched off.{PAUSE_UNTIL_PRESS}");
+static const u8 sText_PowerTrainerOn[] = _("EXP MAX was switched on!{PAUSE_UNTIL_PRESS}");
+static const u8 sText_PowerTrainerOff[] = _("EXP MAX was switched off.{PAUSE_UNTIL_PRESS}");
 static const u8 sText_PowderQty[] = _("POWDER QTY: {STR_VAR_1}{PAUSE_UNTIL_PRESS}");
 static const u8 sText_BootedUpTM[] = _("Booted up a TM.");
 static const u8 sText_BootedUpHM[] = _("Booted up an HM.");
@@ -173,6 +178,69 @@ static void SetUpItemUseOnFieldCallback(u8 taskId)
     {
         sItemUseOnFieldCB(taskId);
     }
+}
+
+static const u8 sText_PlayerUsedFieldTool[] = _("{PLAYER} used the {STR_VAR_2}!");
+
+static void Task_ActivateFieldTool(u8 taskId)
+{
+    if (gPostMenuFieldCallback != NULL)
+        gPostMenuFieldCallback();
+    DestroyTask(taskId);
+}
+
+static void Task_UseFieldTool(u8 taskId)
+{
+    CopyItemName(gSpecialVar_ItemId, gStringVar2);
+    StringExpandPlaceholders(gStringVar4, sText_PlayerUsedFieldTool);
+    DisplayItemMessageOnField(taskId, gStringVar4, Task_ActivateFieldTool);
+}
+
+void ItemUseOutOfBattle_FieldTool(u8 taskId)
+{
+    enum FieldMove fieldMove;
+
+    switch (gSpecialVar_ItemId)
+    {
+    case ITEM_FIELD_SHEARS:    fieldMove = FIELD_MOVE_CUT;        break;
+    case ITEM_GLIDER:          fieldMove = FIELD_MOVE_FLY;        break;
+    case ITEM_SURFBOARD:       fieldMove = FIELD_MOVE_SURF;       break;
+    case ITEM_POWER_GLOVES:    fieldMove = FIELD_MOVE_STRENGTH;   break;
+    case ITEM_LANTERN:         fieldMove = FIELD_MOVE_FLASH;      break;
+    case ITEM_ROCK_HAMMER:     fieldMove = FIELD_MOVE_ROCK_SMASH; break;
+    case ITEM_WATERFALL_GEAR:  fieldMove = FIELD_MOVE_WATERFALL;  break;
+    case ITEM_DIVING_GEAR:     fieldMove = FIELD_MOVE_DIVE;       break;
+    default:
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+        return;
+    }
+
+    gSpecialVar_0x8005 = 2;
+    gFieldEffectArguments[3] = 2;
+    SetFieldMoveUserPartyIndex(0);
+    if (!IsFieldMoveUnlocked(fieldMove) || !SetUpFieldMove(fieldMove))
+    {
+        DisplayDadsAdviceCannotUseItemMessage(taskId, gTasks[taskId].tUsingRegisteredKeyItem);
+        return;
+    }
+
+    if (fieldMove == FIELD_MOVE_FLY)
+    {
+        if (!gTasks[taskId].tUsingRegisteredKeyItem)
+        {
+            gBagMenu->newScreenCallback = CB2_OpenFlyMap;
+            Task_FadeAndCloseBagMenu(taskId);
+        }
+        else
+        {
+            SetMainCallback2(CB2_OpenFlyMap);
+            DestroyTask(taskId);
+        }
+        return;
+    }
+
+    sItemUseOnFieldCB = Task_UseFieldTool;
+    SetUpItemUseOnFieldCallback(taskId);
 }
 
 static void FieldCB_UseItemOnField(void)
@@ -839,6 +907,27 @@ void ItemUseOutOfBattle_InfiniteRepel(u8 taskId)
         FlagSet(FLAG_UNUSED_0x8E5);
         VarSet(VAR_REPEL_STEP_COUNT, 0);
         message = sText_RepelCharmOn;
+    }
+
+    if (!gTasks[taskId].tUsingRegisteredKeyItem)
+        DisplayItemMessage(taskId, FONT_NORMAL, message, CloseItemMessage);
+    else
+        DisplayItemMessageOnField(taskId, message, Task_CloseCantUseKeyItemMessage);
+}
+
+void ItemUseOutOfBattle_PowerTrainer(u8 taskId)
+{
+    const u8 *message;
+
+    if (FlagGet(FLAG_POWER_TRAINER_ON))
+    {
+        FlagClear(FLAG_POWER_TRAINER_ON);
+        message = sText_PowerTrainerOff;
+    }
+    else
+    {
+        FlagSet(FLAG_POWER_TRAINER_ON);
+        message = sText_PowerTrainerOn;
     }
 
     if (!gTasks[taskId].tUsingRegisteredKeyItem)

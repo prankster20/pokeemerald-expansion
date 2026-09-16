@@ -8,11 +8,18 @@ EventScript_CutTree::
 	buffermovename STR_VAR_2, MOVE_CUT
 	msgbox Text_WantToCut, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, EventScript_CancelCut
+	goto_if_eq VAR_0x8005, 2, EventScript_CutTreeToolOnly
 	msgbox Text_MonUsedFieldMove, MSGBOX_DEFAULT
+	closemessage
+	goto EventScript_CutTreeCommon
+EventScript_CutTreeToolOnly:
+	bufferitemname STR_VAR_2, ITEM_FIELD_SHEARS
+	msgbox Text_PlayerUsedFieldTool, MSGBOX_DEFAULT
 	closemessage
 EventScript_CutTreeCommon:
 	isfollowerfieldmoveuser VAR_0x8004
 	setfieldeffectargument 3, VAR_0x8004 @ skip pose if so
+	call_if_eq VAR_0x8005, 2, EventScript_FieldToolSkipMonCutIn
 	dofieldeffect FLDEFF_USE_CUT_ON_TREE
 	waitstate
 EventScript_CutTreeDown:: @ fallthrough
@@ -46,7 +53,7 @@ EventScript_CancelCut::
 Text_WantToCut:
 	.string "This tree looks like it can be\n"
 	.string "CUT down!\p"
-	.string "Would you like to CUT it?$"
+	.string "Would you like to use the FIELD SHEARS?$"
 
 Text_MonUsedFieldMove:
 	.string "{STR_VAR_1} used {STR_VAR_2}!$"
@@ -70,12 +77,19 @@ EventScript_RockSmash::
 	buffermovename STR_VAR_2, MOVE_ROCK_SMASH
 	msgbox Text_WantToSmash, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, EventScript_CancelSmash
+	goto_if_eq VAR_0x8005, 2, EventScript_RockSmashToolOnly
 	msgbox Text_MonUsedFieldMove, MSGBOX_DEFAULT
+	closemessage
+	goto EventScript_RockSmashCommon
+EventScript_RockSmashToolOnly:
+	bufferitemname STR_VAR_2, ITEM_ROCK_HAMMER
+	msgbox Text_PlayerUsedFieldTool, MSGBOX_DEFAULT
 	closemessage
 EventScript_RockSmashCommon:
 	@ check if follower should use the field move
 	isfollowerfieldmoveuser VAR_0x8004
 	setfieldeffectargument 3, VAR_0x8004 @ skip pose if so
+	call_if_eq VAR_0x8005, 2, EventScript_FieldToolSkipMonCutIn
 	dofieldeffect FLDEFF_USE_ROCK_SMASH
 	waitstate
 EventScript_SmashRock:: @ fallthrough
@@ -215,7 +229,8 @@ EventScript_CancelSmash::
 
 Text_WantToSmash:
 	.string "This rock appears to be breakable.\n"
-	.string "Would you like to use ROCK SMASH?$"
+	.string "Would you like to use the\n"
+	.string "ROCK HAMMER?$"
 
 Text_CantSmash:
 	.string "It's a rugged rock, but a POKéMON\n"
@@ -230,6 +245,12 @@ EventScript_StrengthBoulder::
 	msgbox Text_WantToStrength, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, EventScript_CancelStrength
 	closemessage
+	goto_if_ne VAR_0x8005, 2, EventScript_StrengthUseEffect
+	bufferitemname STR_VAR_2, ITEM_POWER_GLOVES
+	msgbox Text_PlayerUsedFieldTool, MSGBOX_DEFAULT
+	closemessage
+EventScript_StrengthUseEffect:
+	call_if_eq VAR_0x8005, 2, EventScript_FieldToolSkipMonCutIn
 	dofieldeffect FLDEFF_USE_STRENGTH
 	waitstate
 	goto EventScript_ActivateStrength
@@ -264,9 +285,8 @@ EventScript_CancelStrength::
 	end
 
 Text_WantToStrength:
-	.string "It's a big boulder, but a POKéMON\n"
-	.string "may be able to push it aside.\p"
-	.string "Would you like to use STRENGTH?$"
+	.string "It's a big boulder.\p"
+	.string "Would you like to use the POWER GLOVES?$"
 
 Text_MonUsedStrength:
 	.string "{STR_VAR_1} used STRENGTH!\p"
@@ -289,7 +309,14 @@ EventScript_UseWaterfall::
 	setfieldeffectargument 0, VAR_RESULT
 	msgbox Text_WantToWaterfall, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, EventScript_EndWaterfall
+	goto_if_eq VAR_0x8005, 2, EventScript_WaterfallToolOnly
 	msgbox Text_MonUsedWaterfall, MSGBOX_DEFAULT
+	goto EventScript_WaterfallStartEffect
+EventScript_WaterfallToolOnly:
+	bufferitemname STR_VAR_2, ITEM_WATERFALL_GEAR
+	msgbox Text_PlayerUsedFieldTool, MSGBOX_DEFAULT
+EventScript_WaterfallStartEffect:
+	call_if_eq VAR_0x8005, 2, EventScript_FieldToolSkipMonCutIn
 	hidefollowernpc
 	dofieldeffect FLDEFF_USE_WATERFALL
 	callnative FollowerNPC_WarpSetEnd
@@ -311,7 +338,7 @@ Text_CantWaterfall:
 
 Text_WantToWaterfall:
 	.string "It's a large waterfall.\n"
-	.string "Would you like to use WATERFALL?$"
+	.string "Would you like to use the WATERFALL GEAR?$"
 
 Text_MonUsedWaterfall:
 	.string "{STR_VAR_1} used WATERFALL.$"
@@ -326,7 +353,14 @@ EventScript_UseDive::
 	setfieldeffectargument 1, 1
 	msgbox Text_WantToDive, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, EventScript_EndDive
+	goto_if_eq VAR_0x8005, 2, EventScript_DiveToolOnly
 	msgbox Text_MonUsedDive, MSGBOX_DEFAULT
+	goto EventScript_DiveStartEffect
+EventScript_DiveToolOnly:
+	bufferitemname STR_VAR_2, ITEM_DIVING_GEAR
+	msgbox Text_PlayerUsedFieldTool, MSGBOX_DEFAULT
+EventScript_DiveStartEffect:
+	call_if_eq VAR_0x8005, 2, EventScript_FieldToolSkipMonCutIn
 	hidefollowernpc
 	setfieldeffectargument 0, VAR_0x8004
 	setfieldeffectargument 1, 1
@@ -352,7 +386,14 @@ EventScript_UseDiveUnderwater::
 	setfieldeffectargument 1, 1
 	msgbox Text_WantToSurface, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, EventScript_NoSurface
+	goto_if_eq VAR_0x8005, 2, EventScript_SurfaceToolOnly
 	msgbox Text_MonUsedDive, MSGBOX_DEFAULT
+	goto EventScript_SurfaceStartEffect
+EventScript_SurfaceToolOnly:
+	bufferitemname STR_VAR_2, ITEM_DIVING_GEAR
+	msgbox Text_PlayerUsedFieldTool, MSGBOX_DEFAULT
+EventScript_SurfaceStartEffect:
+	call_if_eq VAR_0x8005, 2, EventScript_FieldToolSkipMonCutIn
 	hidefollowernpc
 	dofieldeffect FLDEFF_USE_DIVE
 	goto EventScript_EndSurface
@@ -405,7 +446,7 @@ Text_CantDive:
 
 Text_WantToDive:
 	.string "The sea is deep here.\n"
-	.string "Would you like to use DIVE?$"
+	.string "Would you like to use the DIVING GEAR?$"
 
 Text_MonUsedDive:
 	.string "{STR_VAR_1} used DIVE.$"
@@ -416,7 +457,16 @@ Text_CantSurface:
 
 Text_WantToSurface:
 	.string "Light is filtering down from above.\n"
-	.string "Would you like to use DIVE?$"
+	.string "Would you like to use the DIVING GEAR?$"
+
+EventScript_FieldToolSkipMonCutIn:
+	@ Field tools are used by the player, never by the follower.
+	setvar VAR_0x8004, FALSE
+	setfieldeffectargument 3, 2
+	return
+
+Text_PlayerUsedFieldTool:
+	.string "{PLAYER} used the {STR_VAR_2}!$"
 
 EventScript_FailSweetScent::
 	msgbox Text_FailSweetScent, MSGBOX_SIGN

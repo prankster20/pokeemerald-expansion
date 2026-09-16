@@ -220,9 +220,40 @@ Gender: Male
 Music: Aqua
 Double Battle: No
 AI: Check Bad Move
+Difficulty: Easy
 
-Skorupi
-Level: 9
+Inkay
+Level: 10
+Nature: Greedy
+- Sneer
+- Confound
+- Bubble
+- Peck
+
+=== TRAINER_GRUNT_PETALBURG_WOODS ===
+Name: GRUNT
+Class: Team Aqua
+Pic: Aqua Grunt M
+Gender: Male
+Music: Aqua
+Double Battle: No
+AI: Check Bad Move
+Difficulty: Normal
+
+Inkay
+Level: 10
+Nature: Greedy, Shortsighted
+- Sneer
+- Confound
+- Flip Turn
+- Peck
+
+SPECIES_WOOPER_PALDEA
+Level: 10
+Nature: Greedy, Flighty
+- Bulldoze
+- Poison Tail
+- Flip Turn
 
 === TRAINER_MARCEL ===
 Name: MARCEL
@@ -4316,25 +4347,23 @@ Items: Potion / Potion
 Double Battle: No
 AI: Basic Trainer
 
-Geodude
-Level: 12
-- Tackle
-- Defense Curl
-- Rock Throw
-- Rock Tomb
-
-Geodude
-Level: 12
-- Tackle
-- Defense Curl
-- Rock Throw
-- Rock Tomb
-
-Nosepass @ Oran Berry
+Geodude-Alola
 Level: 15
-- Block
-- Harden
 - Tackle
+- Defense Curl
+- Rock Throw
+- Rock Tomb
+
+Glimmet
+Level: 15
+- Acid
+- Rock Tomb
+- Stealth Rock
+
+Carbink @ Muscle Band
+Level: 15
+- Tackle
+- Covet
 - Rock Tomb
 
 === TRAINER_BRAWLY_1 ===
@@ -5356,6 +5385,7 @@ AI: Check Bad Move
 
 Sentret
 Level: 5
+Nature: Naive
 
 === TRAINER_BILLY ===
 Name: BILLY

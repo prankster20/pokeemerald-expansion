@@ -5958,6 +5958,9 @@ u32 GetBattleMoveTarget(enum Move move, enum MoveTarget moveTarget)
 
 enum Obedience GetAttackerObedienceForAction(void)
 {
+#if B_ALWAYS_OBEY
+    return OBEYS;
+#else
     s32 rnd;
     s32 calc;
     u8 obedienceLevel = 0;
@@ -6057,6 +6060,7 @@ enum Obedience GetAttackerObedienceForAction(void)
         else
             return DISOBEYS_LOAFS;
     }
+#endif
 }
 
 enum HoldEffect GetBattlerHoldEffect(enum BattlerId battler)
@@ -6826,6 +6830,7 @@ static inline u32 CalcMoveBasePower(struct DamageContext *ctx)
     return basePower;
 }
 
+
 static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
 {
     u32 holdEffectParamAtk;
@@ -7008,6 +7013,10 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
         break;
     case ABILITY_PUNK_ROCK:
         if (IsSoundMove(move))
+            modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
+        break;
+    case ABILITY_RADIANCE:
+        if (IsLightMove(move))
             modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
         break;
     case ABILITY_STEELY_SPIRIT:
@@ -7350,13 +7359,39 @@ static inline u32 CalcAttackStat(struct DamageContext *ctx)
     {
         if (IsBattleMovePhysical(move))
         {
-            atkStat = gBattleMons[battlerAtk].attack;
-            atkStage = gBattleMons[battlerAtk].statStages[STAT_ATK];
+            if (ctx->abilities[battlerAtk] == ABILITY_ROYALTY && (ctx->fieldStatuses & STATUS_FIELD_WONDER_ROOM))
+            {
+                atkStat = gBattleMons[battlerAtk].spDefense;
+                atkStage = gBattleMons[battlerAtk].statStages[STAT_SPDEF];
+            }
+            else if (ctx->abilities[battlerAtk] == ABILITY_ROYALTY)
+            {
+                atkStat = gBattleMons[battlerAtk].defense;
+                atkStage = gBattleMons[battlerAtk].statStages[STAT_DEF];
+            }
+            else
+            {
+                atkStat = gBattleMons[battlerAtk].attack;
+                atkStage = gBattleMons[battlerAtk].statStages[STAT_ATK];
+            }
         }
         else
         {
-            atkStat = gBattleMons[battlerAtk].spAttack;
-            atkStage = gBattleMons[battlerAtk].statStages[STAT_SPATK];
+            if (ctx->abilities[battlerAtk] == ABILITY_ESOTERIC && (ctx->fieldStatuses & STATUS_FIELD_WONDER_ROOM))
+            {
+                atkStat = gBattleMons[battlerAtk].defense;
+                atkStage = gBattleMons[battlerAtk].statStages[STAT_DEF];
+            }
+            else if (ctx->abilities[battlerAtk] == ABILITY_ESOTERIC)
+            {
+                atkStat = gBattleMons[battlerAtk].spDefense;
+                atkStage = gBattleMons[battlerAtk].statStages[STAT_SPDEF];
+            }
+            else
+            {
+                atkStat = gBattleMons[battlerAtk].spAttack;
+                atkStage = gBattleMons[battlerAtk].statStages[STAT_SPATK];
+            }
         }
     }
 
@@ -8077,6 +8112,7 @@ static inline uq4_12_t GetAttackerAbilitiesModifier(enum BattlerId battlerAtk, u
     switch (abilityAtk)
     {
     case ABILITY_NEUROFORCE:
+    case ABILITY_PREDATOR:
         if (typeEffectivenessModifier >= UQ_4_12(2.0))
             return UQ_4_12(1.25);
         break;
@@ -8132,6 +8168,13 @@ static inline uq4_12_t GetDefenderAbilitiesModifier(struct DamageContext *ctx)
         break;
     case ABILITY_PUNK_ROCK:
         if (IsSoundMove(ctx->move))
+        {
+            modifier = UQ_4_12(0.5);
+            recordAbility = TRUE;
+        }
+        break;
+    case ABILITY_RADIANCE:
+        if (IsLightMove(ctx->move))
         {
             modifier = UQ_4_12(0.5);
             recordAbility = TRUE;
@@ -8767,12 +8810,12 @@ s32 GetAdjustedDamage(struct DamageContext *ctx, s32 damage)
         gBattleStruct->battlerState[ctx->battlerDef].indomitableFaintPending = TRUE;
     }
     // --- Custom Archetype nature: Affectionate ---
-    // At exactly max Friendship, has a Focus Band-like 20% chance to endure
-    // lethal move damage with 1 HP. This is separate from the global
+    // Has a Focus Band-like 5-20% chance, scaled by current Friendship, to
+    // endure lethal move damage with 1 HP. This is separate from the global
     // affection-mechanics toggle and uses the existing affection message.
     else if (HasNature(ctx->battlerDef, NATURE_AFFECTIONATE)
-          && gBattleMons[ctx->battlerDef].friendship == MAX_FRIENDSHIP
-          && RandomPercentage(RNG_NATURE_AFFECTIONATE, 20))
+          && RandomPercentage(RNG_NATURE_AFFECTIONATE,
+                              5 + (gBattleMons[ctx->battlerDef].friendship * 15 / MAX_FRIENDSHIP)))
     {
         enduredHit = TRUE;
         if (ctx->updateFlags)

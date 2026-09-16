@@ -68,7 +68,7 @@ SINGLE_BATTLE_TEST("Covert Cloak does not block primary effects")
         HP_BAR(opponent);
         switch (move) {
             case MOVE_INFESTATION:
-                MESSAGE("The opposing Skarmory has been afflicted with an infestation by Wobbuffet!");
+                MESSAGE("The opposing Skarmory has been infested by Wobbuffet!");
                 break;
             case MOVE_THOUSAND_ARROWS:
                 MESSAGE("The opposing Skarmory fell straight down!");

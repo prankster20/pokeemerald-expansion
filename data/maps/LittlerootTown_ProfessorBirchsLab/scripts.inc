@@ -509,7 +509,8 @@ LittlerootTown_ProfessorBirchsLab_EventScript_GivePokedex::
 	call LittlerootTown_ProfessorBirchsLab_EventScript_ReceivePokedex
 	msgbox LittlerootTown_ProfessorBirchsLab_Text_ExplainPokedex, MSGBOX_DEFAULT
 	msgbox LittlerootTown_ProfessorBirchsLab_Text_BirchGivePokeBalls, MSGBOX_DEFAULT
-	giveitem ITEM_POKE_BALL, 5
+	giveitem ITEM_POKE_BALL, 10
+	giveitem ITEM_POKEMON_BOX_LINK, 1
 	closemessage
 	applymovement LOCALID_BIRCHS_LAB_RIVAL, LittlerootTown_ProfessorBirchsLab_Movement_RivalApproachPlayer
 	waitmovement 0
@@ -531,8 +532,10 @@ LittlerootTown_ProfessorBirchsLab_EventScript_MayGivePokeBalls::
 	giveitem ITEM_INFINITE_REPEL
 	msgbox LittlerootTown_ProfessorBirchsLab_Text_MayGiveCatchUpCandy, MSGBOX_DEFAULT
 	giveitem ITEM_CATCH_UP_CANDY
+	msgbox LittlerootTown_ProfessorBirchsLab_Text_MayGivePowerTrainer, MSGBOX_DEFAULT
+	giveitem ITEM_POWER_TRAINER
 	msgbox LittlerootTown_ProfessorBirchsLab_Text_MayGiveSupplies, MSGBOX_DEFAULT
-	giveitem ITEM_RANDOM_MINT, 3
+	giveitem ITEM_ROOKIE_RANDOM_MINT, 3
 	setvar VAR_RESULT, 0
 	return
 
@@ -541,8 +544,10 @@ LittlerootTown_ProfessorBirchsLab_EventScript_BrendanGivePokeBalls::
 	giveitem ITEM_INFINITE_REPEL
 	msgbox LittlerootTown_ProfessorBirchsLab_Text_BrendanGiveCatchUpCandy, MSGBOX_DEFAULT
 	giveitem ITEM_CATCH_UP_CANDY
+	msgbox LittlerootTown_ProfessorBirchsLab_Text_BrendanGivePowerTrainer, MSGBOX_DEFAULT
+	giveitem ITEM_POWER_TRAINER
 	msgbox LittlerootTown_ProfessorBirchsLab_Text_BrendanGiveSupplies, MSGBOX_DEFAULT
-	giveitem ITEM_RANDOM_MINT, 3
+	giveitem ITEM_ROOKIE_RANDOM_MINT, 3
 	setvar VAR_RESULT, 1
 	return
 
@@ -785,6 +790,11 @@ LittlerootTown_ProfessorBirchsLab_Text_MayGiveCatchUpCandy:
 	.string "POKéMON that's fallen far behind\n"
 	.string "the rest of your team.$"
 
+LittlerootTown_ProfessorBirchsLab_Text_MayGivePowerTrainer:
+	.string "MAY: The POWER TRAINER makes one\n"
+	.string "battle count as repeated training up\l"
+	.string "to your current level cap!$"
+
 LittlerootTown_ProfessorBirchsLab_Text_MayGiveSupplies:
 	.string "MAY: Oh, and take three RANDOM\n"
 	.string "MINTS! They change a POKéMON's\n"
@@ -819,6 +829,11 @@ LittlerootTown_ProfessorBirchsLab_Text_BrendanGiveCatchUpCandy:
 	.string "BRENDAN: This CATCH-UP CANDY helps a\n"
 	.string "POKéMON that's fallen far behind\n"
 	.string "the rest of your team.$"
+
+LittlerootTown_ProfessorBirchsLab_Text_BrendanGivePowerTrainer:
+	.string "BRENDAN: The POWER TRAINER makes\n"
+	.string "one battle count as repeated training\l"
+	.string "up to your current level cap.$"
 
 LittlerootTown_ProfessorBirchsLab_Text_BrendanGiveSupplies:
 	.string "BRENDAN: Here. Three RANDOM MINTS.\n"

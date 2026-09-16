@@ -231,6 +231,14 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
         .breakable = TRUE,
     },
 
+    [ABILITY_UNFLAPPABLE] =
+    {
+        .name = _("Unflappable"),
+        .description = COMPOUND_STRING("Prevents stat reduction."),
+        .aiRating = 4,
+        .breakable = TRUE,
+    },
+
     [ABILITY_NATURAL_CURE] =
     {
         .name = _("Natural Cure"),
@@ -899,7 +907,7 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_RECKLESS] =
     {
         .name = _("Reckless"),
-        .description = COMPOUND_STRING("Boosts moves with recoil."),
+        .description = COMPOUND_STRING("Boosts moves with recoil or crash damage by 30%."),
         .aiRating = 6,
     },
 
@@ -1396,8 +1404,8 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
 
     [ABILITY_PARENTAL_BOND] =
     {
-        .name = _("Tandem Bond"),
-        .description = COMPOUND_STRING("Single-target single-strike moves hit twice, with the second hit at 25% power."),
+        .name = _("Familial Bond"),
+        .description = COMPOUND_STRING("The family fights together, hitting twice, with the second hit at 25% power."),
         .aiRating = 10,
     },
 
@@ -1786,7 +1794,14 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_NEUROFORCE] =
     {
         .name = _("Neuroforce"),
-        .description = COMPOUND_STRING("Ups “supereffective”."),
+        .description = COMPOUND_STRING("Boosts super-effective moves by 25%."),
+        .aiRating = 6,
+    },
+
+    [ABILITY_PREDATOR] =
+    {
+        .name = _("Predator"),
+        .description = COMPOUND_STRING("Boosts super-effective moves by 25%."),
         .aiRating = 6,
     },
 
@@ -1870,7 +1885,7 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
     {
         .name = _("Punk Rock"),
         .description = COMPOUND_STRING("Ups and resists sound."),
-        .aiRating = 2,
+        .aiRating = 6,
         .breakable = TRUE,
     },
 
@@ -2479,5 +2494,27 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
     {
         .name = _("Spicy Spray"),
         .description = COMPOUND_STRING("Burns the foe when damaged."),
+    },
+
+    [ABILITY_ESOTERIC] =
+    {
+        .name = _("Esoteric"),
+        .description = COMPOUND_STRING("Adds 25% of Sp. Def to special attacks."),
+        .aiRating = 6,
+    },
+
+    [ABILITY_ROYALTY] =
+    {
+        .name = _("Royalty"),
+        .description = COMPOUND_STRING("Adds 25% of Defense to physical attacks."),
+        .aiRating = 6,
+    },
+
+    [ABILITY_RADIANCE] =
+    {
+        .name = _("Radiance"),
+        .description = COMPOUND_STRING("Boosts Light-based moves by 30% and takes 50% less damage from other Light-based moves."),
+        .aiRating = 6,
+        .breakable = TRUE,
     },
 };

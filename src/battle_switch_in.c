@@ -16,6 +16,7 @@ static bool32 TryHazardsOnSwitchIn(enum BattlerId battler, enum Ability ability,
 static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler);
 static bool32 TryNatureSwitchInEffects(enum BattlerId battler); // pranks / jimh
 static bool32 SecondEventBlockEvents(struct BattleCalcValues *calcValues);
+static EWRAM_DATA u8 sNatureAnnouncementIndexes[MAX_BATTLERS_COUNT] = {0};
 
 bool32 DoSwitchInEvents(void)
 {
@@ -75,9 +76,10 @@ bool32 DoSwitchInEvents(void)
     case SWITCH_IN_EVENTS_ANNOUNCE_NATURES:
         while (gBattleStruct->switchInBattlerCounter < gBattlersCount)
         {
-            battler = gBattlersByRawSpeed[gBattleStruct->switchInBattlerCounter++];
+            battler = gBattlersByRawSpeed[gBattleStruct->switchInBattlerCounter];
             if (TryAnnounceOpposingNatureOnSwitchIn(battler))
                 return TRUE;
+            gBattleStruct->switchInBattlerCounter++;
         }
         gBattleStruct->switchInBattlerCounter = 0;
         gBattleStruct->eventState.switchIn++;
@@ -333,7 +335,12 @@ static bool32 TryAnnounceOpposingNatureOnSwitchIn(enum BattlerId battler)
     if (GetBattlerSide(battler) != B_SIDE_OPPONENT)
         return FALSE;
 
-    nature = GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE);
+    if (!GetPokemonNatureAtIndex(GetBattlerMon(battler), sNatureAnnouncementIndexes[battler], &nature))
+    {
+        sNatureAnnouncementIndexes[battler] = 0;
+        return FALSE;
+    }
+    sNatureAnnouncementIndexes[battler]++;
     gBattleScripting.battler = battler;
     gBattleScripting.showNaturePopup = TRUE;
     gBattleScripting.naturePopupId = nature;

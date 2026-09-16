@@ -129,6 +129,7 @@ u8 GetHPBarLevel(s16 hp, s16 maxhp);
 void CreateAbilityPopUp(enum BattlerId battlerId, enum Ability ability, bool32 isDoubleBattle);
 // pranks / jimh - Custom Archetype natures: Cowardly & Phobic
 void CreateNaturePopUp(enum BattlerId battlerId, u8 nature, bool32 isDoubleBattle);
+bool32 IsAbilityPopUpActive(enum BattlerId battlerId);
 void DestroyAbilityPopUp(enum BattlerId battlerId);
 bool32 CanThrowLastUsedBall(void);
 void TryHideLastUsedBall(void);

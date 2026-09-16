@@ -922,6 +922,7 @@ static bool32 CanIntimidateLowerOpponentAtk(enum BattlerId battler, enum Battler
     {
     case ABILITY_HYPER_CUTTER:
     case ABILITY_CLEAR_BODY:
+    case ABILITY_UNFLAPPABLE:
     case ABILITY_FULL_METAL_BODY:
     case ABILITY_WHITE_SMOKE:
         return FALSE;

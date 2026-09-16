@@ -4,9 +4,10 @@
 #include "caps.h"
 #include "pokemon.h"
 #include "constants/global.h"
+#include "constants/difficulty.h"
 
 
-u32 GetCurrentLevelCap(void)
+u32 GetCurrentProgressionLevelCap(void)
 {
     static const u32 sLevelCapFlagMap[][2] =
     {
@@ -22,9 +23,6 @@ u32 GetCurrentLevelCap(void)
     };
 
     u32 i;
-
-    if (gSaveBlock2Ptr != NULL && gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_OFF)
-        return MAX_LEVEL;
 
     if (B_LEVEL_CAP_TYPE == LEVEL_CAP_FLAG_LIST)
     {
@@ -43,6 +41,14 @@ u32 GetCurrentLevelCap(void)
     return MAX_LEVEL;
 }
 
+u32 GetCurrentLevelCap(void)
+{
+    if (gSaveBlock2Ptr != NULL && gSaveBlock2Ptr->optionsDifficulty == DIFFICULTY_EASY)
+        return MAX_LEVEL;
+
+    return GetCurrentProgressionLevelCap();
+}
+
 u32 GetSoftLevelCapExpValue(u32 level, u32 expValue)
 {
     static const u32 sExpScalingDown[5] = { 4, 8, 16, 32, 64 };
@@ -52,7 +58,7 @@ u32 GetSoftLevelCapExpValue(u32 level, u32 expValue)
     u32 currentLevelCap;
 
     if (B_EXP_CAP_TYPE == EXP_CAP_NONE
-     || gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_OFF)
+     || gSaveBlock2Ptr->optionsDifficulty == DIFFICULTY_EASY)
         return expValue;
 
     currentLevelCap = GetCurrentLevelCap();
@@ -72,7 +78,7 @@ u32 GetSoftLevelCapExpValue(u32 level, u32 expValue)
             return expValue;
         }
     }
-    else if (gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD)
+    else if (gSaveBlock2Ptr->optionsDifficulty != DIFFICULTY_EASY)
     {
         return 0;
     }
@@ -93,16 +99,16 @@ u32 GetSoftLevelCapExpValue(u32 level, u32 expValue)
 u32 GetCurrentEVCap(void)
 {
     static const u16 sEvCapFlagMap[][2] = {
-        // Define EV caps for each milestone
-        {FLAG_BADGE01_GET, MAX_TOTAL_EVS *  1 / 17},
-        {FLAG_BADGE02_GET, MAX_TOTAL_EVS *  3 / 17},
-        {FLAG_BADGE03_GET, MAX_TOTAL_EVS *  5 / 17},
-        {FLAG_BADGE04_GET, MAX_TOTAL_EVS *  7 / 17},
-        {FLAG_BADGE05_GET, MAX_TOTAL_EVS *  9 / 17},
-        {FLAG_BADGE06_GET, MAX_TOTAL_EVS * 11 / 17},
-        {FLAG_BADGE07_GET, MAX_TOTAL_EVS * 13 / 17},
-        {FLAG_BADGE08_GET, MAX_TOTAL_EVS * 15 / 17},
-        {FLAG_IS_CHAMPION, MAX_TOTAL_EVS},
+        // The pre-Gym allowance is 64 EVs. Each badge adds another 64,
+        // with the last two stages clamped to the engine's 510-EV limit.
+        {FLAG_BADGE01_GET,  64},
+        {FLAG_BADGE02_GET, 128},
+        {FLAG_BADGE03_GET, 192},
+        {FLAG_BADGE04_GET, 256},
+        {FLAG_BADGE05_GET, 320},
+        {FLAG_BADGE06_GET, 384},
+        {FLAG_BADGE07_GET, 448},
+        {FLAG_BADGE08_GET, MAX_TOTAL_EVS},
     };
 
     if (B_EV_CAP_TYPE == EV_CAP_FLAG_LIST)
@@ -123,4 +129,36 @@ u32 GetCurrentEVCap(void)
     }
 
     return MAX_TOTAL_EVS;
+}
+
+u32 GetCurrentPerStatEVCap(void)
+{
+    static const u16 sPerStatEvCapFlagMap[][2] = {
+        {FLAG_BADGE01_GET,  32},
+        {FLAG_BADGE02_GET,  64},
+        {FLAG_BADGE03_GET,  96},
+        {FLAG_BADGE04_GET, 128},
+        {FLAG_BADGE05_GET, 160},
+        {FLAG_BADGE06_GET, 192},
+        {FLAG_BADGE07_GET, 224},
+        {FLAG_BADGE08_GET, MAX_PER_STAT_EVS},
+    };
+
+    if (B_EV_CAP_TYPE == EV_CAP_NO_GAIN)
+        return 0;
+    if (B_EV_CAP_TYPE == EV_CAP_FLAG_LIST)
+    {
+        for (u32 i = 0; i < ARRAY_COUNT(sPerStatEvCapFlagMap); i++)
+            if (!FlagGet(sPerStatEvCapFlagMap[i][0]))
+                return sPerStatEvCapFlagMap[i][1];
+    }
+
+    return MAX_PER_STAT_EVS;
+}
+
+bool32 IsAcceleratedTrainingActive(void)
+{
+    // The badge check is a failsafe for old/debug saves that may set the badge
+    // without running Roxanne's normal post-battle script.
+    return FlagGet(FLAG_EXPEDITED_TRAINING) && !FlagGet(FLAG_BADGE01_GET);
 }

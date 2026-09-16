@@ -978,6 +978,7 @@ static bool32 CanAbilityPreventStatLoss(enum Ability ability)
     switch (ability)
     {
     case ABILITY_CLEAR_BODY:
+    case ABILITY_UNFLAPPABLE:
     case ABILITY_FULL_METAL_BODY:
     case ABILITY_WHITE_SMOKE:
         return TRUE;

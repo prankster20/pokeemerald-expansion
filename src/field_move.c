@@ -4,9 +4,36 @@
 #include "fldeff.h"
 #include "fldeff_misc.h"
 #include "party_menu.h"
+#include "item.h"
+#include "constants/items.h"
 #include "constants/field_move.h"
 #include "constants/moves.h"
 #include "constants/party_menu.h"
+
+enum Item FieldMove_GetToolItemId(enum FieldMove fieldMove)
+{
+    static const enum Item sFieldMoveTools[FIELD_MOVES_COUNT] =
+    {
+        [FIELD_MOVE_CUT] = ITEM_FIELD_SHEARS,
+        [FIELD_MOVE_FLASH] = ITEM_LANTERN,
+        [FIELD_MOVE_ROCK_SMASH] = ITEM_ROCK_HAMMER,
+        [FIELD_MOVE_STRENGTH] = ITEM_POWER_GLOVES,
+        [FIELD_MOVE_SURF] = ITEM_SURFBOARD,
+        [FIELD_MOVE_FLY] = ITEM_GLIDER,
+        [FIELD_MOVE_DIVE] = ITEM_DIVING_GEAR,
+        [FIELD_MOVE_WATERFALL] = ITEM_WATERFALL_GEAR,
+    };
+
+    if (fieldMove >= FIELD_MOVES_COUNT)
+        return ITEM_NONE;
+    return sFieldMoveTools[fieldMove];
+}
+
+bool32 HasFieldMoveTool(enum FieldMove fieldMove)
+{
+    enum Item item = FieldMove_GetToolItemId(fieldMove);
+    return item != ITEM_NONE && CheckBagHasItem(item, 1);
+}
 
 static bool32 IsFieldMoveUnlocked_Cut(void)
 {

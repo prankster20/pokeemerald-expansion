@@ -1,4 +1,5 @@
 #include "global.h"
+#include "caps.h"
 #include "battle_setup.h"
 #include "battle_pike.h"
 #include "battle_pyramid.h"
@@ -14,6 +15,7 @@
 #include "ow_abilities.h"
 #include "pokeblock.h"
 #include "pokemon.h"
+#include "pokemon_storage_system.h"
 #include "random.h"
 #include "roamer.h"
 #include "safari_zone.h"
@@ -50,7 +52,6 @@ static u16 FeebasRandom(void);
 static void FeebasSeedRng(u16 seed);
 static void ApplyFluteEncounterRateMod(u32 *encRate);
 static void ApplyCleanseTagEncounterRateMod(u32 *encRate);
-static u8 GetMaxLevelOfSpeciesInWildTable(const struct WildPokemon *wildMon, enum Species species, enum WildPokemonArea area);
 #ifdef BUGFIX
 static bool8 TryGetAbilityInfluencedWildMonIndex(const struct WildPokemon *wildMon, enum Type type, enum Ability ability, u8 *monIndex, u32 size);
 #else
@@ -511,25 +512,38 @@ static u32 ChooseWildMonIndex_Fishing(const struct WildPokemon *wildPokemon, u8 
     return 0;
 }
 
-static u32 GetWildTableSize(enum WildPokemonArea area)
+static u32 GetHighestOwnedPokemonLevel(void)
 {
-    switch (area)
+    u32 highestLevel = 0;
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
     {
-    case WILD_AREA_LAND:
-        return LAND_WILD_COUNT;
-    case WILD_AREA_SAND:
-        return SAND_WILD_COUNT;
-    case WILD_AREA_WATER:
-        return WATER_WILD_COUNT;
-    case WILD_AREA_ROCKS:
-        return ROCK_WILD_COUNT;
-    case WILD_AREA_FISHING:
-        return FISH_WILD_COUNT;
-    case WILD_AREA_HIDDEN:
-        return HIDDEN_WILD_COUNT;
+        if (!GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SANITY_HAS_SPECIES)
+         || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SANITY_IS_EGG))
+            continue;
+
+        highestLevel = max(highestLevel, GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_LEVEL));
     }
 
-    return 0;
+    if (gPokemonStoragePtr != NULL)
+    {
+        for (u32 box = 0; box < TOTAL_BOXES_COUNT; box++)
+        {
+            for (u32 slot = 0; slot < IN_BOX_COUNT; slot++)
+            {
+                struct BoxPokemon *boxMon = GetBoxedMonPtr(box, slot);
+
+                if (!GetBoxMonData(boxMon, MON_DATA_SANITY_HAS_SPECIES)
+                 || GetBoxMonData(boxMon, MON_DATA_SANITY_IS_EGG)
+                 || GetBoxMonData(boxMon, MON_DATA_SANITY_IS_BAD_EGG))
+                    continue;
+
+                highestLevel = max(highestLevel, GetBoxMonData(boxMon, MON_DATA_LEVEL));
+            }
+        }
+    }
+
+    return max(highestLevel, 2);
 }
 
 u32 GetAveragePlayerPartyLevel(void)
@@ -550,91 +564,50 @@ u32 GetAveragePlayerPartyLevel(void)
     return monCount == 0 ? MIN_LEVEL : totalLevel / monCount;
 }
 
-static s32 GetWildLevelShift(const struct WildPokemon *wildPokemon, u32 wildMonIndex, enum WildPokemonArea area)
+static u32 GetScaledWildMaxLevel(void)
 {
-    u32 tableMinLevel = MAX_LEVEL;
-    u32 firstSlot = 0;
-    u32 tableSize = GetWildTableSize(area);
-    u32 targetMinLevel = max(GetAveragePlayerPartyLevel(), 3) - 2;
+    u32 levelCapCeiling = max(GetCurrentProgressionLevelCap(), 4) - 2;
+    u32 ownedLevel = GetHighestOwnedPokemonLevel();
+    u32 ownedLevelMargin = FlagGet(FLAG_BADGE01_GET) ? 2 : 1;
+    u32 ownedLevelCeiling = ownedLevel > ownedLevelMargin ? ownedLevel - ownedLevelMargin : 2;
 
-    // Scale fishing levels only against the slots available to the active rod.
-    if (area == WILD_AREA_FISHING)
-    {
-        if (wildMonIndex == 0)
-        {
-            firstSlot = 0;
-            tableSize = 1;
-        }
-        else if (wildMonIndex == 1)
-        {
-            firstSlot = 1;
-            tableSize = 1;
-        }
-        else
-        {
-            firstSlot = 2;
-            tableSize = 12;
-        }
-    }
-
-    for (u32 i = firstSlot; i < firstSlot + tableSize; i++)
-        tableMinLevel = min(tableMinLevel, min(wildPokemon[i].minLevel, wildPokemon[i].maxLevel));
-
-    // Shift every slot by the same amount, preserving all authored differences.
-    // For example, if a table's lowest level is 2 and the party average is 6,
-    // the target minimum is 4: 2-5 becomes 4-7, while 3-6 becomes 5-8.
-    return (s32)targetMinLevel - (s32)tableMinLevel;
+    return max(2, min(levelCapCeiling, ownedLevelCeiling));
 }
 
 u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon, u8 wildMonIndex, enum WildPokemonArea area)
 {
-    s32 min;
-    s32 max;
-    u8 range;
-    u8 rand;
-    s32 levelShift = GetWildLevelShift(wildPokemon, wildMonIndex, area);
-    if (LURE_STEP_COUNT == 0)
-    {
-        // Make sure minimum level is less than maximum level
-        if (wildPokemon[wildMonIndex].maxLevel >= wildPokemon[wildMonIndex].minLevel)
-        {
-            min = wildPokemon[wildMonIndex].minLevel;
-            max = wildPokemon[wildMonIndex].maxLevel;
-        }
-        else
-        {
-            min = wildPokemon[wildMonIndex].maxLevel;
-            max = wildPokemon[wildMonIndex].minLevel;
-        }
-        min = min(max(min + levelShift, MIN_LEVEL), MAX_LEVEL);
-        max = min(max(max + levelShift, MIN_LEVEL), MAX_LEVEL);
-        range = max - min + 1;
-        rand = Random() % range;
+    u32 maxLevel;
+    u32 minLevel;
+    u32 rand;
 
-        // check ability for max level mon
-        if (!GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SANITY_IS_EGG))
-        {
-            enum Ability ability = GetMonAbility(&gParties[B_TRAINER_PLAYER][0]);
-            if (ability == ABILITY_HUSTLE || ability == ABILITY_VITAL_SPIRIT || ability == ABILITY_PRESSURE)
-            {
-                if (Random() % 2 == 0)
-                    return max;
+    (void)wildPokemon;
+    (void)wildMonIndex;
+    (void)area;
 
-                if (rand != 0)
-                    rand--;
-            }
-        }
-        return min + rand;
-    }
-    else
+    // Before the first Route 103 rival battle, the player's starter is only
+    // level 5.  Do not apply the progression-cap scaling yet: keep every
+    // ordinary generated wild encounter within the original opening range.
+    if (!FlagGet(FLAG_DEFEATED_RIVAL_ROUTE103))
+        return 2 + Random() % 3;
+
+    maxLevel = GetScaledWildMaxLevel();
+    minLevel = max(2, maxLevel - 2);
+
+    // Lures and the usual max-level encounter abilities preserve their role
+    // by selecting the top of this scaled range, never exceeding its ceiling.
+    if (LURE_STEP_COUNT != 0)
+        return maxLevel;
+
+    rand = Random() % (maxLevel - minLevel + 1);
+    if (!GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SANITY_IS_EGG))
     {
-        // Looks for the max level of all slots that share the same species as the selected slot.
-        max = GetMaxLevelOfSpeciesInWildTable(wildPokemon, wildPokemon[wildMonIndex].species, area);
-        if (max > 0)
-            return min(max(max + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
-        else // Failsafe
-            return min(max(wildPokemon[wildMonIndex].maxLevel + levelShift + 1, MIN_LEVEL), MAX_LEVEL);
+        enum Ability ability = GetMonAbility(&gParties[B_TRAINER_PLAYER][0]);
+        if ((ability == ABILITY_HUSTLE || ability == ABILITY_VITAL_SPIRIT || ability == ABILITY_PRESSURE)
+         && Random() % 2 == 0)
+            return maxLevel;
     }
+
+    return minLevel + rand;
 }
 
 u16 GetCurrentMapWildMonHeaderId(void)
@@ -1459,39 +1432,6 @@ static bool8 TryGetRandomWildMonIndexByType(const struct WildPokemon *wildMon, e
 }
 
 #include "data.h"
-
-static u8 GetMaxLevelOfSpeciesInWildTable(const struct WildPokemon *wildMon, enum Species species, enum WildPokemonArea area)
-{
-    u8 i, maxLevel = 0, numMon = 0;
-
-    switch (area)
-    {
-    case WILD_AREA_LAND:
-        numMon = LAND_WILD_COUNT;
-        break;
-    case WILD_AREA_SAND:
-        numMon = SAND_WILD_COUNT;
-        break;
-    case WILD_AREA_WATER:
-        numMon = WATER_WILD_COUNT;
-        break;
-    case WILD_AREA_ROCKS:
-        numMon = ROCK_WILD_COUNT;
-        break;
-    default:
-    case WILD_AREA_FISHING:
-    case WILD_AREA_HIDDEN:
-        break;
-    }
-
-    for (i = 0; i < numMon; i++)
-    {
-        if (wildMon[i].species == species && wildMon[i].maxLevel > maxLevel)
-            maxLevel = wildMon[i].maxLevel;
-    }
-
-    return maxLevel;
-}
 
 #ifdef BUGFIX
 static bool8 TryGetAbilityInfluencedWildMonIndex(const struct WildPokemon *wildMon, enum Type type, enum Ability ability, u8 *monIndex, u32 size)

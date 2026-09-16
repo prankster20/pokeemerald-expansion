@@ -1,5 +1,6 @@
 #include "global.h"
 #include "battle.h"
+#include "data.h"
 #include "egg_hatch.h"
 #include "event_data.h"
 #include "new_game.h"
@@ -28,6 +29,30 @@ TEST("Nature independent from Hidden Nature")
     SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &hiddenNature);
     EXPECT_EQ(GetNature(&mon), nature);
     EXPECT_EQ(GetMonData(&mon, MON_DATA_HIDDEN_NATURE), hiddenNature);
+}
+
+TEST("Hidden Power type uses all five digits of the Persona code")
+{
+    EXPECT(GetPersonaHiddenPowerType(19295) != GetPersonaHiddenPowerType(29295));
+    EXPECT_EQ(GetPersonaHiddenPowerType(19295), GetPersonaHiddenPowerType(19295 + PERSONALITY_CODE_MODULUS));
+}
+
+TEST("Persona Hidden Power is distributed as evenly as possible across all 18 regular types")
+{
+    u32 counts[NUMBER_OF_MON_TYPES] = {0};
+
+    for (u32 code = 0; code < PERSONALITY_CODE_MODULUS; code++)
+        counts[GetPersonaHiddenPowerType(code)]++;
+
+    for (enum Type type = TYPE_NONE; type < NUMBER_OF_MON_TYPES; type++)
+    {
+        if (gTypesInfo[type].isHiddenPowerType)
+            EXPECT(counts[type] == 5555 || counts[type] == 5556);
+        else
+            EXPECT_EQ(counts[type], 0);
+    }
+    EXPECT(counts[TYPE_NORMAL] != 0);
+    EXPECT(counts[TYPE_FAIRY] != 0);
 }
 
 TEST("Terastallization type defaults to primary or secondary type")

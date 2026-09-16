@@ -48,8 +48,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Pound"),
         .description = COMPOUND_STRING(
             "Pounds the foe with\n"
-            "forelegs or tail.\n"
-            "Contact."),
+            "forelegs or tail. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_NORMAL,
@@ -282,8 +281,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Scratch"),
         .description = COMPOUND_STRING(
             "Scratches the foe with\n"
-            "sharp claws.\n"
-            "Contact."),
+            "sharp claws. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_NORMAL,
@@ -441,13 +439,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Gust"),
         .description = COMPOUND_STRING(
-            "Strikes the foe with a gust\n"
-            "of wind whipped up by wings."),
+            "Strikes with a gust of {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}wind{COLOR WHITE}{SHADOW DARK_GRAY}\n"
+            "whipped up by wings."),
         .effect = EFFECT_HIT,
         .power = 40,
-        .type = B_UPDATED_MOVE_TYPES >= GEN_2 ? TYPE_FLYING : TYPE_NORMAL,
+        .type = TYPE_FLYING,
         .accuracy = 100,
-        .pp = 35,
+        .pp = 30,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_SPECIAL,
@@ -465,13 +463,14 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Wing Attack"),
         .description = COMPOUND_STRING(
-            "Strikes the foe with wings\n"
-            "spread wide."),
-        .effect = EFFECT_HIT,
-        .power = B_UPDATED_MOVE_DATA >= GEN_2 ? 60 : 35,
+            "Strikes with wings\n"
+            "spread wide. Suffers {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}10% recoil{COLOR WHITE}{SHADOW DARK_GRAY}. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
+        .effect = EFFECT_RECOIL,
+        .argument = { .recoilPercentage = 10 },
+        .power = 60,
         .type = TYPE_FLYING,
         .accuracy = 100,
-        .pp = 35,
+        .pp = 20,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -628,7 +627,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .contestCategory = CONTEST_CATEGORY_COOL,
         .contestComboStarterId = 0,
         .contestComboMoves = {COMBO_STARTER_GROWTH},
-        .battleAnimScript = gBattleAnimMove_VineWhip,
+        // .battleAnimScript = gBattleAnimMove_VineWhip,
+        .battleAnimScript = gBattleAnimMove_GMaxVineLash,
     },
 
     [MOVE_STOMP] =
@@ -664,13 +664,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Double Kick"),
         .description = COMPOUND_STRING(
-            "A double-kicking attack\n"
-            "that strikes the foe twice."),
+            "Kicks the foe with fore- or hindlegs.\n"
+            "{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Double- strike. Contact, Kick{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 30,
         .type = TYPE_FIGHTING,
         .accuracy = 100,
-        .pp = 30,
+        .pp = 20,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -739,15 +739,16 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
 
     [MOVE_ROLLING_KICK] =
     {
-        .name = COMPOUND_STRING("Rolling Kick"),
+        .name = COMPOUND_STRING("Roughhouse"),
         .description = COMPOUND_STRING(
-            "A fast kick delivered from\n"
-            "a rapid spin. May flinch."),
+            "Picks a fight with the\n"
+            "foe. 10% chance to flinch.\n"
+            "{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = 60,
+        .power = 40,
         .type = TYPE_FIGHTING,
-        .accuracy = 85,
-        .pp = 15,
+        .accuracy = 100,
+        .pp = 30,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -755,13 +756,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .ignoresKingsRock = B_UPDATED_MOVE_FLAGS < GEN_3,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_FLINCH,
-            .chance = 30,
+            .chance = 10,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_HIGHLY_APPEALING : CONTEST_EFFECT_BADLY_STARTLE_PREV_MONS,
         .contestCategory = CONTEST_CATEGORY_COOL,
         .contestComboStarterId = 0,
         .contestComboMoves = {0},
-        .battleAnimScript = gBattleAnimMove_RollingKick,
+        .battleAnimScript = gBattleAnimMove_Roughhouse,
         .validApprenticeMove = TRUE,
     },
 
@@ -894,8 +895,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Tackle"),
         .description = COMPOUND_STRING(
             "Charges the foe with a full-\n"
-            "body tackle.\n"
-            "Contact."),
+            "body tackle. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         #if B_UPDATED_MOVE_DATA >= GEN_7
             .power = 40,
         #elif B_UPDATED_MOVE_DATA >= GEN_5
@@ -1082,19 +1082,19 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Poison Sting"),
         .description = COMPOUND_STRING(
-            "A toxic attack with barbs,\n"
-            "etc., that may poison."),
+            "An attack with barbs, horns,\n"
+            "or the like. 35% chance to poison."),
         .effect = EFFECT_HIT,
-        .power = 15,
+        .power = 40,
         .type = TYPE_POISON,
         .accuracy = 100,
-        .pp = 35,
+        .pp = 25,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_POISON,
-            .chance = B_UPDATED_MOVE_DATA >= GEN_2 ? 30 : 20,
+            .chance = 35,
         }),
         .contestEffect = CONTEST_EFFECT_STARTLE_PREV_MON,
         .contestCategory = CONTEST_CATEGORY_SMART,
@@ -1185,9 +1185,9 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Bite"),
         .description = COMPOUND_STRING(
             "Bites with vicious fangs.\n"
-            "May cause flinching."),
+            "10% chance to flinch. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact, Bite{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = 60,
+        .power = 40,
         .type = B_UPDATED_MOVE_TYPES >= GEN_2 ? TYPE_DARK : TYPE_NORMAL,
         .accuracy = 100,
         .pp = 25,
@@ -1198,7 +1198,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .bitingMove = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_FLINCH,
-            .chance = B_UPDATED_MOVE_DATA >= GEN_2 ? 30 : 10,
+            .chance = 10,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_STARTLE_PREV_MON : CONTEST_EFFECT_BADLY_STARTLE_PREV_MONS,
         .contestCategory = CONTEST_CATEGORY_TOUGH,
@@ -1213,7 +1213,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Growl"),
         .description = COMPOUND_STRING(
             "Growls cutely to reduce both\n"
-            "foes' Attack. Sound."),
+            "foes' Attack. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Sound{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_STAT_CHANGE,
         .power = 0,
         .type = TYPE_NORMAL,
@@ -1389,25 +1389,20 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Acid"),
         .description = COMPOUND_STRING(
-            "Sprays a hide-melting acid.\n"
-        #if B_UPDATED_MOVE_DATA >= GEN_4
-            "May lower Sp. Def."),
-        #else
-            "May lower Defense."),
-        #endif
+            "Sprays a hide-melting acid at {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}both foes{COLOR WHITE}{SHADOW DARK_GRAY}.\n"
+            "10% chance to drop Sp. Def."),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_POISON,
         .accuracy = 100,
-        .pp = 30,
+        .pp = 25,
         .target = TARGET_BOTH,
         .priority = 0,
         .category = DAMAGE_CATEGORY_SPECIAL,
             .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_STAT_MINUS,
-            .defense = B_UPDATED_MOVE_DATA < GEN_4 ? 1 : 0,
-            .spDef = B_UPDATED_MOVE_DATA >= GEN_4 ? 1 : 0,
-            .chance = B_UPDATED_MOVE_DATA >= GEN_2 ? 10 : 33,
+            .spDef = 1,
+            .chance = 10,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_WORSEN_CONDITION_OF_PREV_MONS : CONTEST_EFFECT_BADLY_STARTLE_FRONT_MON,
         .contestCategory = CONTEST_CATEGORY_SMART,
@@ -1632,10 +1627,10 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Psybeam"),
         .description = COMPOUND_STRING(
-            "Fires a peculiar ray that\n"
-            "may confuse the foe."),
+            "Fires a peculiar ray with a 20% chance to\n"
+            "confuse the foe."),
         .effect = EFFECT_HIT,
-        .power = 65,
+        .power = 60,
         .type = TYPE_PSYCHIC,
         .accuracy = 100,
         .pp = 20,
@@ -1644,7 +1639,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_SPECIAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_CONFUSION,
-            .chance = 10,
+            .chance = 20,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_SHIFT_JUDGE_ATTENTION : CONTEST_EFFECT_SCRAMBLE_NEXT_TURN_ORDER,
         .contestCategory = CONTEST_CATEGORY_BEAUTY,
@@ -1744,7 +1739,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .description = COMPOUND_STRING(
             "Attacks the foe with a\n"
             "jabbing beak, etc.\n"
-            "Contact."),
+            "{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_FLYING,
@@ -1788,18 +1783,18 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Submission"),
         .description = COMPOUND_STRING(
-            "A reckless body slam that\n"
-            "also hurts the user."),
+            "A reckless body slam. The\n"
+            "user suffers {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}33% recoil{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_RECOIL,
-        .power = 80,
+        .power = 120,
         .type = TYPE_FIGHTING,
-        .accuracy = 80,
-        .pp = B_UPDATED_MOVE_DATA >= GEN_6 ? 20 : 25,
+        .accuracy = 100,
+        .pp = 10,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .makesContact = TRUE,
-        .argument = { .recoilPercentage = 25 },
+        .argument = { .recoilPercentage = 33 },
         .contestEffect = CONTEST_EFFECT_USER_MORE_EASILY_STARTLED,
         .contestCategory = CONTEST_CATEGORY_COOL,
         .contestComboStarterId = 0,
@@ -1957,7 +1952,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .power = 60,
         .type = TYPE_GRASS,
         .accuracy = 100,
-        .pp = B_UPDATED_MOVE_DATA >= GEN_4 ? 15 : 10,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_SPECIAL,
@@ -2036,14 +2031,14 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Razor Leaf"),
         .description = COMPOUND_STRING(
-            "Cuts enemies with leaves.\n"
-            "High critical-hit ratio."),
+            "Cuts {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}both foes{COLOR WHITE}{SHADOW DARK_GRAY} with leaves.\n"
+            "+1 critical-hit ratio."),
         .effect = EFFECT_HIT,
         .power = 60,
         .type = TYPE_GRASS,
         .accuracy = 100,
-        .criticalHitStage = B_UPDATED_MOVE_DATA >= GEN_3 ? 1 : 2,
-        .pp = 20,
+        .criticalHitStage = 1,
+        .pp = 15,
         .target = TARGET_BOTH,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -2085,13 +2080,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Poison Powder"),
         .description = COMPOUND_STRING(
-            "Scatters a toxic powder\n"
-            "that may poison the foe."),
+            "Scatters a toxic {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}powder{COLOR WHITE}{SHADOW DARK_GRAY}\n"
+            "that poisons the foe."),
         .effect = EFFECT_NON_VOLATILE_STATUS,
         .power = 0,
         .type = TYPE_POISON,
-        .accuracy = 75,
-        .pp = 35,
+        .accuracy = 100,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -2111,13 +2106,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Stun Spore"),
         .description = COMPOUND_STRING(
-            "Scatters a powder that may\n"
+            "Scatters a {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}powder{COLOR WHITE}{SHADOW DARK_GRAY} that may\n"
             "paralyze the foe."),
         .effect = EFFECT_NON_VOLATILE_STATUS,
         .power = 0,
         .type = TYPE_GRASS,
-        .accuracy = 75,
-        .pp = 30,
+        .accuracy = 90,
+        .pp = 10,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -2137,13 +2132,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Sleep Powder"),
         .description = COMPOUND_STRING(
-            "Scatters a powder that may\n"
+            "Scatters a {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}powder{COLOR WHITE}{SHADOW DARK_GRAY} that may\n"
             "cause the foe to sleep."),
         .effect = EFFECT_NON_VOLATILE_STATUS,
         .power = 0,
         .type = TYPE_GRASS,
         .accuracy = 75,
-        .pp = 15,
+        .pp = 5,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -2387,7 +2382,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .effect = EFFECT_HIT,
         .power = 50,
         .type = TYPE_ROCK,
-        .accuracy = B_UPDATED_MOVE_DATA >= GEN_2 ? 100 : 65,
+        .accuracy = 100,
         .pp = 25,
         .target = TARGET_SELECTED,
         .priority = 0,
@@ -2514,12 +2509,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
 
     [MOVE_CONFUSION] =
     {
-        .name = COMPOUND_STRING("Confusion"),
+        .name = COMPOUND_STRING("Confound"),
         .description = COMPOUND_STRING(
-            "A psychic attack that may\n"
+            "A weak psychic attack with a 10% chance to\n"
             "cause confusion."),
         .effect = EFFECT_HIT,
-        .power = 50,
+        .power = 40,
         .type = TYPE_PSYCHIC,
         .accuracy = 100,
         .pp = 25,
@@ -2593,8 +2588,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Concentrate"),
         .description = COMPOUND_STRING(
-            "Concentrates in a peaceful\n"
-            "fashion to raise Sp.Atk."),
+            "Concentrates peacefully\n"
+            "to raise Sp. Atk."),
         .effect = EFFECT_STAT_CHANGE,
         .power = 0,
         .type = TYPE_PSYCHIC,
@@ -2655,7 +2650,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .description = COMPOUND_STRING(
             "An extremely fast attack.\n"
             "Strikes with +1 priority.\n"
-            "Contact."),
+            "{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_NORMAL,
@@ -2816,8 +2811,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Double Team"),
         .description = COMPOUND_STRING(
-            "Creates illusory copies to\n"
-            "raise evasiveness."),
+            "By moving rapidly, the user\n"
+            "raises its Speed stat."),
         .effect = EFFECT_STAT_CHANGE,
         .power = 0,
         .type = TYPE_NORMAL,
@@ -2836,7 +2831,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .contestComboMoves = {0},
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = STAT_CHANGE_EFFECT_PLUS,
-            .evasion = 1,
+            .speed = 1,
         }),
         .battleAnimScript = gBattleAnimMove_DoubleTeam,
         .validApprenticeMove = TRUE,
@@ -2977,7 +2972,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .power = 0,
         .type = TYPE_GHOST,
         .accuracy = 100,
-        .pp = 20,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -3386,10 +3381,10 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Sludge"),
         .description = COMPOUND_STRING(
-            "Sludge is hurled to inflict\n"
-            "damage. May also poison."),
+            "Unsanitary sludge is hurled at the foe.\n"
+            "30% chance to poison."),
         .effect = EFFECT_HIT,
-        .power = 65,
+        .power = 60,
         .type = TYPE_POISON,
         .accuracy = 100,
         .pp = 20,
@@ -3398,7 +3393,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .category = DAMAGE_CATEGORY_SPECIAL,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_POISON,
-            .chance = B_UPDATED_MOVE_DATA >= GEN_2 ? 30 : 40,
+            .chance = 30,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_STARTLE_PREV_MON : CONTEST_EFFECT_BADLY_STARTLE_FRONT_MON,
         .contestCategory = CONTEST_CATEGORY_TOUGH,
@@ -4284,19 +4279,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     [MOVE_ROCK_SLIDE] =
     {
         .name = COMPOUND_STRING("Rock Slide"),
-        #if B_UPDATED_MOVE_DATA >= GEN_2
-            .description = COMPOUND_STRING(
-                "Large boulders are hurled.\n"
-                "May cause flinching."),
-        #else
-            .description = COMPOUND_STRING(
-                "Hits the foe with an\n"
-                "avalanche of rocks."),
-        #endif
+        .description = COMPOUND_STRING(
+            "Large boulders are hurled at {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}both foes{COLOR WHITE}{SHADOW DARK_GRAY}.\n"
+            "25% chance to cause flinching."),
         .effect = EFFECT_HIT,
-        .power = 75,
+        .power = 80,
         .type = TYPE_ROCK,
-        .accuracy = 90,
+        .accuracy = 100,
         .pp = 10,
         .target = TARGET_BOTH,
         .priority = 0,
@@ -4304,7 +4293,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         #if B_UPDATED_MOVE_DATA >= GEN_2
             .additionalEffects = ADDITIONAL_EFFECTS({
                 .moveEffect = MOVE_EFFECT_FLINCH,
-                .chance = 30,
+                .chance = 25,
             }),
         #endif
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_STARTLE_PREV_MONS : CONTEST_EFFECT_BADLY_STARTLE_PREV_MONS,
@@ -4445,18 +4434,19 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Super Fang"),
         .description = COMPOUND_STRING(
-            "Attacks with sharp fangs\n"
-            "and cuts half the foe's HP."),
+            "Attacks with sharp fangs, cutting\n"
+            "the foe's remaining HP in half. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact, Bite{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_FIXED_PERCENT_DAMAGE,
         .power = 1,
         .type = TYPE_NORMAL,
-        .accuracy = 90,
-        .pp = 10,
+        .accuracy = 100,
+        .pp = 5,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .argument = { .damagePercentage = 50 },
         .makesContact = TRUE,
+        .bitingMove = TRUE,
         .ignoresKingsRock = (B_UPDATED_MOVE_FLAGS == GEN_3 || B_UPDATED_MOVE_FLAGS == GEN_4),
         .contestEffect = CONTEST_EFFECT_BADLY_STARTLE_MONS_WITH_GOOD_APPEALS,
         .contestCategory = CONTEST_CATEGORY_TOUGH,
@@ -4630,10 +4620,10 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
             "While attacking, it may\n"
             "steal the foe's held item."),
         .effect = EFFECT_STEAL_ITEM,
-        .power = B_UPDATED_MOVE_DATA >= GEN_6 ? 60 : 40,
+        .power = 60,
         .type = TYPE_DARK,
         .accuracy = 100,
-        .pp = B_UPDATED_MOVE_DATA >= GEN_6 ? 25 : 10,
+        .pp = 20,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -5741,10 +5731,10 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Spark"),
         .description = COMPOUND_STRING(
-            "An electrified tackle that\n"
-            "may paralyze the foe."),
+            "An electrified tackle with a\n"
+            "20% chance to paralyze. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = 65,
+        .power = 60,
         .type = TYPE_ELECTRIC,
         .accuracy = 100,
         .pp = 20,
@@ -5754,7 +5744,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .makesContact = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_PARALYSIS,
-            .chance = 30,
+            .chance = 20,
         }),
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_HIGHLY_APPEALING : CONTEST_EFFECT_BADLY_STARTLE_FRONT_MON,
         .contestCategory = CONTEST_CATEGORY_COOL,
@@ -6626,12 +6616,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Crunch"),
         .description = COMPOUND_STRING(
-            "Crunches with sharp fangs.\n"
-        #if B_UPDATED_MOVE_DATA >= GEN_4
-            "May lower Defense."),
-        #else
-            "May lower Sp. Def."),
-        #endif
+            "Crunches the foe with sharp fangs.\n"
+            "20% chance to drop Defense. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact, Bite{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 80,
         .type = TYPE_DARK,
@@ -6644,8 +6630,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .bitingMove = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_STAT_MINUS,
-            .defense = B_UPDATED_MOVE_DATA >= GEN_4 ? 1 : 0,
-            .spDef = B_UPDATED_MOVE_DATA < GEN_4 ? 1 : 0,
+            .defense = 1,
             .chance = 20,
         }),
         .contestEffect = CONTEST_EFFECT_BADLY_STARTLE_FRONT_MON,
@@ -6835,9 +6820,9 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .description = COMPOUND_STRING(
             "A rock-crushing attack\n"
             "with a 50% chance to\n"
-            "drop Defense."),
+            "drop Defense. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = B_UPDATED_MOVE_DATA >= GEN_4 ? 40 : 20,
+        .power = 40,
         .type = TYPE_FIGHTING,
         .accuracy = 100,
         .pp = 15,
@@ -7177,8 +7162,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .effect = EFFECT_NON_VOLATILE_STATUS,
         .power = 0,
         .type = TYPE_FIRE,
-        .accuracy = B_UPDATED_MOVE_DATA >= GEN_6 ? 85 : 75,
-        .pp = 15,
+        .accuracy = 85,
+        .pp = 10,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -8675,13 +8660,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Rock Tomb"),
         .description = COMPOUND_STRING(
-            "Stops the foe from moving\n"
-            "with rocks and cuts Speed."),
+            "Pelts rocks to prevents the foe's movement,\n"
+            "with a 100% chance to drop Speed."),
         .effect = EFFECT_HIT,
-        .power = B_UPDATED_MOVE_DATA >= GEN_6 ? 60 : 50,
+        .power = 60,
         .type = TYPE_ROCK,
-        .accuracy = B_UPDATED_MOVE_DATA >= GEN_6 ? 95 : 80,
-        .pp = B_UPDATED_MOVE_DATA >= GEN_6 ? 15 : 10,
+        .accuracy = 100,
+        .pp = 20,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -9379,12 +9364,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Covet"),
         .description = COMPOUND_STRING(
             "Cutely begs to obtain an\n"
-            "item held by the foe."),
+            "item held by the foe. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_STEAL_ITEM,
-        .power = B_UPDATED_MOVE_DATA >= GEN_5 ? 60 : 40,
-        .type = TYPE_NORMAL,
+        .power = 60,
+        .type = TYPE_FAIRY,
         .accuracy = 100,
-        .pp = B_UPDATED_MOVE_DATA >= GEN_6 ? 25 : 40,
+        .pp = 20,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -9580,11 +9565,11 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .description = COMPOUND_STRING(
             "Hurls boulders at the foe\n"
             "2 to 5 times in a row.\n"
-            "Ballistic."),
+            "{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Ballistic{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 25,
         .type = TYPE_ROCK,
-        .accuracy = B_UPDATED_MOVE_DATA >= GEN_5 ? 100 : 80,
+        .accuracy = 100,
         .pp = 10,
         .target = TARGET_SELECTED,
         .priority = 0,
@@ -9624,8 +9609,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Water Pulse"),
         .description = COMPOUND_STRING(
-            "Attacks with ultrasonic\n"
-            "waves. May confuse the foe."),
+            "Attacks with ultrasonic waves. 20% chance to confuse the foe. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Pulse{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 60,
         .type = TYPE_WATER,
@@ -9951,7 +9935,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Pluck"),
         .description = COMPOUND_STRING(
             "Eats the foe's held Berry\n"
-            "gaining its effect."),
+            "gaining its effect. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 60,
         .type = TYPE_FLYING,
@@ -10058,7 +10042,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Bide"),
         .description = COMPOUND_STRING(
             "Retaliates any hit with\n"
-            "1.25x damage. Priority -3. Contact."),
+            "1.25x damage. Priority -3. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_REFLECT_DAMAGE,
         .power = 1,
         .type = TYPE_NORMAL,
@@ -12136,7 +12120,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Bug Bite"),
         .description = COMPOUND_STRING(
             "Eats the foe's held Berry\n"
-            "gaining its effect."),
+            "gaining its effect. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact, Bite{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 60,
         .type = TYPE_BUG,
@@ -12146,6 +12130,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .makesContact = TRUE,
+        .bitingMove = TRUE,
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_BUG_BITE,
         }),
@@ -12334,12 +12319,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Double Hit"),
         .description = COMPOUND_STRING(
             "Slams the foe twice with a tail or\n"
-            "the like. Double-strike. Contact."),
+            "the like. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Double- strike. Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 35,
         .type = TYPE_NORMAL,
         .accuracy = 100,
-        .pp = 10,
+        .pp = 20,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -13140,10 +13125,10 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Low Sweep"),
         .description = COMPOUND_STRING(
-            "Attacks the foe's legs\n"
-            "lowering its Speed."),
+            "Strikes at the foe's legs.\n"
+            "100% chance to drop its Speed. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = B_UPDATED_MOVE_DATA >= GEN_6 ? 65 : 60,
+        .power = 60,
         .type = TYPE_FIGHTING,
         .accuracy = 100,
         .pp = 20,
@@ -13316,12 +13301,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Echoed Voice"),
         .description = COMPOUND_STRING(
             "Does more damage every turn\n"
-            "it is used."),
+            "it is used. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Sound{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_ECHOED_VOICE,
         .power = 40,
         .type = TYPE_NORMAL,
         .accuracy = 100,
-        .pp = 15,
+        .pp = 10,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_SPECIAL,
@@ -13953,7 +13938,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Struggle Bug"),
         .description = COMPOUND_STRING(
             "Resisting, the user attacks\n"
-            "both foes. 100% to drop Sp. Atk."),
+            "{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}both foes{COLOR WHITE}{SHADOW DARK_GRAY}. 100% to drop Sp. Atk."),
         .effect = EFFECT_HIT,
         .power = 60,
         .type = TYPE_BUG,
@@ -14792,12 +14777,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
 
     [MOVE_SNARL] =
     {
-        .name = COMPOUND_STRING("Snarl"),
+        .name = COMPOUND_STRING("Sneer"),
         .description = COMPOUND_STRING(
-            "Yells and rants at the foe\n"
-            "lowering its Sp. Atk."),
+            "Yells and rants, with a 100% chance to\n"
+            "drop {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}both foes'{COLOR WHITE}{SHADOW DARK_GRAY} Attack and Sp. Atk stats. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Sound{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = 55,
+        .power = 60,
         .type = TYPE_DARK,
         .accuracy = 100,
         .pp = 15,
@@ -14810,6 +14795,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .additionalEffects = ADDITIONAL_EFFECTS({
             .moveEffect = MOVE_EFFECT_STAT_MINUS,
             .spAtk = 1,
+            .attack = 1,
             .chance = 100,
         }),
         .contestEffect = CONTEST_EFFECT_BADLY_STARTLE_PREV_MONS, //CONTEST_EFFECT_QUICKLY_GROW_BORED
@@ -15293,7 +15279,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
 
     [MOVE_DISARMING_VOICE] =
     {
-        .name = COMPOUND_STRING("Disarming Voice"),
+        .name = COMPOUND_STRING("Disarm Voice"),
         .description = COMPOUND_STRING(
             "Lets out a charming cry\n"
             "that cannot be evaded."),
@@ -15369,15 +15355,15 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
 
     [MOVE_DRAINING_KISS] =
     {
-        .name = COMPOUND_STRING("Draining Kiss"),
+        .name = COMPOUND_STRING("Drain Kiss"),
         .description = COMPOUND_STRING(
-            "An attack that absorbs over\n"
-            "half the damage inflicted."),
+            "An attack that absorbs 75% of\n"
+            "the damage dealt. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_ABSORB,
-        .power = 50,
+        .power = 60,
         .type = TYPE_FAIRY,
         .accuracy = 100,
-        .pp = 10,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_SPECIAL,
@@ -16120,9 +16106,9 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
 
     [MOVE_DAZZLING_GLEAM] =
     {
-        .name = COMPOUND_STRING("Dazzling Gleam"),
+        .name = COMPOUND_STRING("Dazzle Gleam"),
         .description = COMPOUND_STRING(
-            "Damages foes by emitting\n"
+            "Damages {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}both foes{COLOR WHITE}{SHADOW DARK_GRAY} by emitting\n"
             "a bright flash."),
         .effect = EFFECT_HIT,
         .power = 80,
@@ -16231,12 +16217,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Nuzzle"),
         .description = COMPOUND_STRING(
             "Rubs its cheeks against\n"
-            "the foe, paralyzing it."),
+            "the foe, with a 100% chance to paralyze. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
-        .power = 20,
+        .power = 40,
         .type = TYPE_ELECTRIC,
         .accuracy = 100,
-        .pp = 20,
+        .pp = 10,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,
@@ -16278,13 +16264,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Infestation"),
         .description = COMPOUND_STRING(
-            "The foe is infested and\n"
+            "The target is infested and\n"
             "attacked for "BINDING_TURNS" turns."),
         .effect = EFFECT_HIT,
-        .power = 20,
+        .power = 50,
         .type = TYPE_BUG,
         .accuracy = 100,
-        .pp = 20,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_SPECIAL,
@@ -17426,7 +17412,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Brutal Swing"),
         .description = COMPOUND_STRING(
             "Violently swings around\n"
-            "to hurt everyone nearby."),
+            "to hurt {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}everyone nearby{COLOR WHITE}{SHADOW DARK_GRAY}. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 60,
         .type = TYPE_DARK,
@@ -17762,13 +17748,13 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Tearful Look"),
         .description = COMPOUND_STRING(
-            "The user tears up, dropping\n"
-            "Attack and Sp. Attack."),
+            "The user tears up, dropping the target's\n"
+            "Attack and Sp. Attack stats."),
         .effect = EFFECT_STAT_CHANGE,
         .power = 0,
         .type = TYPE_NORMAL,
         .accuracy = 0,
-        .pp = 20,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -18237,7 +18223,7 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Blunt Bash"),
         .description = COMPOUND_STRING(
-            "Bashes the foe with blunt implements. 10% to flinch. Contact."),
+            "Bashes the foe with blunt implements. 10% to flinch. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT,
         .power = 40,
         .type = TYPE_STEEL,
@@ -19550,12 +19536,12 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Flip Turn"),
         .description = COMPOUND_STRING(
             "Attacks and rushes back to\n"
-            "switch with a party Pokémon."),
+            "switch with a party Pokémon. {COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5}Contact{COLOR WHITE}{SHADOW DARK_GRAY}."),
         .effect = EFFECT_HIT_ESCAPE,
         .power = 60,
         .type = TYPE_WATER,
         .accuracy = 100,
-        .pp = 20,
+        .pp = 15,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_PHYSICAL,

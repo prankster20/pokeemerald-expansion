@@ -112,7 +112,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsNatureTitles = OPTIONS_NATURE_TITLES_ON;
     gSaveBlock2Ptr->optionsShinyOdds = OPTIONS_SHINY_ODDS_4096;
     gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
-    gSaveBlock2Ptr->optionsLevelCaps = OPTIONS_LEVEL_CAPS_OFF;
+    gSaveBlock2Ptr->optionsDifficulty = DIFFICULTY_NORMAL;
     gSaveBlock2Ptr->optionsEasierCatch = OPTIONS_EASIER_CATCH_1X;
     gSaveBlock2Ptr->optionsPersonalityColors = OPTIONS_PERSONALITY_COLORS_ON;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
@@ -195,7 +195,7 @@ void NewGameInitData(void)
     PlayTimeCounter_Reset();
     ClearPokedexFlags();
     InitEventData();
-    VarSet(VAR_LEVEL_CAP, 15);
+    VarSet(VAR_LEVEL_CAP, 10);
     ClearTVShowData();
     ResetGabbyAndTy();
     ClearSecretBases();

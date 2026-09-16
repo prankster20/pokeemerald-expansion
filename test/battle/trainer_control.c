@@ -82,7 +82,9 @@ TEST("CreateNPCTrainerPartyForTrainer generates customized Pokémon")
 
     EXPECT(GetMonGender(&testParty[0]) == MON_FEMALE);
     EXPECT(GetNature(&testParty[0]) == NATURE_HASTY);
+    EXPECT(GetMonData(&testParty[0], MON_DATA_HIDDEN_NATURE) == NATURE_VIBRANT);
     EXPECT(GetNature(&testParty[1]) == NATURE_HARDY);
+    EXPECT(GetMonData(&testParty[1], MON_DATA_HIDDEN_NATURE) == NATURE_HARDY);
 
     EXPECT_EQ(GetMonData(&testParty[0], MON_DATA_DYNAMAX_LEVEL), 5);
     EXPECT_EQ(GetMonData(&testParty[1], MON_DATA_DYNAMAX_LEVEL), 10);
@@ -97,6 +99,27 @@ TEST("CreateNPCTrainerPartyForTrainer generates different personalities for diff
     CreateNPCTrainerPartyFromTrainer(testParty, GetTrainerStructFromId(currTrainer), TRUE, BATTLE_TYPE_TRAINER);
     EXPECT(testParty[0].box.personality != testParty[1].box.personality);
     Free(testParty);
+}
+
+TEST("Trainer Pokémon can activate every Nature in a comma-separated Nature list")
+{
+    const struct Trainer *trainer = GetTrainerStructFromId(3);
+    u32 nature;
+
+    CreateNPCTrainerPartyFromTrainer(gParties[B_TRAINER_OPPONENT_A], trainer, TRUE, BATTLE_TYPE_TRAINER);
+    EXPECT_EQ(GetNature(&gParties[B_TRAINER_OPPONENT_A][0]), NATURE_HASTY);
+    EXPECT_EQ(GetMonData(&gParties[B_TRAINER_OPPONENT_A][0], MON_DATA_HIDDEN_NATURE), NATURE_VIBRANT);
+    EXPECT(PokemonHasNature(&gParties[B_TRAINER_OPPONENT_A][0], NATURE_HASTY));
+    EXPECT(PokemonHasNature(&gParties[B_TRAINER_OPPONENT_A][0], NATURE_VIBRANT));
+    EXPECT(PokemonHasNature(&gParties[B_TRAINER_OPPONENT_A][0], NATURE_RUGGED));
+    EXPECT(!PokemonHasNature(&gParties[B_TRAINER_OPPONENT_A][0], NATURE_MODEST));
+    EXPECT(GetPokemonNatureAtIndex(&gParties[B_TRAINER_OPPONENT_A][0], 0, &nature));
+    EXPECT_EQ(nature, NATURE_HASTY);
+    EXPECT(GetPokemonNatureAtIndex(&gParties[B_TRAINER_OPPONENT_A][0], 1, &nature));
+    EXPECT_EQ(nature, NATURE_VIBRANT);
+    EXPECT(GetPokemonNatureAtIndex(&gParties[B_TRAINER_OPPONENT_A][0], 2, &nature));
+    EXPECT_EQ(nature, NATURE_RUGGED);
+    EXPECT(!GetPokemonNatureAtIndex(&gParties[B_TRAINER_OPPONENT_A][0], 3, &nature));
 }
 
 TEST("ModifyPersonalityForNature can set any nature")

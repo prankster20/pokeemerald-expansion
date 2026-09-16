@@ -123,6 +123,19 @@ static void CheckChangingTurnOrderEffects(void);
 static void FreeResetData_ReturnToOvOrDoEvolutions(void);
 static void ReturnFromBattleToOverworld(void);
 static void TryEvolvePokemon(void);
+
+#define TRAINER_NATURE_FLAG_WORDS DIV_ROUND_UP(NUM_NATURES, 32)
+#define MAX_ANNOUNCED_TRAINER_NATURES 3
+
+struct TrainerPartyNatureSet
+{
+    u32 personality;
+    u32 flags[TRAINER_NATURE_FLAG_WORDS];
+    u8 orderedNatures[MAX_ANNOUNCED_TRAINER_NATURES];
+    u8 count;
+};
+
+static EWRAM_DATA struct TrainerPartyNatureSet sTrainerPartyNatureSets[MAX_BATTLE_TRAINERS][PARTY_SIZE] = {0};
 static void WaitForEvoSceneToFinish(void);
 static void HandleEndTurn_ContinueBattle(void);
 static void HandleEndTurn_BattleWon(void);
@@ -1814,6 +1827,130 @@ static u32 GeneratePartyHash(const struct Trainer *trainer, u32 i)
     return Crc32B(buffer, n);
 }
 
+static bool32 GetTrainerPartyNatureSet(const struct Pokemon *mon, struct TrainerPartyNatureSet **natureSet)
+{
+    u32 start = (u32)&gParties[0][0];
+    u32 address = (u32)mon;
+    u32 offset;
+    u32 index;
+
+    if (address < start || address >= start + sizeof(gParties))
+        return FALSE;
+    offset = address - start;
+    if (offset % sizeof(struct Pokemon) != 0)
+        return FALSE;
+
+    index = offset / sizeof(struct Pokemon);
+    *natureSet = &sTrainerPartyNatureSets[index / PARTY_SIZE][index % PARTY_SIZE];
+    return TRUE;
+}
+
+void SetTrainerMonNatures(struct Pokemon *mon, const struct TrainerMon *partyEntry)
+{
+    struct TrainerPartyNatureSet *natureSet;
+    u32 activeNature = GetTrainerMonSecondNature(partyEntry);
+
+    SetMonData(mon, MON_DATA_HIDDEN_NATURE, &activeNature);
+    if (!GetTrainerPartyNatureSet(mon, &natureSet))
+        return;
+
+    memset(natureSet, 0, sizeof(*natureSet));
+    natureSet->personality = GetMonData(mon, MON_DATA_PERSONALITY);
+    natureSet->flags[partyEntry->nature / 32] |= 1u << (partyEntry->nature % 32);
+    natureSet->orderedNatures[natureSet->count++] = partyEntry->nature;
+    for (u32 i = 0; i < partyEntry->additionalNatureCount; i++)
+    {
+        u32 nature = partyEntry->additionalNatures[i];
+
+        if (nature < NUM_NATURES)
+        {
+            natureSet->flags[nature / 32] |= 1u << (nature % 32);
+            // Only the first three entries written in trainers.party are
+            // announcement candidates, even if one of them is duplicated.
+            if (i + 1 < MAX_ANNOUNCED_TRAINER_NATURES)
+            {
+                bool32 duplicate = FALSE;
+
+                for (u32 j = 0; j < natureSet->count; j++)
+                    if (natureSet->orderedNatures[j] == nature)
+                        duplicate = TRUE;
+                if (!duplicate)
+                    natureSet->orderedNatures[natureSet->count++] = nature;
+            }
+        }
+    }
+}
+
+bool32 GetPokemonNatureAtIndex(struct Pokemon *mon, u32 index, u32 *nature)
+{
+    struct TrainerPartyNatureSet *natureSet;
+
+    if (GetTrainerPartyNatureSet(mon, &natureSet)
+     && natureSet->personality == GetMonData(mon, MON_DATA_PERSONALITY))
+    {
+        if (index >= natureSet->count)
+            return FALSE;
+        *nature = natureSet->orderedNatures[index];
+        return TRUE;
+    }
+
+    if (index != 0)
+        return FALSE;
+    *nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    return TRUE;
+}
+
+bool32 ShouldSuppressRepeatedNaturePopup(enum BattlerId battler, u32 nature)
+{
+    u32 announcedNature;
+
+    if (!gSaveBlock2Ptr->optionsAnnounceNatures
+     || GetBattlerSide(battler) != B_SIDE_OPPONENT
+     || !gBattleStruct->battlerState[battler].switchIn
+     || gBattleStruct->eventState.switchIn <= SWITCH_IN_EVENTS_ANNOUNCE_NATURES)
+        return FALSE;
+
+    for (u32 i = 0; i < MAX_ANNOUNCED_TRAINER_NATURES; i++)
+        if (GetPokemonNatureAtIndex(GetBattlerMon(battler), i, &announcedNature)
+         && announcedNature == nature)
+            return TRUE;
+    return FALSE;
+}
+
+bool32 PokemonHasNature(struct Pokemon *mon, u32 nature)
+{
+    struct TrainerPartyNatureSet *natureSet;
+
+    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == nature)
+        return TRUE;
+    if (nature >= NUM_NATURES || !GetTrainerPartyNatureSet(mon, &natureSet))
+        return FALSE;
+    if (natureSet->personality != GetMonData(mon, MON_DATA_PERSONALITY))
+        return FALSE;
+    return (natureSet->flags[nature / 32] & (1u << (nature % 32))) != 0;
+}
+
+s32 GetPokemonNatureStatModifierPercent(struct Pokemon *mon, enum Stat statIndex, u32 personality)
+{
+    struct TrainerPartyNatureSet *natureSet;
+    s32 modifier = 0;
+
+    // Trainer-only multi-Natures are stored outside the Pokemon struct. Sum
+    // their percentage-point modifiers so opposing boosts/drops cancel
+    // exactly and matching boosts stack (for example, two +15% boosts become
+    // +30%). The bitset also ensures duplicate entries are applied only once.
+    if (GetTrainerPartyNatureSet(mon, &natureSet)
+     && natureSet->personality == GetMonData(mon, MON_DATA_PERSONALITY))
+    {
+        for (u32 nature = 0; nature < NUM_NATURES; nature++)
+            if (natureSet->flags[nature / 32] & (1u << (nature % 32)))
+                modifier += GetNatureStatModifierPercent(nature, statIndex, personality);
+        return modifier;
+    }
+
+    return GetNatureStatModifierPercent(GetMonData(mon, MON_DATA_HIDDEN_NATURE), statIndex, personality);
+}
+
 void ModifyPersonalityForNature(u32 *personality, u32 newNature)
 {
     // Nature occupies bits 8-14 of the personality. Preserve the low byte and
@@ -1932,6 +2069,9 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
             // personality after CreateMon so even secret Natures are honored
             // instead of being rejected by the natural-generation reroll.
             SetMonData(&party[i], MON_DATA_PERSONALITY, &personalityValue);
+            // The first entry remains personality/stat-derived. Additional
+            // entries are tracked as trainer-only active battle Natures.
+            SetTrainerMonNatures(&party[i], &partyData[monIndex]);
             {
                 bool32 isShiny = partyData[monIndex].isShiny;
                 SetMonData(&party[i], MON_DATA_IS_SHINY, &isShiny);
@@ -5996,38 +6136,8 @@ enum Type GetDynamicMoveType(struct Pokemon *mon, enum Move move, enum BattlerId
         }
         break;
     case EFFECT_HIDDEN_POWER:
-        {
-            u32 typeBits = 0;
-            if (state == MON_IN_BATTLE)
-            {
-                typeBits = ((gBattleMons[battler].hpIV & 1) << 0)
-                        | ((gBattleMons[battler].attackIV & 1) << 1)
-                        | ((gBattleMons[battler].defenseIV & 1) << 2)
-                        | ((gBattleMons[battler].speedIV & 1) << 3)
-                        | ((gBattleMons[battler].spAttackIV & 1) << 4)
-                        | ((gBattleMons[battler].spDefenseIV & 1) << 5);
-            }
-            else
-            {
-                typeBits = ((GetMonData(mon, MON_DATA_HP_IV) & 1) << 0)
-                        | ((GetMonData(mon, MON_DATA_ATK_IV) & 1) << 1)
-                        | ((GetMonData(mon, MON_DATA_DEF_IV) & 1) << 2)
-                        | ((GetMonData(mon, MON_DATA_SPEED_IV) & 1) << 3)
-                        | ((GetMonData(mon, MON_DATA_SPATK_IV) & 1) << 4)
-                        | ((GetMonData(mon, MON_DATA_SPDEF_IV) & 1) << 5);
-            }
-
-            u32 hpTypes[NUMBER_OF_MON_TYPES] = {0};
-            u32 i, hpTypeCount = 0;
-            for (i = 0; i < NUMBER_OF_MON_TYPES; i++)
-            {
-                if (gTypesInfo[i].isHiddenPowerType)
-                    hpTypes[hpTypeCount++] = i;
-            }
-            moveType = ((hpTypeCount - 1) * typeBits) / 63;
-            return ((hpTypes[moveType] | F_DYNAMIC_TYPE_IGNORE_PHYSICALITY) & 0x3F);
-        }
-        break;
+        return (GetPersonaHiddenPowerType(GetMonData(mon, MON_DATA_PERSONALITY))
+              | F_DYNAMIC_TYPE_IGNORE_PHYSICALITY) & 0x3F;
     case EFFECT_CHANGE_TYPE_ON_ITEM:
         if (holdEffect == GetMoveEffectArg_HoldEffect(move))
             return GetItemSecondaryId(heldItem);

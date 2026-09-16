@@ -6,6 +6,7 @@
 #include "gpu_regs.h"
 #include "palette.h"
 #include "party_menu.h"
+#include "item_menu.h"
 #include "trig.h"
 #include "overworld.h"
 #include "event_data.h"
@@ -26,6 +27,7 @@
 #include "heal_location.h"
 #include "constants/field_specials.h"
 #include "constants/heal_locations.h"
+#include "constants/items.h"
 #include "constants/rgb.h"
 #include "constants/weather.h"
 
@@ -2490,7 +2492,10 @@ static void CB_ExitFlyMap(void)
             }
             else
             {
-                SetMainCallback2(CB2_ReturnToPartyMenuFromFlyMap);
+                if (gSpecialVar_ItemId == ITEM_GLIDER)
+                    SetMainCallback2(CB2_ReturnToField);
+                else
+                    SetMainCallback2(CB2_ReturnToPartyMenuFromFlyMap);
             }
             TRY_FREE_AND_SET_NULL(sFlyMap);
             FreeAllWindowBuffers();

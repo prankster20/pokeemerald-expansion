@@ -76,3 +76,17 @@ SINGLE_BATTLE_TEST("pranks Deceitful activates a held Adrenaline Orb without Int
         EXPECT_EQ(opponent->statStages[STAT_SPEED], DEFAULT_STAT_STAGE + 1);
     }
 }
+
+SINGLE_BATTLE_TEST("pranks Deceitful activates a held Throat Spray after a non-sound move")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_TACKLE); Item(ITEM_THROAT_SPRAY); }
+        OPPONENT(SPECIES_WOBBUFFET);
+        SetTestNature(&PLAYER_PARTY[0], NATURE_DECEITFUL);
+    } WHEN {
+        TURN { MOVE(player, MOVE_TACKLE); }
+    } THEN {
+        EXPECT_EQ(player->item, ITEM_NONE);
+        EXPECT_EQ(player->statStages[STAT_SPATK], DEFAULT_STAT_STAGE + 1);
+    }
+}

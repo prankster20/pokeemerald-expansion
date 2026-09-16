@@ -2072,7 +2072,15 @@ static bool8 WaterfallFieldEffect_Init(struct Task *task, struct ObjectEvent *ob
 {
     LockPlayerFieldControls();
     gPlayerAvatar.preventStep = TRUE;
-    task->tState++;
+    if (gFieldEffectArguments[3] == 2)
+    {
+        gFieldEffectArguments[3] = 0;
+        task->tState = 3; // Skip ShowMon and WaitForShowMon.
+    }
+    else
+    {
+        task->tState++;
+    }
     return FALSE;
 }
 
@@ -2146,7 +2154,15 @@ void Task_UseDive(u8 taskId)
 static bool8 DiveFieldEffect_Init(struct Task *task)
 {
     gPlayerAvatar.preventStep = TRUE;
-    task->data[0]++;
+    if (gFieldEffectArguments[3] == 2)
+    {
+        gFieldEffectArguments[3] = 0;
+        task->data[0] = 2; // Skip ShowMon.
+    }
+    else
+    {
+        task->data[0]++;
+    }
     return FALSE;
 }
 
@@ -3367,7 +3383,15 @@ static void SurfFieldEffect_Init(struct Task *task)
     SetPlayerAvatarStateMask(PLAYER_AVATAR_FLAG_SURFING);
     PlayerGetDestCoords(&task->tDestX, &task->tDestY);
     MoveCoords(gObjectEvents[gPlayerAvatar.objectEventId].movementDirection, &task->tDestX, &task->tDestY);
-    task->tState++;
+    if (gFieldEffectArguments[3] == 2)
+    {
+        gFieldEffectArguments[3] = 0;
+        task->tState = 3; // Skip the field-move pose and mon cut-in.
+    }
+    else
+    {
+        task->tState++;
+    }
 }
 
 static void SurfFieldEffect_FieldMovePose(struct Task *task)

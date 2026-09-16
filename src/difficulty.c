@@ -6,21 +6,21 @@
 
 enum DifficultyLevel GetCurrentDifficultyLevel(void)
 {
-    if (!B_VAR_DIFFICULTY)
-        return DIFFICULTY_NORMAL;
+    if (gSaveBlock2Ptr != NULL)
+        return gSaveBlock2Ptr->optionsDifficulty;
 
-    return VarGet(B_VAR_DIFFICULTY);
+    return DIFFICULTY_NORMAL;
 }
 
 void SetCurrentDifficultyLevel(enum DifficultyLevel desiredDifficulty)
 {
-    if (!B_VAR_DIFFICULTY)
-        return;
-
     if (desiredDifficulty > DIFFICULTY_MAX)
         desiredDifficulty = DIFFICULTY_MAX;
 
-    VarSet(B_VAR_DIFFICULTY, desiredDifficulty);
+    if (gSaveBlock2Ptr != NULL)
+        gSaveBlock2Ptr->optionsDifficulty = desiredDifficulty;
+    if (B_VAR_DIFFICULTY)
+        VarSet(B_VAR_DIFFICULTY, desiredDifficulty);
 }
 
 enum DifficultyLevel GetBattlePartnerDifficultyLevel(u16 partnerId)

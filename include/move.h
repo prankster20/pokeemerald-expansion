@@ -382,6 +382,22 @@ static inline bool32 IsSoundMove(enum Move moveId)
     return gMovesInfo[SanitizeMoveId(moveId)].soundMove;
 }
 
+static inline bool32 IsLightMove(enum Move moveId)
+{
+    switch (moveId)
+    {
+    case MOVE_FLASH_CANNON:
+    case MOVE_GLITZY_GLOW:
+    case MOVE_LIGHT_OF_RUIN:
+    case MOVE_LIGHT_THAT_BURNS_THE_SKY:
+    case MOVE_MOONGEIST_BEAM:
+    case MOVE_SOLAR_BEAM:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 static inline bool32 IsBallisticMove(enum Move moveId)
 {
     return gMovesInfo[SanitizeMoveId(moveId)].ballisticMove;

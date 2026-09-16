@@ -1495,7 +1495,7 @@ static void PrintSecondaryEntries(struct BattleDebugMenu *data)
         AddTextPrinter(&printer, 0, NULL);
         break;
     case LIST_ITEM_NATURE:
-        PadString(gNaturesInfo[GetNatureFromPersonality(gBattleMons[data->battlerId].personality)].name, text);
+        PadString(gNaturesInfo[GetMonData(GetBattlerMon(data->battlerId), MON_DATA_HIDDEN_NATURE)].name, text);
         printer.currentY = printer.y = sSecondaryListTemplate.upText_Y;
         AddTextPrinter(&printer, 0, NULL);
         break;
@@ -1609,7 +1609,7 @@ static void UpdateBattlerValue(struct BattleDebugMenu *data)
         *(u32 *)(data->modifyArrows.modifiedValPtr) = data->modifyArrows.currValue;
         break;
     case VAL_NATURE:
-        ModifyPersonalityForNature(data->modifyArrows.modifiedValPtr, data->modifyArrows.currValue);
+        SetMonData(GetBattlerMon(data->battlerId), MON_DATA_HIDDEN_NATURE, &data->modifyArrows.currValue);
         break;
     case VAL_BITFIELD_32:
         *(u32 *)(data->modifyArrows.modifiedValPtr) &= ~(GetBitfieldToAndValue(data->bitfield[data->currentSecondaryListItemId].currBit, data->bitfield[data->currentSecondaryListItemId].bitsCount));
@@ -1906,9 +1906,9 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
         data->modifyArrows.minValue = 0;
         data->modifyArrows.maxValue = NUM_NATURES - 1;
         data->modifyArrows.maxDigits = 3;
-        data->modifyArrows.modifiedValPtr = &gBattleMons[data->battlerId].personality;
+        data->modifyArrows.modifiedValPtr = NULL;
         data->modifyArrows.typeOfVal = VAL_NATURE;
-        data->modifyArrows.currValue = GetNatureFromPersonality(gBattleMons[data->battlerId].personality);
+        data->modifyArrows.currValue = GetMonData(GetBattlerMon(data->battlerId), MON_DATA_HIDDEN_NATURE);
         break;
     case LIST_ITEM_MOVES:
         data->modifyArrows.minValue = 0;

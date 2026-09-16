@@ -19,6 +19,7 @@
 #define PARTY_SIZE 255
 #define MAX_MON_MOVES 4
 #define MAX_MON_TAGS 32
+#define MAX_MON_NATURES 128
 #define STARTING_STATUS_COUNT 64
 
 struct String
@@ -37,6 +38,7 @@ enum Gender
     GENDER_ANY,
     GENDER_MALE,
     GENDER_FEMALE,
+    GENDER_GENDERLESS,
 };
 
 enum BattleType
@@ -57,6 +59,7 @@ struct Pokemon
     struct String nickname;
     struct String species;
     enum Gender gender;
+    int gender_line;
     struct String item;
     int header_line;
 
@@ -83,6 +86,8 @@ struct Pokemon
 
     struct String nature;
     int nature_line;
+    struct String additional_natures[MAX_MON_NATURES - 1];
+    int additional_natures_n;
 
     bool shiny;
     int shiny_line;
@@ -881,6 +886,11 @@ static bool token_gender(struct Parser *p, const struct Token *t, enum Gender *g
         *g = GENDER_FEMALE;
         return true;
     }
+    else if (is_literal_token(t, "Genderless") || is_literal_token(t, "None"))
+    {
+        *g = GENDER_GENDERLESS;
+        return true;
+    }
     else
     {
         return set_parse_error(p, t->location, "invalid gender");
@@ -1022,6 +1032,48 @@ static bool token_human_identifiers(struct Parser *p, const struct Token *t, str
             return set_parse_error(p, p_.location, "expected '/' or newline");
     }
     *ids_n = n;
+    return true;
+}
+
+// Comma-separated Nature names. The first Nature is personality-derived;
+// later entries are trainer-only active Natures.
+static bool token_natures(struct Parser *p, const struct Token *t, struct Pokemon *pokemon)
+{
+    struct Source source = {
+        .path = p->source->path,
+        .buffer = p->source->buffer,
+        .buffer_n = t->end,
+    };
+    struct Parser p_ = {
+        .source = &source,
+        .location = t->location,
+        .offset = t->begin,
+    };
+    struct String natures[MAX_MON_NATURES];
+    int count = 0;
+
+    for (;;)
+    {
+        struct Token nature;
+
+        skip_whitespace(&p_);
+        if (!match_human_identifier(&p_, &nature))
+            return set_parse_error(p, p_.location, "expected Nature name");
+        if (count == MAX_MON_NATURES)
+            return set_parse_error(p, nature.location, "too many Natures");
+        natures[count++] = token_string(&nature);
+
+        skip_whitespace(&p_);
+        if (match_eof(&p_))
+            break;
+        if (!match_exact(&p_, ","))
+            return set_parse_error(p, p_.location, "expected ',' or newline after Nature");
+    }
+
+    pokemon->nature = natures[0];
+    pokemon->additional_natures_n = count - 1;
+    for (int i = 1; i < count; i++)
+        pokemon->additional_natures[i - 1] = natures[i];
     return true;
 }
 
@@ -1422,12 +1474,15 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                     break;
                 case GENDER_MALE:
                     pokemon->species = literal_string(gendered_species[i].male_species);
+                    pokemon->gender = GENDER_ANY;
                     break;
                 case GENDER_FEMALE:
                     pokemon->species = literal_string(gendered_species[i].female_species);
+                    pokemon->gender = GENDER_ANY;
+                    break;
+                case GENDER_GENDERLESS:
                     break;
                 }
-                pokemon->gender = GENDER_ANY;
                 break;
             }
         }
@@ -1469,6 +1524,14 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 pokemon->ability_line = value.location.line;
                 pokemon->ability = token_string(&value);
             }
+            else if (is_literal_token(&key, "Gender"))
+            {
+                if (pokemon->gender_line)
+                    any_error = !set_show_parse_error(p, key.location, "duplicate 'Gender'");
+                pokemon->gender_line = value.location.line;
+                if (!token_gender(p, &value, &pokemon->gender))
+                    any_error = !show_parse_error(p);
+            }
             else if (is_literal_token(&key, "Level"))
             {
                 if (pokemon->level_line)
@@ -1507,7 +1570,8 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (pokemon->nature_line)
                     any_error = !set_show_parse_error(p, value.location, "duplicate 'Nature'");
                 pokemon->nature_line = value.location.line;
-                pokemon->nature = token_string(&value);
+                if (!token_natures(p, &value, pokemon))
+                    any_error = !show_parse_error(p);
             }
             else if (is_literal_token(&key, "Shiny"))
             {
@@ -1550,7 +1614,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             }
             else
             {
-                any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Ability', 'Level', 'Met Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
+                any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Ability', 'Gender', 'Level', 'Met Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
             }
         }
 
@@ -2064,6 +2128,10 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
                     fprintf(f, "#line %d\n", pokemon->header_line);
                     fprintf(f, "            .gender = TRAINER_MON_FEMALE,\n");
                     break;
+                case GENDER_GENDERLESS:
+                    fprintf(f, "#line %d\n", pokemon->header_line);
+                    fprintf(f, "            .gender = TRAINER_MON_GENDERLESS,\n");
+                    break;
             }
 
             if (!is_empty_string(pokemon->item))
@@ -2138,6 +2206,19 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
             else
             {
                 fprintf(f, "            .nature = NATURE_HARDY,\n");
+            }
+
+            if (pokemon->additional_natures_n != 0)
+            {
+                fprintf(f, "            .additionalNatures = (const u8[]){");
+                for (int i = 0; i < pokemon->additional_natures_n; i++)
+                {
+                    if (i != 0)
+                        fprintf(f, ", ");
+                    fprint_constant(f, "NATURE", pokemon->additional_natures[i]);
+                }
+                fprintf(f, "},\n");
+                fprintf(f, "            .additionalNatureCount = %d,\n", pokemon->additional_natures_n);
             }
 
             if (pokemon->shiny_line)

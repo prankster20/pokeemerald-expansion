@@ -480,7 +480,7 @@ static enum ItemEffect TryThroatSpray(enum BattlerId battlerAtk)
 {
     enum ItemEffect effect = ITEM_NO_EFFECT;
 
-    if (IsSoundMove(gCurrentMove)
+    if ((IsSoundMove(gCurrentMove) || HasNature(battlerAtk, NATURE_DECEITFUL))
      && !gBattleStruct->battlerState[battlerAtk].redCardSwitched
      && !gBattleStruct->unableToUseMove
      && (IsAnyTargetTurnDamaged(battlerAtk, INCLUDING_SUBSTITUTES) || (GetBattleMoveCategory(gCurrentMove) == DAMAGE_CATEGORY_STATUS && IsAnyTargetAffected()))

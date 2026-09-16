@@ -1508,8 +1508,9 @@
 #define FLAG_RECEIVED_POKEDEX_FROM_BIRCH            (SYSTEM_FLAGS + 0x84)
 
 #define FLAG_UNUSED_0x8E5                           (SYSTEM_FLAGS + 0x85) // Used by the Repel Charm
-#define FLAG_UNUSED_0x8E6                           (SYSTEM_FLAGS + 0x86) // Unused Flag
-#define FLAG_UNUSED_0x8E7                           (SYSTEM_FLAGS + 0x87) // Unused Flag
+#define FLAG_EXP_MAX_ON                             (SYSTEM_FLAGS + 0x86)
+#define FLAG_POWER_TRAINER_ON                       FLAG_EXP_MAX_ON // Compatibility alias
+#define FLAG_EXPEDITED_TRAINING                     (SYSTEM_FLAGS + 0x87)
 #define FLAG_UNUSED_0x8E8                           (SYSTEM_FLAGS + 0x88) // Unused Flag
 #define FLAG_UNUSED_0x8E9                           (SYSTEM_FLAGS + 0x89) // Unused Flag
 #define FLAG_UNUSED_0x8EA                           (SYSTEM_FLAGS + 0x8A) // Unused Flag

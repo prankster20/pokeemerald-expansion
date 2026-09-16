@@ -30,6 +30,7 @@ extern const u8 gBattleAnimMove_DoubleKick[];
 extern const u8 gBattleAnimMove_MegaKick[];
 extern const u8 gBattleAnimMove_JumpKick[];
 extern const u8 gBattleAnimMove_RollingKick[];
+extern const u8 gBattleAnimMove_Roughhouse[];
 extern const u8 gBattleAnimMove_SandAttack[];
 extern const u8 gBattleAnimMove_Headbutt[];
 extern const u8 gBattleAnimMove_HornAttack[];

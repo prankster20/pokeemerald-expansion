@@ -2327,6 +2327,7 @@ bool32 CanLowerStat(enum BattlerId battlerAtk, enum BattlerId battlerDef, struct
             break;
         case ABILITY_CONTRARY:
         case ABILITY_CLEAR_BODY:
+        case ABILITY_UNFLAPPABLE:
         case ABILITY_WHITE_SMOKE:
         case ABILITY_FULL_METAL_BODY:
             return FALSE;
@@ -2614,6 +2615,30 @@ bool32 HasMoveWithCategory(enum BattlerId battler, enum DamageCategory category)
     for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
     {
         if (moves[moveIndex] != MOVE_NONE && moves[moveIndex] != MOVE_UNAVAILABLE && GetBattleMoveCategory(moves[moveIndex]) == category)
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 HasSoundMove(enum BattlerId battler)
+{
+    enum Move *moves = GetMovesArray(battler);
+
+    for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
+    {
+        if (moves[moveIndex] != MOVE_NONE && moves[moveIndex] != MOVE_UNAVAILABLE && IsSoundMove(moves[moveIndex]))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static bool32 HasLightMove(enum BattlerId battler)
+{
+    enum Move *moves = GetMovesArray(battler);
+
+    for (u32 moveIndex = 0; moveIndex < MAX_MON_MOVES; moveIndex++)
+    {
+        if (moves[moveIndex] != MOVE_NONE && moves[moveIndex] != MOVE_UNAVAILABLE && IsLightMove(moves[moveIndex]))
             return TRUE;
     }
     return FALSE;
@@ -4687,16 +4712,20 @@ static enum AIScore IncreaseStatUpScoreInternal(enum BattlerId battlerAtk, enum 
     case STAT_DEF:
     {
         bool32 defRelevant = (HasMoveWithCategory(battlerDef, DAMAGE_CATEGORY_PHYSICAL) || !HasMoveWithCategory(battlerDef, DAMAGE_CATEGORY_SPECIAL));
-        bool32 bodyPressCheck = (HasMoveWithEffect(battlerAtk, EFFECT_BODY_PRESS) && !(gFieldStatuses & STATUS_FIELD_WONDER_ROOM) && shouldSetUp);
+        bool32 wonderRoom = gFieldStatuses & STATUS_FIELD_WONDER_ROOM;
+        bool32 bodyPressCheck = (HasMoveWithEffect(battlerAtk, EFFECT_BODY_PRESS) && !wonderRoom && shouldSetUp);
+        bool32 royaltyCheck = (gAiLogicData->abilities[battlerAtk] == ABILITY_ROYALTY && HasMoveWithCategory(battlerAtk, DAMAGE_CATEGORY_PHYSICAL) && !wonderRoom && shouldSetUp);
+        bool32 esotericCheck = (gAiLogicData->abilities[battlerAtk] == ABILITY_ESOTERIC && HasMoveWithCategory(battlerAtk, DAMAGE_CATEGORY_SPECIAL) && wonderRoom && shouldSetUp);
+        bool32 offensiveCheck = bodyPressCheck || royaltyCheck || esotericCheck;
 
-        if (defRelevant || bodyPressCheck)
+        if (defRelevant || offensiveCheck)
         {
             if (defRelevant && (gAiThinkingStruct->aiFlags[battlerAtk] & AI_FLAG_STALL))
                 tempScore += WEAK_EFFECT;
             if (stages == 1)
-                tempScore += bodyPressCheck ? DECENT_EFFECT : WEAK_EFFECT;
+                tempScore += offensiveCheck ? DECENT_EFFECT : WEAK_EFFECT;
             else
-                tempScore += bodyPressCheck ? GOOD_EFFECT : DECENT_EFFECT;
+                tempScore += offensiveCheck ? GOOD_EFFECT : DECENT_EFFECT;
         }
         break;
     }
@@ -4722,16 +4751,20 @@ static enum AIScore IncreaseStatUpScoreInternal(enum BattlerId battlerAtk, enum 
     {
         bool32 spDefRelevant = (HasMoveWithCategory(battlerDef, DAMAGE_CATEGORY_SPECIAL) || !HasMoveWithCategory(battlerDef, DAMAGE_CATEGORY_PHYSICAL));
         // Wonder Room makes Body Press use Sp. Def stages for its damage calculation.
-        bool32 bodyPressCheck = (HasMoveWithEffect(battlerAtk, EFFECT_BODY_PRESS) && (gFieldStatuses & STATUS_FIELD_WONDER_ROOM) && shouldSetUp);
+        bool32 wonderRoom = gFieldStatuses & STATUS_FIELD_WONDER_ROOM;
+        bool32 bodyPressCheck = (HasMoveWithEffect(battlerAtk, EFFECT_BODY_PRESS) && wonderRoom && shouldSetUp);
+        bool32 royaltyCheck = (gAiLogicData->abilities[battlerAtk] == ABILITY_ROYALTY && HasMoveWithCategory(battlerAtk, DAMAGE_CATEGORY_PHYSICAL) && wonderRoom && shouldSetUp);
+        bool32 esotericCheck = (gAiLogicData->abilities[battlerAtk] == ABILITY_ESOTERIC && HasMoveWithCategory(battlerAtk, DAMAGE_CATEGORY_SPECIAL) && !wonderRoom && shouldSetUp);
+        bool32 offensiveCheck = bodyPressCheck || royaltyCheck || esotericCheck;
 
-        if (spDefRelevant || bodyPressCheck)
+        if (spDefRelevant || offensiveCheck)
         {
             if (spDefRelevant && (gAiThinkingStruct->aiFlags[battlerAtk] & AI_FLAG_STALL))
                 tempScore += WEAK_EFFECT;
             if (stages == 1)
-                tempScore += bodyPressCheck ? DECENT_EFFECT : WEAK_EFFECT;
+                tempScore += offensiveCheck ? DECENT_EFFECT : WEAK_EFFECT;
             else
-                tempScore += bodyPressCheck ? GOOD_EFFECT : DECENT_EFFECT;
+                tempScore += offensiveCheck ? GOOD_EFFECT : DECENT_EFFECT;
         }
         break;
     }
@@ -5961,6 +5994,7 @@ enum AIScore BattlerBenefitsFromAbilityScore(enum BattlerId battler, enum Abilit
     {
     // Transferrable abilities that can be assumed to be always beneficial.
     case ABILITY_CLEAR_BODY:
+    case ABILITY_UNFLAPPABLE:
     case ABILITY_GOOD_AS_GOLD:
     case ABILITY_MAGIC_GUARD:
     case ABILITY_MOODY:
@@ -5994,6 +6028,22 @@ enum AIScore BattlerBenefitsFromAbilityScore(enum BattlerId battler, enum Abilit
     case ABILITY_PURE_POWER:
         if (HasMoveWithCategory(battler, DAMAGE_CATEGORY_PHYSICAL))
             return BEST_EFFECT;
+        break;
+    case ABILITY_ROYALTY:
+        if (HasMoveWithCategory(battler, DAMAGE_CATEGORY_PHYSICAL))
+            return BEST_EFFECT;
+        break;
+    case ABILITY_ESOTERIC:
+        if (HasMoveWithCategory(battler, DAMAGE_CATEGORY_SPECIAL))
+            return BEST_EFFECT;
+        break;
+    case ABILITY_PUNK_ROCK:
+        if (HasSoundMove(battler))
+            return GOOD_EFFECT;
+        break;
+    case ABILITY_RADIANCE:
+        if (HasLightMove(battler))
+            return GOOD_EFFECT;
         break;
     // Also used to Worry Seed WORRY_SEED
     case ABILITY_INSOMNIA:

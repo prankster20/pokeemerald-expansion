@@ -56,6 +56,15 @@ static void Task_DoFieldMove_Init(u8 taskId)
 
     LockPlayerFieldControls();
     gPlayerAvatar.preventStep = TRUE;
+
+    // Field tools can operate without a compatible Pokémon. In that case the
+    // script sets argument 3 to 2, meaning skip both the pose and mon cut-in.
+    if (gFieldEffectArguments[3] == 2)
+    {
+        gFieldEffectArguments[3] = 0;
+        gTasks[taskId].func = Task_DoFieldMove_RunFunc;
+        return;
+    }
     objEventId = gPlayerAvatar.objectEventId;
     if (!ObjectEventIsMovementOverridden(&gObjectEvents[objEventId])
      || ObjectEventClearHeldMovementIfFinished(&gObjectEvents[objEventId]))

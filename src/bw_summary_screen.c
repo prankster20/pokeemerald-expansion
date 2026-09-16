@@ -260,6 +260,8 @@ static void TryDrawHPBar(void);
 static void SwitchToMoveSelection(u8);
 static void Task_HandleInput_MoveSelect(u8);
 static bool8 HasMoreThanOneMove(void);
+static bool8 CanDeleteSelectedMove(void);
+static void DeleteSelectedMove(u8);
 static void ChangeSelectedMove(s16 *, s8, u8 *);
 static void CloseMoveSelectMode(u8);
 static void SwitchToMovePositionSwitchMode(u8);
@@ -367,6 +369,9 @@ static void Task_HideEffectTilemap(u8);
 static void HideInactivePageDots(void);
 static void HideContestPageDots(void);
 static void RestoreSummaryPageDisplay(void);
+static void PrintTextOnWindowWithFont(u8, const u8 *, u8, u8, u8, u8, u32);
+static void PrintTextOnWindow(u8, const u8 *, u8, u8, u8, u8);
+static void PrintAOrBButtonIcon(u8, bool8, u32);
 static void ShowCategoryIcon(u16);
 static void DestroyCategoryIcon(void);
 static void ShowGradeIcons(u8);
@@ -380,6 +385,7 @@ static void RunMonAnimTimer(void);
 static bool32 ShouldShowMoveRelearner(void);
 static void ShowMoveRelearner(void);
 static void HideMoveRelearner(void);
+static void PrintMovePrompt(const u8 *text);
 static bool32 ShouldShowRename(void);
 static void ShowCancelOrRenamePrompt(void);
 static void CB2_ReturnToSummaryScreenFromNamingScreen(void);
@@ -392,6 +398,8 @@ static u8 sMemoEffectBuffer[300];
 static u8 sDynamicNatureDescriptionBuffer[300]; // Holds dynamic Nature descriptions and current boost percentages.
 static const u8 sMemoMiscTextColor[]                        = _("{COLOR WHITE}{SHADOW DARK_GRAY}");
 static const u8 sText_ChangeAbility[]                       = _("{START_BUTTON} CHANGE");
+static const u8 sText_Relearn[]                             = _("{START_BUTTON} RELEARN");
+static const u8 sText_Delete[]                              = _("{SELECT_BUTTON} DELETE");
 static const u8 sStatsNonHPLayout[]                         = _("{DYNAMIC 0}\n{DYNAMIC 1}\n{DYNAMIC 2}\n{DYNAMIC 3}\n{DYNAMIC 4}");
 static const u8 sMovesPPLayout[]                            = _("{PP}{CLEAR_TO 31}{DYNAMIC 0}/{DYNAMIC 1}");
 
@@ -467,14 +475,6 @@ static const u16 sStatGrades_Pal[]                          = INCBIN_U16("graphi
 static const u32 sStatGrades_Gfx[]                          = INCBIN_U32("graphics/summary_screen/bw/stat_grades.4bpp.smol");
 static const u16 sFriendshipIcon_Pal[]                      = INCBIN_U16("graphics/summary_screen/bw/heart.gbapal");
 static const u32 sFriendshipIcon_Gfx[]                      = INCBIN_U32("graphics/summary_screen/bw/heart.4bpp.smol");
-// rave note: yeah I know doing this with a sprite is mad jank, but I promise I have my reasons
-#if BW_SUMMARY_DECAP == TRUE
-static const u32 sRelearnPrompt_Gfx[]                       = INCBIN_U32("graphics/summary_screen/bw/relearn_prompt_decap.4bpp.smol");
-#else
-static const u32 sRelearnPrompt_Gfx[]                       = INCBIN_U32("graphics/summary_screen/bw/relearn_prompt.4bpp.smol");
-#endif
-static const u16 sRelearnPrompt_Pal[]                       = INCBIN_U16("graphics/summary_screen/bw/relearn_prompt.gbapal");
-
 static const struct BgTemplate sBgTemplates[] =
 {
     {
@@ -571,12 +571,15 @@ static const struct WindowTemplate sSummaryTemplate[] =
     },
     [PSS_LABEL_WINDOW_PROMPT_SWITCH] = {
         .bg = 0,
-        .tilemapLeft = 22,
+        // Match pokemon_summary_screen.c's PSS_LABEL_WINDOW_PROMPT_RELEARN.
+        // SELECT is wider than A/START, so the old 8-tile prompt clipped it.
+        .tilemapLeft = 18,
+        // Keep the BW prompt on the top row; its Relearn sprite is also at y=4.
         .tilemapTop = 0,
-        .width = 8,
+        .width = 11,
         .height = 2,
-        .paletteNum = 6,
-        .baseBlock = 121,
+        .paletteNum = 15,
+        .baseBlock = 800,
     },
     [PSS_LABEL_WINDOW_POKEMON_INFO_TYPE] = {
         .bg = 0,
@@ -795,7 +798,6 @@ static void (*const sTextPrinterTasks[])(u8 taskId) =
 #define TAG_FRIENDSHIP_ICON 30008
 #define TAG_TERA_TYPE 30009
 #define TAG_MON_SHADOW 30010
-#define TAG_RELEARN_PROMPT 30011
 
 enum BWCategoryIcon
 {
@@ -855,37 +857,6 @@ static const struct SpriteTemplate sSpriteTemplate_CategoryIcons =
     .paletteTag = TAG_CATEGORY_ICONS,
     .oam = &sOamData_CategoryIcons,
     .anims = sSpriteAnimTable_CategoryIcons,
-    .images = NULL,
-    .affineAnims = gDummySpriteAffineAnimTable,
-    .callback = SpriteCallbackDummy
-};
-
-static const struct OamData sOamData_RelearnPrompt =
-{
-    .size = SPRITE_SIZE(64x32),
-    .shape = SPRITE_SHAPE(64x32),
-    .priority = 0,
-};
-
-static const struct CompressedSpriteSheet sSpriteSheet_RelearnPrompt =
-{
-    .data = sRelearnPrompt_Gfx,
-    .size = 64*32/2,
-    .tag = TAG_RELEARN_PROMPT,
-};
-
-static const struct SpritePalette sSpritePal_RelearnPrompt =
-{
-    .data = sRelearnPrompt_Pal,
-    .tag = TAG_RELEARN_PROMPT
-};
-
-static const struct SpriteTemplate sSpriteTemplate_RelearnPrompt =
-{
-    .tileTag = TAG_RELEARN_PROMPT,
-    .paletteTag = TAG_RELEARN_PROMPT,
-    .oam = &sOamData_RelearnPrompt,
-    .anims = gDummySpriteAnimTable,
     .images = NULL,
     .affineAnims = gDummySpriteAffineAnimTable,
     .callback = SpriteCallbackDummy
@@ -2173,11 +2144,6 @@ static bool8 DecompressGraphics(void)
         sMonSummaryScreen->switchCounter++;
         break;
     case 24:
-        if (P_SUMMARY_SCREEN_MOVE_RELEARNER)
-        {
-            LoadCompressedSpriteSheet(&sSpriteSheet_RelearnPrompt);
-            LoadSpritePalette(&sSpritePal_RelearnPrompt);
-        }
         sMonSummaryScreen->switchCounter = 0;
         return TRUE;
     }
@@ -3026,12 +2992,27 @@ static void TryDrawHPBar(void)
 
 static void SwitchToMoveSelection(u8 taskId)
 {
+    s32 stringXPos;
+    s32 iconXPos;
+
     sMonSummaryScreen->firstMoveIndex = 0;
 
     if (!sMonSummaryScreen->lockMovesFlag)
     {
         if (ShouldShowMoveRelearner())
             HideMoveRelearner();
+        FillWindowPixelBuffer(PSS_LABEL_WINDOW_PROMPT_SWITCH, PIXEL_FILL(0));
+        if (sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
+        {
+            PrintMovePrompt(sText_Delete);
+        }
+        else
+        {
+            stringXPos = GetStringRightAlignXOffset(FONT_NORMAL, sText_Switch, 62);
+            iconXPos = max(stringXPos - 16, 0);
+            PrintAOrBButtonIcon(PSS_LABEL_WINDOW_PROMPT_SWITCH, FALSE, iconXPos);
+            PrintTextOnWindow(PSS_LABEL_WINDOW_PROMPT_SWITCH, sText_Switch, stringXPos, 1, 0, 1);
+        }
         PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_SWITCH);
     }
 
@@ -3057,6 +3038,30 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             data[0] = 4;
             ChangeSelectedMove(data, 1, &sMonSummaryScreen->firstMoveIndex);
         }
+        else if (JOY_NEW(SELECT_BUTTON)
+              && sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE
+              && !gMain.inBattle
+              && !sMonSummaryScreen->summary.isEgg
+              && !sMonSummaryScreen->lockMovesFlag)
+        {
+            if (CanDeleteSelectedMove())
+            {
+                PlaySE(SE_SELECT);
+                DeleteSelectedMove(taskId);
+            }
+            else
+            {
+                PlaySE(SE_FAILURE);
+                if (!HasMoreThanOneMove())
+                    PrintMoveDetails(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]);
+                else if (CannotForgetMove(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]))
+                    ShowCantForgetHMsWindow(taskId);
+                else if (IsBoxMonMoveSlotLockedByNature(GetCurrentSummaryBoxMon(), sMonSummaryScreen->firstMoveIndex))
+                    ShowCantForgetNostalgicWindow(taskId);
+                else
+                    ShowCantForgetEclecticWindow(taskId);
+            }
+        }
         else if (JOY_NEW(A_BUTTON))
         {
             if (sMonSummaryScreen->lockMovesFlag == TRUE
@@ -3064,6 +3069,10 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             {
                 PlaySE(SE_SELECT);
                 CloseMoveSelectMode(taskId);
+            }
+            else if (sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
+            {
+                PlaySE(SE_FAILURE);
             }
             else if (HasMoreThanOneMove() == TRUE)
             {
@@ -3100,6 +3109,83 @@ static bool8 HasMoreThanOneMove(void)
             return TRUE;
     }
     return FALSE;
+}
+
+static bool8 CanDeleteSelectedMove(void)
+{
+    enum Move move;
+
+    if (sMonSummaryScreen->firstMoveIndex >= MAX_MON_MOVES || !HasMoreThanOneMove())
+        return FALSE;
+
+    move = sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex];
+    if (move == MOVE_NONE || CannotForgetMove(move))
+        return FALSE;
+
+    // Route deletion through the shared Nature move-rule gate as a
+    // replacement with MOVE_NONE. Future move-locking Natures can therefore
+    // protect their required moves in one central place.
+    if (!CanBoxMonReplaceMoveWithMoveForNature(GetCurrentSummaryBoxMon(),
+                                               sMonSummaryScreen->firstMoveIndex,
+                                               MOVE_NONE))
+        return FALSE;
+
+    return TRUE;
+}
+
+static void DeleteSelectedMove(u8 taskId)
+{
+    struct BoxPokemon *boxMon = GetCurrentSummaryBoxMon();
+    enum Move moves[MAX_MON_MOVES];
+    u8 pp[MAX_MON_MOVES];
+    u8 ppBonusBySlot[MAX_MON_MOVES];
+    u8 ppBonuses = GetBoxMonData(boxMon, MON_DATA_PP_BONUSES);
+    u8 moveNameWindowId;
+    u32 i;
+
+    for (i = 0; i < MAX_MON_MOVES; i++)
+    {
+        moves[i] = GetBoxMonData(boxMon, MON_DATA_MOVE1 + i);
+        pp[i] = GetBoxMonData(boxMon, MON_DATA_PP1 + i);
+        ppBonusBySlot[i] = (ppBonuses >> (i * 2)) & 3;
+    }
+
+    for (i = sMonSummaryScreen->firstMoveIndex; i < MAX_MON_MOVES - 1; i++)
+    {
+        moves[i] = moves[i + 1];
+        pp[i] = pp[i + 1];
+        ppBonusBySlot[i] = ppBonusBySlot[i + 1];
+    }
+    moves[MAX_MON_MOVES - 1] = MOVE_NONE;
+    pp[MAX_MON_MOVES - 1] = 0;
+    ppBonusBySlot[MAX_MON_MOVES - 1] = 0;
+
+    ppBonuses = 0;
+    for (i = 0; i < MAX_MON_MOVES; i++)
+    {
+        SetBoxMonData(boxMon, MON_DATA_MOVE1 + i, &moves[i]);
+        SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp[i]);
+        ppBonuses |= ppBonusBySlot[i] << (i * 2);
+    }
+    SetBoxMonData(boxMon, MON_DATA_PP_BONUSES, &ppBonuses);
+
+    CopyMonToSummaryStruct(&sMonSummaryScreen->currentMon);
+    for (i = 0; i < MAX_MON_MOVES; i++)
+    {
+        sMonSummaryScreen->summary.moves[i] = moves[i];
+        sMonSummaryScreen->summary.pp[i] = pp[i];
+    }
+    sMonSummaryScreen->summary.ppBonuses = ppBonuses;
+
+    CloseMoveSelectMode(taskId);
+    moveNameWindowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_NAMES_PP);
+    FillWindowPixelBuffer(moveNameWindowId, PIXEL_FILL(0));
+    PrintBattleMoves();
+    CopyWindowToVram(moveNameWindowId, COPYWIN_GFX);
+    if (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES)
+        SetMoveTypeIcons();
+    else
+        SetContestMoveTypeIcons();
 }
 
 static void ChangeSelectedMove(s16 *taskData, s8 direction, u8 *moveIndexPtr)
@@ -3363,10 +3449,11 @@ static bool8 CanReplaceMove(void)
     struct BoxPokemon *boxMon = GetCurrentSummaryBoxMon();
     enum Move oldMove;
 
-    if (sMonSummaryScreen->firstMoveIndex == MAX_MON_MOVES
-        || (sMonSummaryScreen->newMove == MOVE_NONE
-         && !IsBoxMonMoveSlotLockedByNature(boxMon, sMonSummaryScreen->firstMoveIndex)))
+    if (sMonSummaryScreen->firstMoveIndex == MAX_MON_MOVES)
         return TRUE;
+
+    if (sMonSummaryScreen->newMove == MOVE_NONE)
+        return CanBoxMonReplaceMoveWithMoveForNature(boxMon, sMonSummaryScreen->firstMoveIndex, MOVE_NONE);
 
     oldMove = sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex];
     if (IsMoveHM(oldMove) == TRUE)
@@ -4277,7 +4364,6 @@ static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 
         u32 widthLen = 0;     // index into lineWidthBuffer
         const u8 *lastSpace = NULL;
         u32 lastSpaceLineLen = 0;
-        u32 lastSpaceWidthLen = 0;
         const u8 *scan = src;
         bool32 overflow = FALSE;
 
@@ -4331,7 +4417,6 @@ static void AppendWrappedNatureDescription(u8 *dest, const u8 *description, u32 
             {
                 lastSpace = scan;
                 lastSpaceLineLen = lineLen;
-                lastSpaceWidthLen = widthLen;
             }
 
             scan++;
@@ -4514,6 +4599,33 @@ static void BufferMonTrainerMemo(void)
             StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
             StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
             StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+        // --- Custom Archetype nature: Affectionate ---
+        else if (description != NULL && sum->mintNature == NATURE_AFFECTIONATE)
+        {
+            u8 numberString[4];
+            u32 chance = 5 + (sum->friendship * 15 / MAX_FRIENDSHIP);
+
+            StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" Currently: "));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+            ConvertIntToDecimalStringN(numberString, chance, STR_CONV_MODE_LEFT_ALIGN, 2);
+            StringAppend(sDynamicNatureDescriptionBuffer, numberString);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("%"));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING("."));
+            description = sDynamicNatureDescriptionBuffer;
+        }
+        // --- Custom Archetype nature: Introspective ---
+        else if (description != NULL && sum->mintNature == NATURE_INTROSPECTIVE)
+        {
+            StringCopy(sDynamicNatureDescriptionBuffer, description);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(" ("));
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoNatureTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, gTypesInfo[GetPersonaHiddenPowerType(sum->pid)].name);
+            StringAppend(sDynamicNatureDescriptionBuffer, sMemoMiscTextColor);
+            StringAppend(sDynamicNatureDescriptionBuffer, COMPOUND_STRING(")"));
             description = sDynamicNatureDescriptionBuffer;
         }
         // --- Custom Archetype nature: Communal ---
@@ -5774,7 +5886,9 @@ static void SetMoveTypeIcons(void)
         if (move != MOVE_NONE)
         {
             enum MonState state = gMain.inBattle ? MON_IN_BATTLE : MON_OUTSIDE_BATTLE;
-            type = P_SHOW_DYNAMIC_TYPES ? CheckDynamicMoveType(&sMonSummaryScreen->currentMon, move, 0, state) : GetMoveType(move);
+            type = (P_SHOW_DYNAMIC_TYPES || GetMoveEffect(move) == EFFECT_HIDDEN_POWER)
+                 ? CheckDynamicMoveType(&sMonSummaryScreen->currentMon, move, 0, state)
+                 : GetMoveType(move);
             SetTypeSpritePosAndPal(type, 8, 16 + (i * 28), i + SPRITE_ARR_ID_TYPE);
         }
         else
@@ -5811,7 +5925,9 @@ static void SetNewMoveTypeIcon(void)
         if (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES)
         {
             enum MonState state = gMain.inBattle ? MON_IN_BATTLE : MON_OUTSIDE_BATTLE;
-            u32 type = P_SHOW_DYNAMIC_TYPES ? CheckDynamicMoveType(&sMonSummaryScreen->currentMon, move, 0, state) : GetMoveType(move);
+            u32 type = (P_SHOW_DYNAMIC_TYPES || GetMoveEffect(move) == EFFECT_HIDDEN_POWER)
+                     ? CheckDynamicMoveType(&sMonSummaryScreen->currentMon, move, 0, state)
+                     : GetMoveType(move);
             SetTypeSpritePosAndPal(type, 8, 128, SPRITE_ARR_ID_TYPE + 4);
         }
         else
@@ -6210,6 +6326,7 @@ static inline bool32 ShouldShowMoveRelearner(void)
 {
     return (P_SUMMARY_SCREEN_MOVE_RELEARNER
          && !sMonSummaryScreen->lockMovesFlag
+         && !sMonSummaryScreen->isBoxMon
          && sMonSummaryScreen->mode != SUMMARY_MODE_BOX
          && sMonSummaryScreen->mode != SUMMARY_MODE_BOX_CURSOR
          && sMonSummaryScreen->relearnableMovesNum > 0
@@ -6217,18 +6334,32 @@ static inline bool32 ShouldShowMoveRelearner(void)
          && !InSlateportBattleTent());
 }
 
+static void PrintMovePrompt(const u8 *text)
+{
+    s32 x;
+
+    FillWindowPixelBuffer(PSS_LABEL_WINDOW_PROMPT_SWITCH, PIXEL_FILL(0));
+    x = GetStringRightAlignXOffset(
+        FONT_SMALL,
+        text,
+        TILE_WIDTH * sSummaryTemplate[PSS_LABEL_WINDOW_PROMPT_SWITCH].width);
+    PrintTextOnWindowWithFont(
+        PSS_LABEL_WINDOW_PROMPT_SWITCH,
+        text,
+        x, 1, 0, 0, FONT_SMALL);
+    PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_SWITCH);
+    CopyWindowToVram(PSS_LABEL_WINDOW_PROMPT_SWITCH, COPYWIN_GFX);
+}
+
 static void ShowMoveRelearner(void)
 {
-    if (sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT] == SPRITE_NONE)
-        sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT] = CreateSprite(&sSpriteTemplate_RelearnPrompt, 199, 20, 0);
-    
-    gSprites[sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT]].invisible = FALSE;
+    PrintMovePrompt(sText_Relearn);
 }
 
 static void HideMoveRelearner(void)
 {
-    if (sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT] != SPRITE_NONE)
-        gSprites[sMonSummaryScreen->spriteIds[SPRITE_ARR_ID_RELEARN_PROMPT]].invisible = TRUE;
+    ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_SWITCH);
+    ScheduleBgCopyTilemapToVram(0);
 }
 
 static inline bool32 ShouldShowRename(void)

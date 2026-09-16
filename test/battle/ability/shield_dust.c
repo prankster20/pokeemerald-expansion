@@ -64,7 +64,7 @@ SINGLE_BATTLE_TEST("Shield Dust does not block primary effects")
         switch (move)
         {
             case MOVE_INFESTATION:
-                MESSAGE("The opposing Vivillon has been afflicted with an infestation by Wobbuffet!");
+                MESSAGE("The opposing Vivillon has been infested by Wobbuffet!");
                 break;
             case MOVE_THOUSAND_ARROWS:
                 MESSAGE("The opposing Vivillon fell straight down!");

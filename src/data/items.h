@@ -2970,15 +2970,31 @@ const struct ItemInfo gItemsInfo[] =
         .name = ITEM_NAME("Catch-Up Candy"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Raises a Pokémon to\n"
-            "team's average level,\n"
-            "if 5+ levels below."),
+            "Raises any Pokémon below\n"
+            "the team's catch-up\n"
+            "level to that level."),
         .importance = 1,
         .pocket = POCKET_KEY_ITEMS,
         .type = ITEM_USE_PARTY_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_CatchUpCandy,
         .iconPic = gItemIcon_RareCandy,
-        .iconPalette = gItemIconPalette_CatchUpCandy,
+        .iconPalette = gItemIconPalette_RareCandy,
+    },
+
+    [ITEM_POWER_TRAINER] =
+    {
+        .name = ITEM_NAME("EXP Max"),
+        .price = 0,
+        .description = COMPOUND_STRING(
+            "Helps weak Pokémon\n"
+            "catch up to two levels\n"
+            "below the level cap."),
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_PowerTrainer,
+        .iconPic = gItemIcon_ExpShare,
+        .iconPalette = gItemIconPalette_ExpShare,
     },
 
     [ITEM_PERSONALITY_MINT] =
@@ -3020,7 +3036,7 @@ const struct ItemInfo gItemsInfo[] =
     {                                                                                          \
         .name = ITEM_NAME(itemName),                                                           \
         .price = (I_PRICE >= GEN_9) ? priceGen9 : priceOld,                                    \
-        .description = COMPOUND_STRING("Can be smelled. It\n" effectText "\nfrom its Nature group."), \
+        .description = COMPOUND_STRING("Can be smelled. It\n" effectText ""), \
         .pocket = POCKET_ITEMS,                                                                \
         .sortType = ITEM_TYPE_NATURE_MINT,                                                     \
         .type = ITEM_USE_PARTY_MENU,                                                           \
@@ -3031,30 +3047,30 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_PurpleMint,                                            \
     },
 
-    GROUP_MINT_ITEM(ITEM_BEGINNER_RANDOM_MINT, "Beginner Rand. Mint", BEGINNER, RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_BEGINNER_SPLIT_MINT,  "Beginner Split Mint",  BEGINNER, SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_BEGINNER_SELECT_MINT, "Beginner Sel. Mint", BEGINNER, SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_EXPERT_RANDOM_MINT,   "Expert Random Mint",   EXPERT,   RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_EXPERT_SPLIT_MINT,    "Expert Split Mint",    EXPERT,   SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_EXPERT_SELECT_MINT,   "Expert Select Mint",   EXPERT,   SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_RISKY_RANDOM_MINT,    "Risky Random Mint",    RISKY,    RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_RISKY_SPLIT_MINT,     "Risky Split Mint",     RISKY,    SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_RISKY_SELECT_MINT,    "Risky Select Mint",    RISKY,    SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_OG25_RANDOM_MINT,     "OG25 Random Mint",     OG25,     RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_OG25_SPLIT_MINT,      "OG25 Split Mint",      OG25,     SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_OG25_SELECT_MINT,     "OG25 Select Mint",     OG25,     SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_CUTE_RANDOM_MINT,     "Cute Random Mint",     CUTE,     RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_CUTE_SPLIT_MINT,      "Cute Split Mint",      CUTE,     SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_CUTE_SELECT_MINT,     "Cute Select Mint",     CUTE,     SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_MEAN_RANDOM_MINT,     "Mean Random Mint",     MEAN,     RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_MEAN_SPLIT_MINT,      "Mean Split Mint",      MEAN,     SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_MEAN_SELECT_MINT,     "Mean Select Mint",     MEAN,     SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_SILLY_RANDOM_MINT,    "Silly Random Mint",    SILLY,    RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_SILLY_SPLIT_MINT,     "Silly Split Mint",     SILLY,    SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_SILLY_SELECT_MINT,    "Silly Select Mint",    SILLY,    SELECT, 30000, 30, "lets you select a Nature")
-    GROUP_MINT_ITEM(ITEM_ELITE_RANDOM_MINT,    "Elite Random Mint",    ELITE,    RANDOM, 10000, 10, "gives a random Nature")
-    GROUP_MINT_ITEM(ITEM_ELITE_SPLIT_MINT,     "Elite Split Mint",     ELITE,    SPLIT,  20000, 20, "offers two random Natures")
-    GROUP_MINT_ITEM(ITEM_ELITE_SELECT_MINT,    "Elite Select Mint",    ELITE,    SELECT, 30000, 30, "lets you select a Nature")
+    GROUP_MINT_ITEM(ITEM_BEGINNER_RANDOM_MINT, "Rookie Random Mint", BEGINNER, RANDOM, 10000, 10, "gives a random Nature ideal for the earlygame.")
+    GROUP_MINT_ITEM(ITEM_BEGINNER_SPLIT_MINT,  "Rookie Split Mint",  BEGINNER, SPLIT,  20000, 20, "offers one of two random Natures ideal for the earlygame.")
+    GROUP_MINT_ITEM(ITEM_BEGINNER_SELECT_MINT, "Rookie Select Mint", BEGINNER, SELECT, 30000, 30, "lets you select a Nature ideal for the earlygame.")
+    GROUP_MINT_ITEM(ITEM_EXPERT_RANDOM_MINT,   "Expert Random Mint",   EXPERT,   RANDOM, 10000, 10, "gives a random Nature best suited for lategame.")
+    GROUP_MINT_ITEM(ITEM_EXPERT_SPLIT_MINT,    "Expert Split Mint",    EXPERT,   SPLIT,  20000, 20, "offers one of two random Natures best suited for lategame.")
+    GROUP_MINT_ITEM(ITEM_EXPERT_SELECT_MINT,   "Expert Select Mint",   EXPERT,   SELECT, 30000, 30, "lets you select a Nature best suited for lategame.")
+    GROUP_MINT_ITEM(ITEM_RISKY_RANDOM_MINT,    "Risky Random Mint",    RISKY,    RANDOM, 10000, 10, "gives a random high-risk Nature.")
+    GROUP_MINT_ITEM(ITEM_RISKY_SPLIT_MINT,     "Risky Split Mint",     RISKY,    SPLIT,  20000, 20, "offers one of two random high-risk Natures.")
+    GROUP_MINT_ITEM(ITEM_RISKY_SELECT_MINT,    "Risky Select Mint",    RISKY,    SELECT, 30000, 30, "lets you select a high-risk Nature.")
+    GROUP_MINT_ITEM(ITEM_OG25_RANDOM_MINT,     "OG25 Random Mint",     OG25,     RANDOM, 10000, 10, "gives a random Nature from the original 25.")
+    GROUP_MINT_ITEM(ITEM_OG25_SPLIT_MINT,      "OG25 Split Mint",      OG25,     SPLIT,  20000, 20, "offers one of two random Natures from the original 25.")
+    GROUP_MINT_ITEM(ITEM_OG25_SELECT_MINT,     "OG25 Select Mint",     OG25,     SELECT, 30000, 30, "lets you select a Nature from the original 25.")
+    GROUP_MINT_ITEM(ITEM_CUTE_RANDOM_MINT,     "Cute Random Mint",     CUTE,     RANDOM, 10000, 10, "gives a random wholesome Nature.")
+    GROUP_MINT_ITEM(ITEM_CUTE_SPLIT_MINT,      "Cute Split Mint",      CUTE,     SPLIT,  20000, 20, "offers one of two random wholesome Natures.")
+    GROUP_MINT_ITEM(ITEM_CUTE_SELECT_MINT,     "Cute Select Mint",     CUTE,     SELECT, 30000, 30, "lets you select a wholesome Nature.")
+    GROUP_MINT_ITEM(ITEM_MEAN_RANDOM_MINT,     "Mean Random Mint",     MEAN,     RANDOM, 10000, 10, "gives a random wretched Nature.")
+    GROUP_MINT_ITEM(ITEM_MEAN_SPLIT_MINT,      "Mean Split Mint",      MEAN,     SPLIT,  20000, 20, "offers one of two random wretched Natures.")
+    GROUP_MINT_ITEM(ITEM_MEAN_SELECT_MINT,     "Mean Select Mint",     MEAN,     SELECT, 30000, 30, "lets you select a wretched Nature.")
+    GROUP_MINT_ITEM(ITEM_SILLY_RANDOM_MINT,    "Silly Random Mint",    SILLY,    RANDOM, 10000, 10, "gives a random funny or silly Nature.")
+    GROUP_MINT_ITEM(ITEM_SILLY_SPLIT_MINT,     "Silly Split Mint",     SILLY,    SPLIT,  20000, 20, "offers one of two random funny or silly Natures.")
+    GROUP_MINT_ITEM(ITEM_SILLY_SELECT_MINT,    "Silly Select Mint",    SILLY,    SELECT, 30000, 30, "lets you select a funny or silly Nature.")
+    GROUP_MINT_ITEM(ITEM_ELITE_RANDOM_MINT,    "Elite Random Mint",    ELITE,    RANDOM, 10000, 10, "gives a random Nature from among the best ones.")
+    GROUP_MINT_ITEM(ITEM_ELITE_SPLIT_MINT,     "Elite Split Mint",     ELITE,    SPLIT,  20000, 20, "offers one of two random Natures from among the best ones.")
+    GROUP_MINT_ITEM(ITEM_ELITE_SELECT_MINT,    "Elite Select Mint",    ELITE,    SELECT, 30000, 30, "lets you select a Nature from among the best ones.")
 
 #undef GROUP_MINT_ITEM
 
@@ -13804,116 +13820,132 @@ const struct ItemInfo gItemsInfo[] =
         .fieldUseFunc = ItemUseOutOfBattle_TMHM,
     },
 
-    [ITEM_HM_CUT] =
+    [ITEM_FIELD_SHEARS] =
     {
-        .name = ITEM_NAME("HM01"),
+        .name = ITEM_NAME("Field Shears"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Slashes the foe\n"
-            "with sharp claws, etc.\n"
-            "+2 crit ratio. Contact. Slice."),
+            "A sturdy pair of\n"
+            "shears that cuts\n"
+            "down small trees."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_FLY] =
+    [ITEM_GLIDER] =
     {
-        .name = ITEM_NAME("HM02"),
+        .name = ITEM_NAME("Glider"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Flies up on the\n"
-            "first turn, then\n"
-            "attacks next turn."),
+            "A compact glider\n"
+            "for flying to\n"
+            "visited places."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_SURF] =
+    [ITEM_SURFBOARD] =
     {
-        .name = ITEM_NAME("HM03"),
+        .name = ITEM_NAME("Surfboard"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Creates a huge\n"
-            "wave, then crashes\n"
-            "it down on the foe."),
+            "A durable board for\n"
+            "traveling across\n"
+            "the water."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_STRENGTH] =
+    [ITEM_POWER_GLOVES] =
     {
-        .name = ITEM_NAME("HM04"),
+        .name = ITEM_NAME("Power Gloves"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Builds enormous\n"
-            "power, then slams\n"
-            "the foe."),
+            "Heavy-duty gloves\n"
+            "that let the wearer\n"
+            "push huge boulders."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_FLASH] =
+    [ITEM_LANTERN] =
     {
-        .name = ITEM_NAME("HM05"),
+        .name = ITEM_NAME("Lantern"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Looses a powerful\n"
-            "blast of light that\n"
-            "reduces accuracy."),
+            "A bright lantern\n"
+            "that illuminates\n"
+            "the darkest caves."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_ROCK_SMASH] =
+    [ITEM_ROCK_HAMMER] =
     {
-        .name = ITEM_NAME("HM06"),
+        .name = ITEM_NAME("Rock Hammer"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "A rock-crushingly\n"
-            "tough attack that\n"
-            "may lower Defense."),
+            "A rugged hammer\n"
+            "made for breaking\n"
+            "cracked rocks."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_WATERFALL] =
+    [ITEM_WATERFALL_GEAR] =
     {
-        .name = ITEM_NAME("HM07"),
+        .name = ITEM_NAME("Waterfall Gear"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Attacks the foe\n"
-            "with enough power\n"
-            "to climb waterfalls."),
+            "Special equipment\n"
+            "for safely scaling\n"
+            "raging waterfalls."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
-    [ITEM_HM_DIVE] =
+    [ITEM_DIVING_GEAR] =
     {
-        .name = ITEM_NAME("HM08"),
+        .name = ITEM_NAME("Diving Gear"),
         .price = 0,
         .description = COMPOUND_STRING(
-            "Dives underwater\n"
-            "the 1st turn, then\n"
-            "attacks next turn."),
+            "Special equipment\n"
+            "for exploring deep\n"
+            "underwater areas."),
         .importance = 1,
-        .pocket = POCKET_TM_HM,
-        .type = ITEM_USE_PARTY_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_TMHM,
+        .pocket = POCKET_KEY_ITEMS,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_FieldTool,
+        .iconPic = gItemIcon_TownMap,
+        .iconPalette = gItemIconPalette_TownMap,
     },
 
 

@@ -1667,7 +1667,7 @@ static s32 ApplyHealingNatureBoostsBattle(struct Pokemon *mon, s32 healAmount)
 
     // --- Custom Archetype nature: Delicate ---
     // Receives 1.3x more healing.
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_DELICATE)
+    if (PokemonHasNature(mon, NATURE_DELICATE))
         healAmount = healAmount * 130 / 100;
 
     return healAmount;
@@ -4432,7 +4432,10 @@ static void Cmd_getexp(void)
                 gBattleScripting.getexpState = 5;
                 gBattleStruct->battlerExpReward = 0;
                 if (B_MAX_LEVEL_EV_GAINS >= GEN_5)
-                    MonGainEVs(&gParties[B_TRAINER_PLAYER][*expMonId], gBattleMons[gBattlerFainted].species);
+                    MonGainEVs(&gParties[B_TRAINER_PLAYER][*expMonId],
+                               gBattleMons[gBattlerFainted].species,
+                               (FlagGet(FLAG_EXP_MAX_ON) && wasSentOut)
+                               || IsAcceleratedTrainingActive());
             }
             else
             {
@@ -4463,7 +4466,34 @@ static void Cmd_getexp(void)
 
                     ApplyExperienceMultipliers(&gBattleStruct->battlerExpReward, *expMonId, gBattlerFainted);
 
-                    if (gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD && gBattleStruct->battlerExpReward != 0)
+                    // EXP Max catches up only Pokemon that actually participated.
+                    // At or above two levels below the progression cap, it leaves
+                    // the battle's ordinary experience reward unchanged.
+                    if (FlagGet(FLAG_EXP_MAX_ON)
+                     && wasSentOut
+                     && gBattleStruct->battlerExpReward != 0)
+                    {
+                        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][*expMonId];
+                        enum GrowthRate growthRate = gSpeciesInfo[GetMonData(mon, MON_DATA_SPECIES)].growthRate;
+                        u32 currentExp = GetMonData(mon, MON_DATA_EXP);
+                        u32 targetLevel = max(GetCurrentProgressionLevelCap(), 3) - 2;
+                        u32 targetExp = gExperienceTables[growthRate][targetLevel];
+
+                        if (currentExp < targetExp)
+                            gBattleStruct->battlerExpReward = targetExp - currentExp;
+                    }
+
+                    // While enabled, EXP Max always fills any yielded EV stat
+                    // toward its current cap for participating Pokémon. Its EXP
+                    // jump remains limited to the catch-up range above. This and
+                    // chapter-end accelerated training apply equally to wild and
+                    // Trainer battles.
+                    MonGainEVs(&gParties[B_TRAINER_PLAYER][*expMonId],
+                               gBattleMons[gBattlerFainted].species,
+                               (FlagGet(FLAG_EXP_MAX_ON) && wasSentOut)
+                               || IsAcceleratedTrainingActive());
+
+                    if (gSaveBlock2Ptr->optionsDifficulty != DIFFICULTY_EASY && gBattleStruct->battlerExpReward != 0)
                     {
                         enum GrowthRate growthRate = gSpeciesInfo[GetMonData(&gParties[B_TRAINER_PLAYER][*expMonId], MON_DATA_SPECIES)].growthRate;
                         u32 currentExp = GetMonData(&gParties[B_TRAINER_PLAYER][*expMonId], MON_DATA_EXP);
@@ -4518,8 +4548,6 @@ static void Cmd_getexp(void)
                         PrepareStringBattle(STRINGID_TEAMGAINEDEXP, gBattleStruct->expGetterBattlerId);
                         gBattleStruct->teamGotExpMsgPrinted = TRUE;
                     }
-
-                    MonGainEVs(&gParties[B_TRAINER_PLAYER][*expMonId], gBattleMons[gBattlerFainted].species);
                 }
                 gBattleScripting.getexpState++;
             }
@@ -10573,10 +10601,10 @@ static u32 ComputeCaptureOdds(u32 wildMonBattler, u32 playerBattler)
     if (battleMon->status1 & STATUS1_CAN_MOVE)
         odds = odds * 15 / 10;
 
-    // --- Custom Archetype nature: Flighty ---
-    // Twice as hard to catch.
-    if (HasNature(wildMonBattler, NATURE_FLIGHTY))
-        odds /= 2;
+    // // --- Custom Archetype nature: Flighty ---
+    // // Twice as hard to catch.
+    // if (HasNature(wildMonBattler, NATURE_FLIGHTY))
+    //     odds /= 2;
 
     // Apply the player's QoL catch multiplier after every ball, species,
     // badge, level, status, and Nature modifier has been resolved.
@@ -11832,6 +11860,8 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
         *expAmount = (*expAmount * 4915) / 4096;
     if (CheckBagHasItem(ITEM_EXP_CHARM, 1)) //is also for other exp boosting Powers if/when implemented
         *expAmount = (*expAmount * 150) / 100;
+    if (IsAcceleratedTrainingActive())
+        *expAmount *= 2;
 
     // --- Custom Archetype nature: Callow ---
     // Gains 5% less EXP.
@@ -13890,11 +13920,23 @@ void BS_ShowAbilityPopup(void)
     // pranks / jimh - Custom Archetype natures: Cowardly & Phobic
     if (gBattleScripting.showNaturePopup)
     {
-        CreateNaturePopUp(gBattlerAbility, gBattleScripting.naturePopupId, (IsDoubleBattle()) != 0);
+        if (!ShouldSuppressRepeatedNaturePopup(gBattlerAbility, gBattleScripting.naturePopupId))
+        {
+            // Consecutive trainer Natures use the same OBJ tile tag and the
+            // same two sprite-ID slots. Wait for the previous popup to finish
+            // sliding out before creating the next one; otherwise the new
+            // text overwrites the old popup and its delayed cleanup can act on
+            // a subsequently-created trainer sprite.
+            if (IsAbilityPopUpActive(gBattlerAbility))
+                return;
+            CreateNaturePopUp(gBattlerAbility, gBattleScripting.naturePopupId, (IsDoubleBattle()) != 0);
+        }
         gBattleScripting.showNaturePopup = FALSE;
     }
     else
     {
+        if (IsAbilityPopUpActive(gBattlerAbility))
+            return;
         CreateAbilityPopUp(gBattlerAbility, gBattleMons[gBattlerAbility].ability, (IsDoubleBattle()) != 0);
     }
     gBattlescriptCurrInstr = cmd->nextInstr;

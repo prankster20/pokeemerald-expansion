@@ -17,6 +17,7 @@
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
 #include "constants/global.h"
+#include "constants/difficulty.h"
 #include "constants/songs.h"
 
 #define tMenuSelection data[0]
@@ -31,7 +32,7 @@
 #define tFooterChoice data[9]
 #define tShinyOdds data[10]
 #define tEasierCatch data[11]
-#define tLevelCaps data[12]
+#define tDifficulty data[12]
 #define tNatureTitles data[13]
 #define tPersonalityColors data[14]
 
@@ -60,7 +61,7 @@ enum
     MORE_MENUITEM_PERSONALITY_COLORS,
     MORE_MENUITEM_SHINY_ODDS,
     MORE_MENUITEM_EASIER_CATCH,
-    MORE_MENUITEM_LEVEL_CAPS,
+    MORE_MENUITEM_DIFFICULTY,
     MORE_MENUITEM_COUNT,
 };
 
@@ -88,7 +89,7 @@ enum
 #define YPOS_MORE_PERSONALITY_COLORS (2 * OPTION_ROW_HEIGHT)
 #define YPOS_MORE_SHINYODDS        (3 * OPTION_ROW_HEIGHT)
 #define YPOS_MORE_EASIER_CATCH     (4 * OPTION_ROW_HEIGHT)
-#define YPOS_MORE_LEVELCAPS        (5 * OPTION_ROW_HEIGHT)
+#define YPOS_MORE_DIFFICULTY       (5 * OPTION_ROW_HEIGHT)
 #define YPOS_FOOTER          (MENUITEM_FOOTER * OPTION_ROW_HEIGHT)
 
 static void Task_OptionMenuFadeIn(u8 taskId);
@@ -112,8 +113,8 @@ static u8 ShinyOdds_ProcessInput(u8 selection);
 static void ShinyOdds_DrawChoices(u8 selection);
 static u8 EasierCatch_ProcessInput(u8 selection);
 static void EasierCatch_DrawChoices(u8 selection);
-static u8 LevelCaps_ProcessInput(u8 selection);
-static void LevelCaps_DrawChoices(u8 selection);
+static u8 Difficulty_ProcessInput(u8 selection);
+static void Difficulty_DrawChoice(u8 selection, bool8 selected);
 static u8 Sound_ProcessInput(u8 selection);
 static void Sound_DrawChoices(u8 selection);
 static u8 FrameType_ProcessInput(u8 selection);
@@ -156,14 +157,16 @@ static const u8 gText_ShinyOdds64[]        = _("{COLOR GREEN}{SHADOW LIGHT_GREEN
 static const u8 gText_EasierCatch1x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}1x");
 static const u8 gText_EasierCatch2x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}2x");
 static const u8 gText_EasierCatch3x[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}3x");
-static const u8 gText_LevelCapsOff[]       = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}OFF");
-static const u8 gText_LevelCapsHard[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}HARD");
+static const u8 gText_DifficultyEasy[]     = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}EASY");
+static const u8 gText_DifficultyNormal[]   = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}NORMAL");
+static const u8 gText_DifficultyLeft[]     = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}{LEFT_ARROW}");
+static const u8 gText_DifficultyRight[]    = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}{RIGHT_ARROW}");
 static const u8 gText_AnnounceNatures[]    = _("SHOW FOE NATURE");
 static const u8 gText_NatureTitles[]       = _("NATURE TITLES");
 static const u8 gText_PersonalityColors[]  = _("MON COLORS");
 static const u8 gText_ShinyOdds[]          = _("SHINY ODDS");
 static const u8 gText_EasierCatch[]        = _("CATCH RATE");
-static const u8 gText_LevelCaps[]          = _("LEVEL CAPS");
+static const u8 gText_Difficulty[]         = _("DIFFICULTY");
 
 static const u16 sOptionMenuText_Pal[] = INCGFX_U16("graphics/interface/option_menu_text.pal", ".gbapal");
 // note: this is only used in the Japanese release
@@ -332,7 +335,7 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tEasierCatch = gSaveBlock2Ptr->optionsEasierCatch;
         if (gTasks[taskId].tEasierCatch >= OPTIONS_EASIER_CATCH_COUNT)
             gTasks[taskId].tEasierCatch = OPTIONS_EASIER_CATCH_1X;
-        gTasks[taskId].tLevelCaps = gSaveBlock2Ptr->optionsLevelCaps;
+        gTasks[taskId].tDifficulty = gSaveBlock2Ptr->optionsDifficulty;
         gTasks[taskId].tSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tButtonMode = gSaveBlock2Ptr->optionsButtonMode;
         gTasks[taskId].tWindowFrameType = gSaveBlock2Ptr->optionsWindowFrameType;
@@ -452,12 +455,12 @@ static void Task_OptionMenuProcessInput(u8 taskId)
                 if (previousOption != gTasks[taskId].tShinyOdds)
                     ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
             }
-            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_LEVEL_CAPS)
+            else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_DIFFICULTY)
             {
-                previousOption = gTasks[taskId].tLevelCaps;
-                gTasks[taskId].tLevelCaps = LevelCaps_ProcessInput(gTasks[taskId].tLevelCaps);
-                if (previousOption != gTasks[taskId].tLevelCaps)
-                    LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);
+                previousOption = gTasks[taskId].tDifficulty;
+                gTasks[taskId].tDifficulty = Difficulty_ProcessInput(gTasks[taskId].tDifficulty);
+                if (previousOption != gTasks[taskId].tDifficulty)
+                    Difficulty_DrawChoice(gTasks[taskId].tDifficulty, TRUE);
             }
             else if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_EASIER_CATCH)
             {
@@ -551,7 +554,7 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsEasierCatch = gTasks[taskId].tEasierCatch;
     // Autosave is currently unavailable. Clear the dormant option for older saves too.
     gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
-    gSaveBlock2Ptr->optionsLevelCaps = gTasks[taskId].tLevelCaps;
+    gSaveBlock2Ptr->optionsDifficulty = gTasks[taskId].tDifficulty;
     gSaveBlock2Ptr->optionsSound = gTasks[taskId].tSound;
     gSaveBlock2Ptr->optionsButtonMode = gTasks[taskId].tButtonMode;
     gSaveBlock2Ptr->optionsWindowFrameType = gTasks[taskId].tWindowFrameType;
@@ -828,7 +831,7 @@ static void EasierCatch_DrawChoices(u8 selection)
     DrawThreeOptionChoices(choices, YPOS_MORE_EASIER_CATCH, selection);
 }
 
-static u8 LevelCaps_ProcessInput(u8 selection)
+static u8 Difficulty_ProcessInput(u8 selection)
 {
     if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
     {
@@ -838,13 +841,18 @@ static u8 LevelCaps_ProcessInput(u8 selection)
     return selection;
 }
 
-static void LevelCaps_DrawChoices(u8 selection)
+static void Difficulty_DrawChoice(u8 selection, bool8 selected)
 {
-    DrawOptionMenuChoice(gText_LevelCapsOff, 104, YPOS_MORE_LEVELCAPS, selection == OPTIONS_LEVEL_CAPS_OFF);
-    DrawOptionMenuChoice(gText_LevelCapsHard,
-                         GetStringRightAlignXOffset(FONT_NORMAL, gText_LevelCapsHard, 198),
-                         YPOS_MORE_LEVELCAPS,
-                         selection == OPTIONS_LEVEL_CAPS_HARD);
+    const u8 *text = selection == DIFFICULTY_EASY ? gText_DifficultyEasy : gText_DifficultyNormal;
+    u8 x = 151 - GetStringWidth(FONT_NORMAL, text, 0) / 2;
+
+    FillWindowPixelRect(WIN_OPTIONS, PIXEL_FILL(1), 100, YPOS_MORE_DIFFICULTY, 102, OPTION_ROW_HEIGHT);
+    if (selected)
+    {
+        DrawOptionMenuChoice(gText_DifficultyLeft, 104, YPOS_MORE_DIFFICULTY, FALSE);
+        DrawOptionMenuChoice(gText_DifficultyRight, 190, YPOS_MORE_DIFFICULTY, FALSE);
+    }
+    DrawOptionMenuChoice(text, x, YPOS_MORE_DIFFICULTY, TRUE);
 }
 
 static u8 Sound_ProcessInput(u8 selection)
@@ -1031,14 +1039,14 @@ static void DrawOptionMenuPage(u8 taskId)
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_PersonalityColors, 8, YPOS_MORE_PERSONALITY_COLORS + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_ShinyOdds, 8, YPOS_MORE_SHINYODDS + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_EasierCatch, 8, YPOS_MORE_EASIER_CATCH + 1, TEXT_SKIP_DRAW, NULL);
-        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_LevelCaps, 8, YPOS_MORE_LEVELCAPS + 1, TEXT_SKIP_DRAW, NULL);
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Difficulty, 8, YPOS_MORE_DIFFICULTY + 1, TEXT_SKIP_DRAW, NULL);
         DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER, gTasks[taskId].tMenuSelection == MENUITEM_FOOTER);
         AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
         NatureTitles_DrawChoices(gTasks[taskId].tNatureTitles);
         PersonalityColors_DrawChoices(gTasks[taskId].tPersonalityColors);
         ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
         EasierCatch_DrawChoices(gTasks[taskId].tEasierCatch);
-        LevelCaps_DrawChoices(gTasks[taskId].tLevelCaps);
+        Difficulty_DrawChoice(gTasks[taskId].tDifficulty, gTasks[taskId].tMenuSelection == MORE_MENUITEM_DIFFICULTY);
     }
 
     HighlightOptionMenuItem(gTasks[taskId].tMenuSelection);

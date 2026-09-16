@@ -99,10 +99,14 @@ PetalburgWoods_EventScript_BagFull::
 	end
 
 PetalburgWoods_EventScript_DevonResearcherFinish::
+	setflag DN_FLAG_DEXNAV_GET
+	setflag DN_FLAG_DETECTOR_MODE
+	msgbox PetalburgWoods_Text_ReceivedDexNav, MSGBOX_DEFAULT
 	msgbox PetalburgWoods_Text_TeamAquaAfterSomethingInRustboro, MSGBOX_DEFAULT
 	applymovement LOCALID_PETALBURG_WOODS_DEVON_EMPLOYEE, PetalburgWoods_Movement_DevonResearcherStartExit
 	waitmovement 0
 	msgbox PetalburgWoods_Text_ICantBeWastingTime, MSGBOX_DEFAULT
+	setvar VAR_LEVEL_CAP 15
 	closemessage
 	return
 
@@ -367,6 +371,11 @@ PetalburgWoods_Text_ThatWasAwfullyClose:
 	.string "I know, I'll give you a GREAT BALL as\n"
 	.string "my thanks!$"
 
+PetalburgWoods_Text_ReceivedDexNav:
+	.string "And take this DEXNAV, too!\p"
+	.string "It can search for POKéMON living in\n"
+	.string "the area. You can open it from the menu.$"
+
 PetalburgWoods_Text_TeamAquaAfterSomethingInRustboro:
 	.string "Didn't that TEAM AQUA thug say\n"
 	.string "they were after something in\l"
@@ -470,4 +479,3 @@ PetalburgWoods_Text_TrainerTipsPP:
 	.string "make moves during battle.\p"
 	.string "If a POKéMON runs out of PP, it must be\n"
 	.string "taken to a POKéMON CENTER.$"
-

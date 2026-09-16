@@ -1,4 +1,6 @@
 #include "global.h"
+#include "battle_main.h"
+#include "data.h"
 #include "event_data.h"
 #include "pokemon.h"
 #include "test/battle.h"
@@ -11,6 +13,49 @@ static void CreateNatureMon(struct Pokemon *mon, enum Species species, u32 level
     SetMonData(mon, MON_DATA_HIDDEN_NATURE, &nature);
     SetMonData(mon, MON_DATA_FRIENDSHIP, &friendship);
     CalculateMonStats(mon);
+}
+
+TEST("pranks trainer multi-Natures add opposing classic stat modifiers before scaling")
+{
+    static const u8 additionalNatures[] = {NATURE_MODEST};
+    const struct TrainerMon trainerMon =
+    {
+        .nature = NATURE_ADAMANT,
+        .additionalNatures = additionalNatures,
+        .additionalNatureCount = ARRAY_COUNT(additionalNatures),
+    };
+    struct Pokemon baseline;
+    struct Pokemon *multiNature = &gParties[B_TRAINER_OPPONENT_A][0];
+
+    CreateNatureMon(&baseline, SPECIES_WOBBUFFET, 50, NATURE_HARDY);
+    CreateNatureMon(multiNature, SPECIES_WOBBUFFET, 50, NATURE_HARDY);
+    SetTrainerMonNatures(multiNature, &trainerMon);
+    CalculateMonStats(multiNature);
+
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_ATK), GetMonData(&baseline, MON_DATA_ATK));
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPATK), GetMonData(&baseline, MON_DATA_SPATK));
+}
+
+TEST("pranks trainer multi-Natures stack matching boosts and retain separate drops")
+{
+    static const u8 additionalNatures[] = {NATURE_JOLLY};
+    const struct TrainerMon trainerMon =
+    {
+        .nature = NATURE_TIMID,
+        .additionalNatures = additionalNatures,
+        .additionalNatureCount = ARRAY_COUNT(additionalNatures),
+    };
+    struct Pokemon baseline;
+    struct Pokemon *multiNature = &gParties[B_TRAINER_OPPONENT_A][0];
+
+    CreateNatureMon(&baseline, SPECIES_WOBBUFFET, 50, NATURE_HARDY);
+    CreateNatureMon(multiNature, SPECIES_WOBBUFFET, 50, NATURE_HARDY);
+    SetTrainerMonNatures(multiNature, &trainerMon);
+    CalculateMonStats(multiNature);
+
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPEED), GetMonData(&baseline, MON_DATA_SPEED) * 130 / 100);
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_ATK), GetMonData(&baseline, MON_DATA_ATK) * 85 / 100);
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPATK), GetMonData(&baseline, MON_DATA_SPATK) * 85 / 100);
 }
 
 WILD_BATTLE_TEST("pranks Ambitious receives Badge Boosts when modern configurations disable them", s16 damage)
@@ -75,7 +120,7 @@ WILD_BATTLE_TEST("pranks Ambitious receives the Defense Badge Boost", s16 damage
     }
 }
 
-TEST("pranks Communal counts shared traits once each and caps its boost at eight percent")
+TEST("pranks Communal counts every teammate's shared traits and caps its boost at eight percent")
 {
     struct Pokemon party[2] = {0};
 
@@ -91,6 +136,20 @@ TEST("pranks Communal counts shared traits once each and caps its boost at eight
 
     EXPECT_EQ(GetCommunalBoostPercent(party, ARRAY_COUNT(party), 0), 8);
     EXPECT_EQ(GetCommunalBoostPercent(NULL, ARRAY_COUNT(party), 0), 0);
+}
+
+TEST("pranks Communal counts the same shared type once for each teammate")
+{
+    struct Pokemon party[3] = {0};
+
+    CreateNatureMon(&party[0], SPECIES_RALTS, 50, NATURE_COMMUNAL);
+    CreateNatureMon(&party[1], SPECIES_TINKATINK, 50, NATURE_HARDY);
+    CreateNatureMon(&party[2], SPECIES_MINCCINO, 50, NATURE_AMBITIOUS);
+    for (u32 i = 0; i < ARRAY_COUNT(party); i++)
+        for (u32 moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
+            SetMonMoveSlot(&party[i], MOVE_NONE, moveSlot);
+
+    EXPECT_EQ(GetCommunalBoostPercent(party, ARRAY_COUNT(party), 0), 4);
 }
 
 TEST("pranks Eclectic grants five percent per move of each category to the matching stat")

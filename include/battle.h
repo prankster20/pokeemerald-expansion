@@ -1120,6 +1120,9 @@ extern u8 gPartyCriticalHits[PARTY_SIZE];
 extern u8 gCategoryIconSpriteId;
 struct Pokemon *GetBattlerParty(enum BattlerId battler);
 struct Pokemon *GetTrainerParty(enum BattleTrainer trainer);
+bool32 PokemonHasNature(struct Pokemon *mon, u32 nature);
+bool32 GetPokemonNatureAtIndex(struct Pokemon *mon, u32 index, u32 *nature);
+bool32 ShouldSuppressRepeatedNaturePopup(enum BattlerId battler, u32 nature);
 struct Pokemon* GetBattlerMon(enum BattlerId battler);
 
 static inline bool32 IsBattlerAlive(enum BattlerId battler)
@@ -1139,7 +1142,7 @@ static inline bool32 IsBattlerAlive(enum BattlerId battler)
 // nature checks read the same way: HasNature(battler, NATURE_X).
 static inline bool32 HasNature(enum BattlerId battler, u32 nature)
 {
-    return GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE) == nature;
+    return PokemonHasNature(GetBattlerMon(battler), nature);
 }
 
 // Some effects, like most end of turn effects only activate on active battlers (on the field)

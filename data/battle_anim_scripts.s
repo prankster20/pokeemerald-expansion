@@ -19718,6 +19718,11 @@ gBattleAnimMove_Supersonic::
 	call SupersonicRing
 	call SupersonicRing
 	waitforvisualfinish
+	delay 6
+	create_basic_hitsplat_sprite ANIM_ATTACKER, 2, x=0, y=0, relative_to=ANIM_TARGET, animation=2
+	createvisualtask AnimTask_ShakeMon, 2, ANIM_TARGET, 3, 0, 6, 1
+	playsewithpan SE_M_COMET_PUNCH, SOUND_PAN_TARGET
+	waitforvisualfinish
 	clearmonbg ANIM_ATK_PARTNER
 	blendoff
 	end
@@ -25436,6 +25441,21 @@ gBattleAnimMove_RockSmash::
 	createsprite gRockFragmentSpriteTemplate, ANIM_ATTACKER, 2, 0, 0, -30, 18, 8, 2
 	createsprite gRockFragmentSpriteTemplate, ANIM_ATTACKER, 2, 0, 0, -30, -18, 8, 2
 	createvisualtask AnimTask_ShakeMon, 2, ANIM_TARGET, 0, 3, 7, 1
+	waitforvisualfinish
+	clearmonbg ANIM_DEF_PARTNER
+	blendoff
+	end
+
+gBattleAnimMove_Roughhouse::
+	monbg ANIM_DEF_PARTNER
+	setalpha 12, 8
+	playsewithpan SE_M_DOUBLE_TEAM, SOUND_PAN_ATTACKER
+	waitplaysewithpan SE_M_COMET_PUNCH, SOUND_PAN_TARGET, 10
+	waitplaysewithpan SE_M_DOUBLE_TEAM, SOUND_PAN_ATTACKER, 20
+	waitplaysewithpan SE_M_COMET_PUNCH, SOUND_PAN_TARGET, 30
+	createvisualtask AnimTask_TranslateMonElliptical, 2, 0, -18, 6, 1, 4
+	createvisualtask AnimTask_TranslateMonElliptical, 2, 1, 18, 6, 1, 4
+	call SubmissionHit
 	waitforvisualfinish
 	clearmonbg ANIM_DEF_PARTNER
 	blendoff

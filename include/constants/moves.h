@@ -906,7 +906,9 @@ enum __attribute__((packed)) Move
     MOVES_COUNT_GEN9,
 
     // Add any custom moves here, not further down!
+    MOVE_CONFOUND = MOVE_CONFUSION,
     MOVE_CONCENTRATE = MOVE_MEDITATE,
+    MOVE_SNEER = MOVE_SNARL,
     MOVE_VIVID_BUBBLE = MOVE_BOUNCY_BUBBLE,
     MOVE_BLUNT_BASH = MOVE_DOUBLE_IRON_BASH,
     MOVE_BIDE_NEW = 848,

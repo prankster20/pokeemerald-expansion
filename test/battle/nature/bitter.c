@@ -59,7 +59,7 @@ SINGLE_BATTLE_TEST("pranks Bitter reflects a foe-inflicted nonvolatile status")
 SINGLE_BATTLE_TEST("pranks Bitter reflects foe-inflicted stat drops without cleansing itself")
 {
     GIVEN {
-        ASSUME(GetMoveEffect(MOVE_GROWL) == EFFECT_ATTACK_DOWN);
+        ASSUME(GetMoveEffect(MOVE_GROWL) == EFFECT_STAT_CHANGE);
         PLAYER(SPECIES_WOBBUFFET) { Moves(MOVE_GROWL); }
         OPPONENT(SPECIES_ABRA) { Nature(NATURE_BITTER); }
     } WHEN {

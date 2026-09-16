@@ -1742,7 +1742,7 @@ static void MoveSelectionDisplayMoveType(enum BattlerId battler)
         || (IsGimmickSelected(battler, GIMMICK_TERA) && speciesId == SPECIES_TERAPAGOS_TERASTAL))
             type = TYPE_STELLAR;
     }
-    else if (P_SHOW_DYNAMIC_TYPES) // Non-vanilla changes to battle UI showing dynamic types
+    else if (P_SHOW_DYNAMIC_TYPES || effect == EFFECT_HIDDEN_POWER) // Hidden Power always shows its Persona-derived type.
     {
         struct Pokemon *mon = GetBattlerMon(battler);
         type = CheckDynamicMoveType(mon, move, battler, MON_IN_BATTLE);

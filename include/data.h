@@ -76,6 +76,8 @@ struct TrainerMon
     enum PokeBall ball:8;
     u8 friendship;
     u8 nature:7; // Widened from 5 bits to fit the expanded 100-nature Archetype system (2^7=128 > 100; old 5-bit width maxed at 31 and would've truncated any custom nature).
+    const u8 *additionalNatures; // Nature entries after the personality/stat Nature.
+    u8 additionalNatureCount;
     bool8 gender:3;
     bool8 isShiny:1;
     enum Type teraType:5;
@@ -85,6 +87,11 @@ struct TrainerMon
     u8 padding2:4;
     u32 tags;
 };
+
+static inline u32 GetTrainerMonSecondNature(const struct TrainerMon *mon)
+{
+    return mon->additionalNatureCount != 0 ? mon->additionalNatures[0] : mon->nature;
+}
 
 #define TRAINER_PARTY(partyArray) partyArray, .partySize = ARRAY_COUNT(partyArray)
 

@@ -2590,6 +2590,11 @@ static inline bool32 IsAnyAbilityPopUpActive(void)
     return activeAbilityPopUps;
 }
 
+bool32 IsAbilityPopUpActive(enum BattlerId battler)
+{
+    return gBattleStruct->battlerState[battler].activeAbilityPopUps;
+}
+
 void CreateAbilityPopUp(enum BattlerId battler, enum Ability ability, bool32 isDoubleBattle)
 {
     u8 *spriteIds;
@@ -2727,6 +2732,13 @@ void UpdateAbilityPopup(enum BattlerId battler)
     u8 *spriteIds = gBattleStruct->abilityPopUpSpriteIds[battler];
     enum Ability ability = (gBattleScripting.abilityPopupOverwrite) ? gBattleScripting.abilityPopupOverwrite
                                                            : gBattleMons[battler].ability;
+
+    // A suppressed duplicate Nature popup has no sprites to update. More
+    // importantly, its old sprite IDs may already have been reused by some
+    // other battle graphic (for example a trainer slide).
+    if (!IsAbilityPopUpActive(battler))
+        return;
+
     PrintAbilityOnAbilityPopUp(ability, spriteIds[0], spriteIds[1]);
 }
 

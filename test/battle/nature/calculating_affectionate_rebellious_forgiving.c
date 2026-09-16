@@ -57,21 +57,21 @@ SINGLE_BATTLE_TEST("pranks Calculating uses the average of Def and SpDef for spe
 }
 
 // ===== AFFECTIONATE =====
-// At max Friendship, 20% chance to survive a lethal hit at 1 HP.
+// 5-20% chance, scaled by Friendship, to survive a lethal hit at 1 HP.
 
-SINGLE_BATTLE_TEST("pranks Affectionate does not endure without max Friendship")
+SINGLE_BATTLE_TEST("pranks Affectionate has a 5 percent chance to endure at zero Friendship")
 {
-    // At < max Friendship the check never fires — this is deterministic.
+    PASSES_RANDOMLY(5, 100, RNG_NATURE_AFFECTIONATE);
     GIVEN {
-        PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); MaxHP(100); HP(1); Friendship(199); }
+        PLAYER(SPECIES_MIENFOO) { Moves(MOVE_CELEBRATE); MaxHP(100); HP(1); Friendship(0); }
         OPPONENT(SPECIES_WOBBUFFET) { Moves(MOVE_TACKLE); Attack(100); }
         u32 nature = NATURE_AFFECTIONATE;
         SetMonData(&PLAYER_PARTY[0], MON_DATA_HIDDEN_NATURE, &nature);
     } WHEN {
         TURN { MOVE(player, MOVE_CELEBRATE); MOVE(opponent, MOVE_TACKLE); }
     } SCENE {
-        HP_BAR(player, hp: 0);
-        MESSAGE("Mienfoo fainted!");
+        HP_BAR(player, hp: 1);
+        NOT MESSAGE("Mienfoo fainted!");
     }
 }
 
@@ -160,7 +160,7 @@ SINGLE_BATTLE_TEST("pranks Forgiving refuses Destiny Bond when learning moves")
 SINGLE_BATTLE_TEST("pranks Forgiving cannot land even a guaranteed critical hit")
 {
     GIVEN {
-        ASSUME(GetMoveEffect(MOVE_FROST_BREATH) == EFFECT_ALWAYS_CRITICAL_HIT);
+        ASSUME(MoveAlwaysCrits(MOVE_FROST_BREATH));
         PLAYER(SPECIES_MIENFOO) { Moves(MOVE_FROST_BREATH); }
         OPPONENT(SPECIES_WOBBUFFET);
         u32 nature = NATURE_FORGIVING;

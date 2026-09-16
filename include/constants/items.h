@@ -822,6 +822,17 @@ enum __attribute__((packed)) Item
     ITEM_HM07 = 688,
     ITEM_HM08 = 689,
 
+    // Permanent field tools. These retain the old HM item ids so existing
+    // scripts and saves continue to award the same progression unlocks.
+    ITEM_FIELD_SHEARS = ITEM_HM01,
+    ITEM_GLIDER = ITEM_HM02,
+    ITEM_SURFBOARD = ITEM_HM03,
+    ITEM_POWER_GLOVES = ITEM_HM04,
+    ITEM_LANTERN = ITEM_HM05,
+    ITEM_ROCK_HAMMER = ITEM_HM06,
+    ITEM_WATERFALL_GEAR = ITEM_HM07,
+    ITEM_DIVING_GEAR = ITEM_HM08,
+
 
     /* Expands to:
      *   ITEM_TM_FOCUS_PUNCH = ITEM_TM01,
@@ -830,12 +841,10 @@ enum __attribute__((packed)) Item
      *   ... */
     #define ENUM_TM(n, id) CAT(ITEM_TM_, id) = CAT(ITEM_TM, n),
     #define ENUM_HM(n, id) CAT(ITEM_HM_, id) = CAT(ITEM_HM, n),
-    #define TO_TMHM_NUMS(a, ...) (__VA_ARGS__)
-    RECURSIVELY(R_ZIP(ENUM_TM, TO_TMHM_NUMS NUMBERS_256, (FOREACH_TM(APPEND_COMMA))))
-    RECURSIVELY(R_ZIP(ENUM_HM, TO_TMHM_NUMS NUMBERS_256, (FOREACH_HM(APPEND_COMMA))))
+    FOREACH_TM(ENUM_TM)
+    FOREACH_HM(ENUM_HM)
     #undef ENUM_TM
     #undef ENUM_HM
-    #undef TO_TMHM_NUMS
 
     // Charms
     ITEM_OVAL_CHARM = 690,
@@ -1077,6 +1086,9 @@ enum __attribute__((packed)) Item
     ITEM_BEGINNER_RANDOM_MINT = 891,
     ITEM_BEGINNER_SPLIT_MINT = 892,
     ITEM_BEGINNER_SELECT_MINT = 893,
+    ITEM_ROOKIE_RANDOM_MINT = ITEM_BEGINNER_RANDOM_MINT,
+    ITEM_ROOKIE_SPLIT_MINT = ITEM_BEGINNER_SPLIT_MINT,
+    ITEM_ROOKIE_SELECT_MINT = ITEM_BEGINNER_SELECT_MINT,
     ITEM_EXPERT_RANDOM_MINT = 894,
     ITEM_EXPERT_SPLIT_MINT = 895,
     ITEM_EXPERT_SELECT_MINT = 896,
@@ -1099,6 +1111,8 @@ enum __attribute__((packed)) Item
     ITEM_ELITE_SPLIT_MINT = 913,
     ITEM_ELITE_SELECT_MINT = 914,
     ITEM_GENDER_SELECT_MINT = 915,
+    ITEM_POWER_TRAINER = 916,
+    ITEM_EXP_MAX = ITEM_POWER_TRAINER,
 
     ITEMS_COUNT,
     ITEM_FIELD_ARROW = ITEMS_COUNT,

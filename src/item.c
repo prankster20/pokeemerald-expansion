@@ -1,4 +1,5 @@
 #include "global.h"
+#include "caps.h"
 #include "item.h"
 #include "berry.h"
 #include "pokeball.h"
@@ -43,8 +44,8 @@ EWRAM_DATA struct BagPocket gBagPockets[POCKETS_COUNT] = {0};
 #include "data/pokemon/item_effects.h"
 #include "data/items.h"
 
-#define UNPACK_TM_ITEM_ID(_tm) [CAT(ENUM_TM_HM_, _tm) + 1] = { CAT(ITEM_TM_, _tm), CAT(MOVE_, _tm) },
-#define UNPACK_HM_ITEM_ID(_hm) [CAT(ENUM_TM_HM_, _hm) + 1] = { CAT(ITEM_HM_, _hm), CAT(MOVE_, _hm) },
+#define UNPACK_TM_ITEM_ID(_num, _move) [CAT(ENUM_TM_HM_TM, _num) + 1] = { CAT(ITEM_TM, _num), CAT(MOVE_, _move) },
+#define UNPACK_HM_ITEM_ID(_num, _move) [CAT(ENUM_TM_HM_HM, _num) + 1] = { CAT(ITEM_HM, _num), CAT(MOVE_, _move) },
 
 const struct TmHmIndexKey gTMHMItemMoveIds[NUM_ALL_MACHINES + 1] =
 {
@@ -988,23 +989,37 @@ const u8 *GetItemDescription(enum Item itemId)
         "Team average: Lv.{STR_VAR_1}.\n"
         "Status: OFF");
     static const u8 sCatchUpCandyDescription[] = _(
-        "Raises a Pokémon to\n"
-        "team's average level,\n"
-        "if 5+ levels below.\n"
-        "Team average: Lv.{STR_VAR_1}.\n");
-    static u8 sInfiniteRepelDescription[128];
+        "Raises any Pokémon below\n"
+        "the catch-up level.\n"
+        "Catch-up level: Lv.{STR_VAR_1}.\n");
+    static const u8 sPowerTrainerDescriptionOn[] = _(
+        "Helps weak Pokémon catch up\n"
+        "to two levels below the cap.\n"
+        "Current cap: Lv.{STR_VAR_1}\n"
+        "Currently ON");
+    static const u8 sPowerTrainerDescriptionOff[] = _(
+        "Helps weak Pokémon catch up\n"
+        "to two levels below the cap.\n"
+        "Current cap: Lv.{STR_VAR_1}\n"
+        "Currently OFF");
+    static u8 sDynamicDescription[128];
 
     if (itemId == ITEM_INFINITE_REPEL)
     {
         ConvertIntToDecimalStringN(gStringVar1, GetAveragePlayerPartyLevel(), STR_CONV_MODE_LEFT_ALIGN, 3);
         if (FlagGet(FLAG_UNUSED_0x8E5))
-            StringExpandPlaceholders(sInfiniteRepelDescription, sInfiniteRepelDescriptionOn);
+            StringExpandPlaceholders(sDynamicDescription, sInfiniteRepelDescriptionOn);
         else
-            StringExpandPlaceholders(sInfiniteRepelDescription, sInfiniteRepelDescriptionOff);
-        return sInfiniteRepelDescription;
+            StringExpandPlaceholders(sDynamicDescription, sInfiniteRepelDescriptionOff);
+        return sDynamicDescription;
     } else if (itemId == ITEM_CATCH_UP_CANDY) {
-        StringExpandPlaceholders(sInfiniteRepelDescription, sCatchUpCandyDescription);
-        return sInfiniteRepelDescription;
+        ConvertIntToDecimalStringN(gStringVar1, GetCatchUpCandyTargetLevel(), STR_CONV_MODE_LEFT_ALIGN, 3);
+        StringExpandPlaceholders(sDynamicDescription, sCatchUpCandyDescription);
+        return sDynamicDescription;
+    } else if (itemId == ITEM_POWER_TRAINER) {
+        ConvertIntToDecimalStringN(gStringVar1, GetCurrentProgressionLevelCap(), STR_CONV_MODE_LEFT_ALIGN, 3);
+        StringExpandPlaceholders(sDynamicDescription, FlagGet(FLAG_EXP_MAX_ON) ? sPowerTrainerDescriptionOn : sPowerTrainerDescriptionOff);
+        return sDynamicDescription;
     }
 
     return gItemsInfo[SanitizeItemId(itemId)].description;

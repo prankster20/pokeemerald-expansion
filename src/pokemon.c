@@ -2,6 +2,7 @@
 #include "malloc.h"
 #include "apprentice.h"
 #include "battle.h"
+#include "battle_main.h"
 #include "battle_ai_util.h"
 #include "battle_anim.h"
 #include "battle_controllers.h"
@@ -584,7 +585,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Boosts healing by 20% for ALL Pokémon, including opponents."),
+        .description = COMPOUND_STRING("Boosts healing by 20% for all Pokémon, including opponents."),
     },
     [NATURE_BITTER] =
     {
@@ -649,7 +650,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("At max Friendship, has a 20% chance to tough out an attack with 1 HP remaining."),
+        .description = COMPOUND_STRING("Has a Friendship-scaled 5-20% chance to tough out an attack with 1 HP remaining."),
     },
     [NATURE_CANTANKEROUS] =
     {
@@ -662,7 +663,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("On entry, all Pokémon (including itself and allies) take 1/16 max HP as indirect damage."),
+        .description = COMPOUND_STRING("On entry, all Pokémon, including itself and allies, take 1/16 max HP as indirect damage."),
     },
     [NATURE_ADORABLE] =
     {
@@ -727,7 +728,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Claims Weakness/Blunder Policy, Adrenaline Orb and Room Service effects fraudulently."),
+        .description = COMPOUND_STRING("Claims Weakness/Blunder Policy, Throat Spray, Adrenaline Orb and Room Service effects fraudulently."),
     },
     [NATURE_DELICATE] =
     {
@@ -832,7 +833,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Twice as hard to catch. Ignores trapping effects and boosts pivot moves by 10%."),
+        .description = COMPOUND_STRING("Ignores trapping effects and boosts pivot moves by 10%."),
     },
     [NATURE_FLIRTY] =
     {
@@ -1106,7 +1107,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("After battle, has a 25% chance to spar with a party member for bonus Exp. and EVs; both lose 1/16 HP."),
+        .description = COMPOUND_STRING("After battles, 25% chance to spar with a party member. Both lose 1/16 HP for bonus EVs and EXP."),
     },
     [NATURE_SUPPORTIVE] =
     {
@@ -1119,7 +1120,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Boosts the best stat of all other Party Pokémon by 5%. Stacking this adds 1% each."),
+        .description = COMPOUND_STRING("Boosts the best stat of all other Party Pokémon by 6%. Stacking this adds 1% each."),
     },
     [NATURE_PRODIGIOUS] =
     {
@@ -1224,7 +1225,7 @@ const struct NatureInfo gNaturesInfo[NUM_NATURES] =
         .battlePalacePercents = PALACE_STYLE(61, 7, 61, 7),
         .battlePalaceFlavorText = B_MSG_EAGER_FOR_MORE,
         .battlePalaceSmokescreen = PALACE_TARGET_STRONGER,
-        .description = COMPOUND_STRING("Moves matching its Hidden Power type deal 20% more damage."),
+        .description = COMPOUND_STRING("Looks inward to identify its Hidden Power type, and boosts moves matching that type by 20%."),
     },
     [NATURE_SCHOLARLY] =
     {
@@ -2490,17 +2491,16 @@ void CalculateMonStats(struct Pokemon *mon)
     s32 level = GetLevelFromMonExp(mon);
     s32 newMaxHP;
 
-    u8 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
     u32 personality = GetMonData(mon, MON_DATA_PERSONALITY, 0);
     u32 loyalBoostPercent = GetLoyalBoostPercent(level, GetMonData(mon, MON_DATA_MET_LEVEL));
 
     SetMonData(mon, MON_DATA_LEVEL, &level);
-    bool32 youthfulBoost = nature == NATURE_YOUTHFUL && IsYouthfulNatureActive(mon);
+    bool32 youthfulBoost = PokemonHasNature(mon, NATURE_YOUTHFUL) && IsYouthfulNatureActive(mon);
     u32 eclecticPhysicalMoves = 0;
     u32 eclecticSpecialMoves = 0;
     u32 eclecticStatusMoves = 0;
 
-    if (nature == NATURE_ECLECTIC)
+    if (PokemonHasNature(mon, NATURE_ECLECTIC))
     {
         eclecticPhysicalMoves = CountBoxMonMovesInCategory(&mon->box, DAMAGE_CATEGORY_PHYSICAL);
         eclecticSpecialMoves = CountBoxMonMovesInCategory(&mon->box, DAMAGE_CATEGORY_SPECIAL);
@@ -2531,12 +2531,12 @@ void CalculateMonStats(struct Pokemon *mon)
 
         u8 baseStat = GetSpeciesBaseStat(species, i);
         s32 n = (((2 * baseStat + iv[i] + ev[i] / 4) * level) / 100) + 5;
-        n = ModifyStatByNature(nature, n, i, personality);
-        if (nature == NATURE_OLD_IMPRESSIONABLE)
+        n = n * (100 + GetPokemonNatureStatModifierPercent(mon, i, personality)) / 100;
+        if (PokemonHasNature(mon, NATURE_OLD_IMPRESSIONABLE))
             n = n * (100 + GetImpressionableStatBoostPercent(mon, i)) / 100;
-        if (nature == NATURE_LOYAL && (i == STAT_ATK || i == STAT_SPATK))
+        if (PokemonHasNature(mon, NATURE_LOYAL) && (i == STAT_ATK || i == STAT_SPATK))
             n = n * (100 + loyalBoostPercent) / 100;
-        if (nature == NATURE_ECLECTIC)
+        if (PokemonHasNature(mon, NATURE_ECLECTIC))
         {
             if (i == STAT_ATK)
                 n = n * (100 + 5 * eclecticPhysicalMoves) / 100;
@@ -2556,7 +2556,7 @@ void CalculateMonStats(struct Pokemon *mon)
     // The Pokémon's highest non-HP stat is boosted by 8% and its lowest non-HP stat is reduced by 8%.
     // Ties break in this fixed priority order (NOT the Stat enum's numeric
     // order, which goes HP/Atk/Def/Speed/SpAtk/SpDef).
-    if (nature == NATURE_PROUD)
+    if (PokemonHasNature(mon, NATURE_PROUD))
     {
         static const enum Stat sProudTieBreakOrder[] = {STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED};
         enum Stat highStat = sProudTieBreakOrder[0];
@@ -2686,11 +2686,37 @@ bool32 IsBoxMonMoveSlotLockedByNature(struct BoxPokemon *boxMon, u32 moveSlot)
 
 bool32 DoesBoxMonNeedToReplaceMoveForNature(struct BoxPokemon *boxMon, enum Move move)
 {
+    u32 moveCount = 0;
+
     if (move == MOVE_NONE)
         return FALSE;
 
     if (GetBoxMonActiveNatureForRefusal(boxMon) == NATURE_ECLECTIC)
-        return CountBoxMonMovesInCategory(boxMon, GetBattleMoveCategory(move)) >= 2;
+    {
+        enum DamageCategory newCategory = GetBattleMoveCategory(move);
+
+        if (CountBoxMonMovesInCategory(boxMon, newCategory) >= 2)
+            return TRUE;
+
+        for (u32 i = 0; i < MAX_MON_MOVES; i++)
+        {
+            if (GetBoxMonData(boxMon, MON_DATA_MOVE1 + i) != MOVE_NONE)
+                moveCount++;
+        }
+
+        // An Eclectic Pokemon's completed moveset must contain at least one
+        // physical, special, and status move.  When filling its fourth slot,
+        // force the new move to supply whichever category is still missing.
+        if (moveCount == MAX_MON_MOVES - 1)
+        {
+            for (u32 category = 0; category <= DAMAGE_CATEGORY_STATUS; category++)
+            {
+                if (CountBoxMonMovesInCategory(boxMon, category) == 0
+                 && newCategory != category)
+                    return TRUE;
+            }
+        }
+    }
 
     return FALSE;
 }
@@ -2706,7 +2732,7 @@ bool32 CanBoxMonReplaceMoveWithMoveForNature(struct BoxPokemon *boxMon, u32 move
     if (IsBoxMonMoveSlotLockedByNature(boxMon, moveSlot))
         return FALSE;
 
-    if (GetBoxMonActiveNatureForRefusal(boxMon) != NATURE_ECLECTIC || newMove == MOVE_NONE)
+    if (GetBoxMonActiveNatureForRefusal(boxMon) != NATURE_ECLECTIC)
         return TRUE;
 
     for (u32 i = 0; i < MAX_MON_MOVES; i++)
@@ -2719,12 +2745,30 @@ bool32 CanBoxMonReplaceMoveWithMoveForNature(struct BoxPokemon *boxMon, u32 move
     oldMove = GetBoxMonData(boxMon, MON_DATA_MOVE1 + moveSlot);
     if (oldMove != MOVE_NONE)
         categoryCounts[GetBattleMoveCategory(oldMove)]--;
-    categoryCounts[GetBattleMoveCategory(newMove)]++;
+    if (newMove != MOVE_NONE)
+        categoryCounts[GetBattleMoveCategory(newMove)]++;
 
+    u32 moveCount = 0;
     for (u32 i = 0; i < ARRAY_COUNT(categoryCounts); i++)
     {
         if (categoryCounts[i] > 2)
             return FALSE;
+        moveCount += categoryCounts[i];
+    }
+
+    // Deleting or replacing the sole move of any represented category would
+    // break Eclectic's mandate.  Incomplete sets below four moves are allowed
+    // while a Pokemon is still learning its initial moves.
+    if (oldMove != MOVE_NONE && categoryCounts[GetBattleMoveCategory(oldMove)] == 0)
+        return FALSE;
+
+    if (moveCount == MAX_MON_MOVES)
+    {
+        for (u32 i = 0; i < ARRAY_COUNT(categoryCounts); i++)
+        {
+            if (categoryCounts[i] == 0)
+                return FALSE;
+        }
     }
 
     return TRUE;
@@ -3248,7 +3292,7 @@ static void ApplyPugnaciousSparringRewards(struct Pokemon *mon)
         }
     }
 
-    if (totalEvs < MAX_TOTAL_EVS && ev < MAX_PER_STAT_EVS)
+    if (totalEvs < GetCurrentEVCap() && ev < GetCurrentPerStatEVCap())
     {
         ev++;
         SetMonData(mon, MON_DATA_HP_EV + stat, &ev);
@@ -5190,6 +5234,82 @@ const u16 *GetSpeciesEggMoves(enum Species species)
     return learnset;
 }
 
+u32 TryPartyMirrorHerbMoveTransfer(void)
+{
+    u32 movesLearned = 0;
+
+    for (u32 learnerIndex = 0; learnerIndex < PARTY_SIZE; learnerIndex++)
+    {
+        struct Pokemon *learner = &gParties[B_TRAINER_PLAYER][learnerIndex];
+        enum Species learnerSpecies = GetMonData(learner, MON_DATA_SPECIES_OR_EGG);
+        enum Species eggMoveSpecies;
+        const u16 *eggMoves;
+        bool32 hasEmptyMoveSlot = FALSE;
+
+        if (learnerSpecies == SPECIES_NONE || learnerSpecies == SPECIES_EGG)
+            continue;
+        if (GetMonData(learner, MON_DATA_HELD_ITEM) != ITEM_MIRROR_HERB)
+            continue;
+
+        for (u32 moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
+        {
+            if (GetMonData(learner, MON_DATA_MOVE1 + moveSlot) == MOVE_NONE)
+            {
+                hasEmptyMoveSlot = TRUE;
+                break;
+            }
+        }
+        if (!hasEmptyMoveSlot)
+            continue;
+
+        eggMoveSpecies = learnerSpecies;
+        if (P_MIRROR_HERB_PRE_EVO_EGG_MOVES)
+        {
+            while (GetSpeciesPreEvolution(eggMoveSpecies) != SPECIES_NONE)
+                eggMoveSpecies = GetSpeciesPreEvolution(eggMoveSpecies);
+        }
+
+        eggMoves = GetSpeciesEggMoves(eggMoveSpecies);
+        if (eggMoves[0] == MOVE_UNAVAILABLE)
+            continue;
+
+        for (u32 eggMoveIndex = 0; eggMoves[eggMoveIndex] != MOVE_UNAVAILABLE; eggMoveIndex++)
+        {
+            enum Move eggMove = eggMoves[eggMoveIndex];
+            bool32 partyMemberKnowsMove = FALSE;
+
+            if (BoxMonKnowsMove(&learner->box, eggMove))
+                continue;
+
+            for (u32 teacherIndex = 0; teacherIndex < PARTY_SIZE && !partyMemberKnowsMove; teacherIndex++)
+            {
+                struct Pokemon *teacher = &gParties[B_TRAINER_PLAYER][teacherIndex];
+                enum Species teacherSpecies;
+
+                if (teacherIndex == learnerIndex)
+                    continue;
+                teacherSpecies = GetMonData(teacher, MON_DATA_SPECIES_OR_EGG);
+                if (teacherSpecies == SPECIES_NONE || teacherSpecies == SPECIES_EGG)
+                    continue;
+
+                for (u32 moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
+                {
+                    if (GetMonData(teacher, MON_DATA_MOVE1 + moveSlot) == eggMove)
+                    {
+                        partyMemberKnowsMove = TRUE;
+                        break;
+                    }
+                }
+            }
+
+            if (partyMemberKnowsMove && GiveMoveToMon(learner, eggMove) == eggMove)
+                movesLearned++;
+        }
+    }
+
+    return movesLearned;
+}
+
 const struct Evolution *GetSpeciesEvolutions(enum Species species)
 {
     const struct Evolution *evolutions = gSpeciesInfo[SanitizeSpeciesId(species)].evolutions;
@@ -5277,7 +5397,6 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
     struct Pokemon *mon;
     enum Species species;
     enum Type types[2];
-    u8 eggGroups[2];
     enum Move moves[MAX_MON_MOVES];
     enum Ability ability;
     u32 nature;
@@ -5293,109 +5412,99 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
 
     types[0] = GetSpeciesType(species, 0);
     types[1] = GetSpeciesType(species, 1);
-    eggGroups[0] = gSpeciesInfo[species].eggGroups[0];
-    eggGroups[1] = gSpeciesInfo[species].eggGroups[1];
     ability = GetMonAbility(mon);
     nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+
     for (u32 i = 0; i < MAX_MON_MOVES; i++)
         moves[i] = GetMonData(mon, MON_DATA_MOVE1 + i);
 
-    // Each distinct trait on this Pokémon contributes at most once, no
-    // matter how many teammates share it: 2 types + 2 egg groups + 4 moves
-    // + 1 ability + 1 Nature. The final bonus is capped at 8%.
+    // Each teammate can contribute for every shared type, move, Ability,
+    // and Nature. Duplicate traits on this Pokémon are counted only once.
     for (u32 typeSlot = 0; typeSlot < 2; typeSlot++)
     {
-        bool32 shared = FALSE;
         if (typeSlot == 1 && types[1] == types[0])
             continue;
-        for (u32 i = 0; i < partyCount && !shared; i++)
-        {
-            enum Species otherSpecies;
-            if (i == monIndex)
-                continue;
-            otherSpecies = GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG);
-            if (otherSpecies == SPECIES_NONE || otherSpecies == SPECIES_EGG)
-                continue;
-            shared = (types[typeSlot] == GetSpeciesType(otherSpecies, 0)
-                   || types[typeSlot] == GetSpeciesType(otherSpecies, 1));
-        }
-        boost += shared;
-    }
 
-    for (u32 groupSlot = 0; groupSlot < 2; groupSlot++)
-    {
-        bool32 shared = FALSE;
-        if (groupSlot == 1 && eggGroups[1] == eggGroups[0])
-            continue;
-        for (u32 i = 0; i < partyCount && !shared; i++)
+        for (u32 i = 0; i < partyCount; i++)
         {
             enum Species otherSpecies;
+
             if (i == monIndex)
                 continue;
+
             otherSpecies = GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG);
             if (otherSpecies == SPECIES_NONE || otherSpecies == SPECIES_EGG)
                 continue;
-            shared = (eggGroups[groupSlot] == gSpeciesInfo[otherSpecies].eggGroups[0]
-                   || eggGroups[groupSlot] == gSpeciesInfo[otherSpecies].eggGroups[1]);
+
+            if (types[typeSlot] == GetSpeciesType(otherSpecies, 0)
+             || types[typeSlot] == GetSpeciesType(otherSpecies, 1))
+                boost++;
         }
-        boost += shared;
     }
 
     for (u32 moveSlot = 0; moveSlot < MAX_MON_MOVES; moveSlot++)
     {
-        bool32 shared = FALSE;
+        bool32 duplicateMove = FALSE;
+
         if (moves[moveSlot] == MOVE_NONE)
             continue;
+
         for (u32 previous = 0; previous < moveSlot; previous++)
-            if (moves[previous] == moves[moveSlot])
-                shared = TRUE;
-        if (shared)
-            continue;
-        for (u32 i = 0; i < partyCount && !shared; i++)
         {
-            if (i == monIndex
-             || GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE
-             || GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG) == SPECIES_EGG)
+            if (moves[previous] == moves[moveSlot])
+            {
+                duplicateMove = TRUE;
+                break;
+            }
+        }
+
+        if (duplicateMove)
+            continue;
+
+        for (u32 i = 0; i < partyCount; i++)
+        {
+            enum Species otherSpecies;
+
+            if (i == monIndex)
                 continue;
+
+            otherSpecies = GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG);
+            if (otherSpecies == SPECIES_NONE || otherSpecies == SPECIES_EGG)
+                continue;
+
             for (u32 otherMoveSlot = 0; otherMoveSlot < MAX_MON_MOVES; otherMoveSlot++)
             {
-                if (moves[moveSlot] == GetMonData(&party[i], MON_DATA_MOVE1 + otherMoveSlot))
+                if (moves[moveSlot] == GetMonData(
+                        &party[i],
+                        MON_DATA_MOVE1 + otherMoveSlot))
                 {
-                    shared = TRUE;
+                    boost++;
                     break;
                 }
             }
         }
-        boost += shared;
     }
 
     for (u32 i = 0; i < partyCount; i++)
     {
-        if (i == monIndex
-         || GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE
-         || GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG) == SPECIES_EGG)
+        enum Species otherSpecies;
+
+        if (i == monIndex)
             continue;
+
+        otherSpecies = GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG);
+        if (otherSpecies == SPECIES_NONE || otherSpecies == SPECIES_EGG)
+            continue;
+
         if (ability != ABILITY_NONE && ability == GetMonAbility(&party[i]))
-        {
             boost++;
-            break;
-        }
-    }
 
-    for (u32 i = 0; i < partyCount; i++)
-    {
-        if (i == monIndex
-         || GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE
-         || GetMonData(&party[i], MON_DATA_SPECIES_OR_EGG) == SPECIES_EGG)
-            continue;
         if (nature == GetMonData(&party[i], MON_DATA_HIDDEN_NATURE))
-        {
             boost++;
-            break;
-        }
     }
 
-    boost*=2; // Each shared trait contributes 2% to the boost.
+    // Each shared trait contributes 2%, capped at 8%.
+    boost *= 2;
     return min(boost, 8);
 }
 
@@ -5425,7 +5534,7 @@ u32 GetSupportiveBoostPercent(struct Pokemon *party, u32 partyCount, u32 monInde
 
     // First Supportive teammate grants +5%; each additional one grants +1%,
     // capped at +10% total.
-    return min(5 + supportiveCount - 1, 10);
+    return min(6 + supportiveCount - 1, 10);
 }
 
 // pranks / jimh - Custom Archetype nature: Pompous
@@ -5640,6 +5749,7 @@ bool8 PokemonUseItemEffects(struct Pokemon *mon, enum Item item, u8 partyIndex, 
 
     // Determine the EV cap to use
     u32 maxAllowedEVs = !B_EV_ITEMS_CAP ? MAX_TOTAL_EVS : GetCurrentEVCap();
+    u32 maxAllowedPerStatEVs = !B_EV_ITEMS_CAP ? MAX_PER_STAT_EVS : GetCurrentPerStatEVCap();
 
     // Get item hold effect
     heldItem = GetMonData(mon, MON_DATA_HELD_ITEM);
@@ -5698,7 +5808,7 @@ bool8 PokemonUseItemEffects(struct Pokemon *mon, enum Item item, u8 partyIndex, 
                     enum Species species = GetMonData(mon, MON_DATA_SPECIES);
                     dataUnsigned = sExpCandyExperienceTable[param - 1] + GetMonData(mon, MON_DATA_EXP);
 
-                    if (B_RARE_CANDY_CAP && gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD)
+                    if (B_RARE_CANDY_CAP && gSaveBlock2Ptr->optionsDifficulty != DIFFICULTY_EASY)
                     {
                         u32 currentLevelCap = GetCurrentLevelCap();
                         if (dataUnsigned > gExperienceTables[gSpeciesInfo[species].growthRate][currentLevelCap])
@@ -5778,7 +5888,8 @@ bool8 PokemonUseItemEffects(struct Pokemon *mon, enum Item item, u8 partyIndex, 
                                 return TRUE;
 
                             // Ensure the increase does not exceed the max EV per stat (252)
-                            evCap = (itemEffect[10] & ITEM10_IS_VITAMIN) ? EV_ITEM_RAISE_LIMIT : MAX_PER_STAT_EVS;
+                            evCap = min((itemEffect[10] & ITEM10_IS_VITAMIN) ? EV_ITEM_RAISE_LIMIT : MAX_PER_STAT_EVS,
+                                        maxAllowedPerStatEVs);
 
                             // Check if the per-stat limit is reached
                             if (dataSigned >= evCap)
@@ -5976,7 +6087,8 @@ bool8 PokemonUseItemEffects(struct Pokemon *mon, enum Item item, u8 partyIndex, 
                                 return TRUE;
 
                             // Ensure the increase does not exceed the max EV per stat (252)
-                            evCap = (itemEffect[10] & ITEM10_IS_VITAMIN) ? EV_ITEM_RAISE_LIMIT : MAX_PER_STAT_EVS;
+                            evCap = min((itemEffect[10] & ITEM10_IS_VITAMIN) ? EV_ITEM_RAISE_LIMIT : MAX_PER_STAT_EVS,
+                                        maxAllowedPerStatEVs);
 
                             // Check if the per-stat limit is reached
                             if (dataSigned >= evCap)
@@ -7175,6 +7287,28 @@ u32 GetPersonalityCode(u32 personality)
     return personality % PERSONALITY_CODE_MODULUS;
 }
 
+enum Type GetPersonaHiddenPowerType(u32 personality)
+{
+    enum Type hiddenPowerTypes[NUMBER_OF_MON_TYPES];
+    u32 code = GetPersonalityCode(personality);
+    u32 shuffledCode;
+    u32 count = 0;
+
+    for (enum Type type = TYPE_NONE; type < NUMBER_OF_MON_TYPES; type++)
+        if (gTypesInfo[type].isHiddenPowerType)
+            hiddenPowerTypes[count++] = type;
+
+    if (count == 0)
+        return TYPE_NORMAL;
+
+    // This affine permutation visits every five-digit Persona code exactly
+    // once, then partitions the shuffled range evenly between all eligible
+    // types. With 18 types, each receives either 5,555 or 5,556 of the
+    // 100,000 possible codes (the closest mathematically possible split).
+    shuffledCode = (code * 31337 + 41317) % PERSONALITY_CODE_MODULUS;
+    return hiddenPowerTypes[(shuffledCode * count) / PERSONALITY_CODE_MODULUS];
+}
+
 u8 GetPersonaGender(u32 personality)
 {
     // Use the high-scale portion of the personality. The lower five decimal
@@ -7504,7 +7638,7 @@ s32 CalculateFriendshipBonuses(struct Pokemon *mon, s32 modifier, enum HoldEffec
     return bonus;
 }
 
-void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies)
+void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies, bool32 forceMaxYield)
 {
     u8 evs[NUM_STATS];
     u16 evIncrease = 0;
@@ -7516,6 +7650,12 @@ void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies)
     u8 stat;
     u8 bonus;
     u32 currentEVCap = GetCurrentEVCap();
+    u32 currentPerStatEVCap = GetCurrentPerStatEVCap();
+    bool32 acceleratedTraining = gMain.inBattle && IsAcceleratedTrainingActive();
+    // This project globally awards twice the species' normal EV yield.
+    // Accelerated training doubles that base rate again before applying its
+    // existing fill-to-cap behavior below.
+    u32 trainingMultiplier = acceleratedTraining ? 4 : 2;
 
     heldItem = GetMonData(mon, MON_DATA_HELD_ITEM, 0);
     if (heldItem == ITEM_ENIGMA_BERRY_E_READER)
@@ -7548,6 +7688,11 @@ void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies)
         if (totalEVs >= currentEVCap)
             break;
 
+        // Existing saves may already exceed the current chapter's cap.
+        // Do not subtract EVs or allow the clamp arithmetic to underflow.
+        if (evs[i] >= currentPerStatEVCap)
+            continue;
+
         if (CheckMonHasHadPokerus(mon))
             multiplier = 2;
         else
@@ -7557,39 +7702,39 @@ void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies)
         {
         case STAT_HP:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_HP)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_HP*2 + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_HP * trainingMultiplier + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_HP*2 * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_HP * trainingMultiplier * multiplier;
             break;
         case STAT_ATK:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_ATK)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Attack*2 + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Attack * trainingMultiplier + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Attack*2 * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Attack * trainingMultiplier * multiplier;
             break;
         case STAT_DEF:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_DEF)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Defense*2 + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Defense * trainingMultiplier + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Defense*2 * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Defense * trainingMultiplier * multiplier;
             break;
         case STAT_SPEED:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_SPEED)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Speed*2 + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_Speed * trainingMultiplier + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Speed*2 * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_Speed * trainingMultiplier * multiplier;
             break;
         case STAT_SPATK:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_SPATK)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpAttack*2 + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpAttack * trainingMultiplier + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpAttack*2 * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpAttack * trainingMultiplier * multiplier;
             break;
         case STAT_SPDEF:
             if (holdEffect == HOLD_EFFECT_POWER_ITEM && stat == STAT_SPDEF)
-                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpDefense*2 + bonus) * multiplier;
+                evIncrease = (gSpeciesInfo[defeatedSpecies].evYield_SpDefense * trainingMultiplier + bonus) * multiplier;
             else
-                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpDefense*2 * multiplier;
+                evIncrease = gSpeciesInfo[defeatedSpecies].evYield_SpDefense * trainingMultiplier * multiplier;
             break;
         default:
             break;
@@ -7598,12 +7743,17 @@ void MonGainEVs(struct Pokemon *mon, enum Species defeatedSpecies)
         if (holdEffect == HOLD_EFFECT_MACHO_BRACE)
             evIncrease *= 2;
 
+        // During an expedited-training window, any stat this encounter would
+        // train is filled as far as the current per-stat and total caps allow.
+        if ((forceMaxYield || acceleratedTraining) && evIncrease != 0)
+            evIncrease = currentPerStatEVCap;
+
         if (totalEVs + (s16)evIncrease > currentEVCap)
             evIncrease = ((s16)evIncrease + currentEVCap) - (totalEVs + evIncrease);
 
-        if (evs[i] + (s16)evIncrease > MAX_PER_STAT_EVS)
+        if (evs[i] + (s16)evIncrease > currentPerStatEVCap)
         {
-            int val1 = (s16)evIncrease + MAX_PER_STAT_EVS;
+            int val1 = (s16)evIncrease + currentPerStatEVCap;
             int val2 = evs[i] + evIncrease;
             evIncrease = val1 - val2;
         }
@@ -8008,7 +8158,7 @@ const u16 *GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(enum Species spec
     return ApplyPersonalityColorToPalette(palette, personality, nature, isEgg);
 }
 
-#define OR_MOVE_IS_HM(_hm) || (move == MOVE_##_hm)
+#define OR_MOVE_IS_HM(_num, _hm) || (move == MOVE_##_hm)
 
 bool32 IsMoveHM(enum Move move)
 {

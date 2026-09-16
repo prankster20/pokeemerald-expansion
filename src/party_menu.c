@@ -582,6 +582,10 @@ static void InitPartyMenu(enum PartyMenuType menuType, enum PartyMenuLayout layo
 
         gTextFlags.autoScroll = 0;
         CalculatePlayerPartyCount();
+        // Opening the field Party Menu acts as the location-independent
+        // equivalent of opening a picnic for Mirror Herb move transfer.
+        if (menuType == PARTY_MENU_TYPE_FIELD && !gMain.inBattle)
+            TryPartyMirrorHerbMoveTransfer();
         SetMainCallback2(CB2_InitPartyMenu);
     }
 }
@@ -1480,6 +1484,11 @@ static void Task_ClosePartyMenuAndSetCB2(u8 taskId)
 u8 GetCursorSelectionMonId(void)
 {
     return gPartyMenu.slotId;
+}
+
+void SetFieldMoveUserPartyIndex(u8 partyIndex)
+{
+    gPartyMenu.slotId = partyIndex;
 }
 
 u8 GetPartyMenuType(void)
@@ -4448,7 +4457,8 @@ bool32 SetUpFieldMove_Surf(void)
     if (!CheckFollowerNPCFlag(FOLLOWER_NPC_FLAG_CAN_SURF))
         return FALSE;
 
-    if (PartyHasMonWithSurf() == TRUE && IsPlayerFacingSurfableFishableWater() == TRUE)
+    if ((gSpecialVar_ItemId == ITEM_SURFBOARD || PartyHasMonWithSurf() == TRUE)
+     && IsPlayerFacingSurfableFishableWater() == TRUE)
     {
         gFieldCallback2 = FieldCallback_PrepareFadeInFromMenu;
         gPostMenuFieldCallback = FieldCallback_Surf;
@@ -5584,8 +5594,10 @@ static const u8 sText_PersonalityVibrant[] = _("Vibrant: Hue ");
 static const u8 sText_PersonalityBright[] = _("  Bright ");
 static const u8 sText_PersonalityPompous[] = _("Pompous:");
 static const u8 sText_PersonalityDevoted[] = _("Devoted bond code: ");
+static const u8 sText_PersonalityHiddenPower[] = _("Hidden Power: ");
 static const u8 sText_Slash[] = _("/");
 static const u8 sText_Plus[] = _("+");
+static const u8 sText_Minus[] = _("-");
 static const u8 sText_PersonalityCodeFailed[] =
     _("That code cannot preserve this\nPokémon's Nature and gender.{PAUSE_UNTIL_PRESS}");
 
@@ -5687,26 +5699,35 @@ static void DrawPersonalityCodeWindow(u8 taskId)
         if (i + 1 != ARRAY_COUNT(sQuirkyStats))
             StringAppend(text, sText_Slash);
     }
-    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 49, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 43, TEXT_SKIP_DRAW, NULL);
 
     GetVibrantColorParameters(code, &hueShift, &brightnessShift);
     StringCopy(text, sText_PersonalityVibrant);
     ConvertIntToDecimalStringN(number, (hueShift * 360 + 768) / 1536, STR_CONV_MODE_LEFT_ALIGN, 3);
     StringAppend(text, number);
     StringAppend(text, sText_PersonalityBright);
-    if (brightnessShift >= 0)
+    if (brightnessShift < 0)
+    {
+        StringAppend(text, sText_Minus);
+        brightnessShift = -brightnessShift;
+    }
+    else
         StringAppend(text, sText_Plus);
     ConvertIntToDecimalStringN(number, brightnessShift, STR_CONV_MODE_LEFT_ALIGN, 2);
     StringAppend(text, number);
-    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 61, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 55, TEXT_SKIP_DRAW, NULL);
 
-    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, sText_PersonalityPompous, 6, 73, TEXT_SKIP_DRAW, NULL);
-    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, GetPompousTitle(code), 14, 85, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, sText_PersonalityPompous, 6, 67, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, GetPompousTitle(code), 14, 79, TEXT_SKIP_DRAW, NULL);
 
     StringCopy(text, sText_PersonalityDevoted);
     ConvertIntToDecimalStringN(number, code % 100, STR_CONV_MODE_LEADING_ZEROS, 2);
     StringAppend(text, number);
-    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 99, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 91, TEXT_SKIP_DRAW, NULL);
+
+    StringCopy(text, sText_PersonalityHiddenPower);
+    StringAppend(text, gTypesInfo[GetPersonaHiddenPowerType(code)].name);
+    AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, text, 6, 103, TEXT_SKIP_DRAW, NULL);
     AddTextPrinterParameterized(tPersonalityWindow, FONT_SMALL, sText_PersonalityCodeHelp,
                                 GetStringCenterAlignXOffset(FONT_SMALL, sText_PersonalityCodeHelp, 17 * 8), 115,
                                 TEXT_SKIP_DRAW, NULL);
@@ -7384,7 +7405,7 @@ void ItemUseCB_RareCandy(u8 taskId, TaskFunc task)
 
     sInitialLevel = GetMonData(mon, MON_DATA_LEVEL);
     if (!(B_RARE_CANDY_CAP
-       && gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD
+       && gSaveBlock2Ptr->optionsDifficulty != DIFFICULTY_EASY
        && sInitialLevel >= GetCurrentLevelCap()))
     {
         BufferMonStatsToTaskData(mon, arrayPtr);
@@ -7466,35 +7487,72 @@ void ItemUseCB_RareCandy(u8 taskId, TaskFunc task)
     }
 }
 
+u8 GetCatchUpCandyTargetLevel(void)
+{
+    u8 highestLevels[6] = {0};
+    u32 monCount = 0;
+
+#define CONSIDER_CATCH_UP_LEVEL(candidateLevel)                         \
+    do                                                                 \
+    {                                                                  \
+        u32 insertAt;                                                  \
+        for (insertAt = 0; insertAt < ARRAY_COUNT(highestLevels); insertAt++) \
+        {                                                              \
+            if ((candidateLevel) > highestLevels[insertAt])            \
+            {                                                          \
+                for (u32 shift = ARRAY_COUNT(highestLevels) - 1; shift > insertAt; shift--) \
+                    highestLevels[shift] = highestLevels[shift - 1];   \
+                highestLevels[insertAt] = (candidateLevel);            \
+                break;                                                 \
+            }                                                          \
+        }                                                              \
+        monCount++;                                                    \
+    } while (0)
+
+    for (u32 i = 0; i < PARTY_SIZE; i++)
+    {
+        struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
+        if (GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE
+         || GetMonData(mon, MON_DATA_IS_EGG))
+            continue;
+        CONSIDER_CATCH_UP_LEVEL(GetMonData(mon, MON_DATA_LEVEL));
+    }
+
+    if (gPokemonStoragePtr != NULL)
+    {
+        for (u32 box = 0; box < TOTAL_BOXES_COUNT; box++)
+        {
+            for (u32 slot = 0; slot < IN_BOX_COUNT; slot++)
+            {
+                struct BoxPokemon *boxMon = &gPokemonStoragePtr->boxes[box][slot];
+
+                if (!GetBoxMonData(boxMon, MON_DATA_SANITY_HAS_SPECIES)
+                 || GetBoxMonData(boxMon, MON_DATA_IS_EGG))
+                    continue;
+                CONSIDER_CATCH_UP_LEVEL(GetLevelFromBoxMonExp(boxMon));
+            }
+        }
+    }
+
+#undef CONSIDER_CATCH_UP_LEVEL
+
+    if (monCount == 0)
+        return 0;
+    return highestLevels[min(monCount, ARRAY_COUNT(highestLevels)) - 1];
+}
+
 void ItemUseCB_CatchUpCandy(u8 taskId, TaskFunc task)
 {
     struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
     struct PartyMenuInternal *ptr = sPartyMenuInternal;
-    u32 totalLevels = 0;
     u32 targetExp;
-    u8 partyCount = 0;
-    u8 targetLevel;
-    u8 i;
-
-    for (i = 0; i < PARTY_SIZE; i++)
-    {
-        if (i == gPartyMenu.slotId
-         || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) == SPECIES_NONE
-         || GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG))
-            continue;
-
-        totalLevels += GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_LEVEL);
-        partyCount++;
-    }
+    u8 targetLevel = GetCatchUpCandyTargetLevel();
 
     sInitialLevel = GetMonData(mon, MON_DATA_LEVEL);
-    targetLevel = partyCount == 0 ? sInitialLevel : totalLevels / partyCount;
-    if (B_RARE_CANDY_CAP && gSaveBlock2Ptr->optionsLevelCaps == OPTIONS_LEVEL_CAPS_HARD)
-        targetLevel = min(targetLevel, GetCurrentLevelCap());
 
     PlaySE(SE_SELECT);
     if (GetMonData(mon, MON_DATA_IS_EGG)
-     || targetLevel < sInitialLevel + 5
+     || targetLevel <= sInitialLevel
      || targetLevel > MAX_LEVEL)
     {
         sInitialLevel = 0;
@@ -8047,7 +8105,7 @@ void DeleteMove(struct Pokemon *mon, enum Move move)
             u32 existingMove = GetBoxMonData(boxMon, MON_DATA_MOVE1 + i);
             if (existingMove == move)
             {
-                if (IsBoxMonMoveSlotLockedByNature(boxMon, i))
+                if (!CanBoxMonReplaceMoveWithMoveForNature(boxMon, i, MOVE_NONE))
                     break;
 
                 SetMonMoveSlot(mon, MOVE_NONE, i);
@@ -9937,7 +9995,7 @@ void MoveDeleterForgetMove(void)
     enum Move move = MOVE_NONE;
     struct BoxPokemon *boxmon = GetSelectedBoxMonFromPcOrParty();
 
-    if (IsBoxMonMoveSlotLockedByNature(boxmon, gSpecialVar_0x8005))
+    if (!CanBoxMonReplaceMoveWithMoveForNature(boxmon, gSpecialVar_0x8005, MOVE_NONE))
         return;
 
     SetBoxMonData(boxmon, MON_DATA_MOVE1 + gSpecialVar_0x8005, &move);

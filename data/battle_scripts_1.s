@@ -4529,7 +4529,16 @@ BattleScript_AbilityPopUpLonger::
 
 BattleScript_AbilityPopUpScriptingLonger::
 	copybyte gBattlerAbility, sBATTLER
-	goto BattleScript_AbilityPopUpLonger
+	tryactivateabilityshield BS_ABILITY_BATTLER
+	showabilitypopup
+	pause B_WAIT_TIME_LONG
+	recordability BS_ABILITY_BATTLER
+	sethword sABILITY_OVERWRITE, 0
+	@ The popup's final slide-out/destruction occurs just after the ordinary
+	@ long pause. Do not let the next switch-in event (or a trainer slide)
+	@ reuse its OBJ resources during that final frame.
+	pause 2
+	return
 
 BattleScript_AbilityPopUpScripting::
 	copybyte gBattlerAbility, sBATTLER

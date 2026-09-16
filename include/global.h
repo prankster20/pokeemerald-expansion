@@ -604,7 +604,7 @@ struct SaveBlock2
              u16 optionsAnnounceNatures:1; // OPTIONS_ANNOUNCE_NATURES_[NO/YES]
              u16 optionsShinyOdds:2; // OPTIONS_SHINY_ODDS_[4096/1024/256/64]
              u16 optionsAutosave:1; // OPTIONS_AUTOSAVE_[PC/OFF]
-             u16 optionsLevelCaps:1; // OPTIONS_LEVEL_CAPS_[OFF/HARD]
+             u16 optionsDifficulty:1; // DIFFICULTY_[EASY/NORMAL]
              u16 optionsEasierCatch:2; // OPTIONS_EASIER_CATCH_[1X/2X/3X]
              u16 optionsNatureTitles:1; // OPTIONS_NATURE_TITLES_[OFF/ON]
              u16 optionsPersonalityColors:1; // OPTIONS_PERSONALITY_COLORS_[OFF/ON]

@@ -13,15 +13,20 @@
 /* Each of these TM_HM enums corresponds an index in the list of TMs + HMs item ids in
  * gTMHMItemMoveIds. The index for an item can be retrieved with GetItemTMHMIndex below.
  */
-#define UNPACK_TM_HM_ENUM(_tmHm) CAT(ENUM_TM_HM_, _tmHm),
+#define UNPACK_TM_ENUM(_num, _move) CAT(ENUM_TM_HM_TM, _num),
+#define UNPACK_HM_ENUM(_num, _move) CAT(ENUM_TM_HM_HM, _num),
+#define PLUS_ONE_MACHINE(_num, _move) + 1
 enum TMHMIndex
 {
-    FOREACH_TMHM(UNPACK_TM_HM_ENUM)
+    FOREACH_TM(UNPACK_TM_ENUM)
+    FOREACH_HM(UNPACK_HM_ENUM)
     NUM_ALL_MACHINES,
-    NUM_TECHNICAL_MACHINES = (0 FOREACH_TM(PLUS_ONE)),
-    NUM_HIDDEN_MACHINES = (0 FOREACH_HM(PLUS_ONE)),
+    NUM_TECHNICAL_MACHINES = (0 FOREACH_TM(PLUS_ONE_MACHINE)),
+    NUM_HIDDEN_MACHINES = (0 FOREACH_HM(PLUS_ONE_MACHINE)),
 };
-#undef UNPACK_TM_HM_ENUM
+#undef UNPACK_TM_ENUM
+#undef UNPACK_HM_ENUM
+#undef PLUS_ONE_MACHINE
 
 enum PACKED ItemSortType
 {
@@ -107,12 +112,10 @@ extern const struct ItemInfo gItemsInfo[];
 extern struct BagPocket gBagPockets[];
 extern const struct TmHmIndexKey gTMHMItemMoveIds[];
 
-#define UNPACK_ITEM_TO_TM_INDEX(_tm) case CAT(ITEM_TM_, _tm): return CAT(ENUM_TM_HM_, _tm) + 1;
-#define UNPACK_ITEM_TO_HM_INDEX(_hm) case CAT(ITEM_HM_, _hm): return CAT(ENUM_TM_HM_, _hm) + 1;
-#define UNPACK_ITEM_TO_TM_MOVE_ID(_tm) case CAT(ITEM_TM_, _tm): return CAT(MOVE_, _tm);
-#define UNPACK_ITEM_TO_HM_MOVE_ID(_hm) case CAT(ITEM_HM_, _hm): return CAT(MOVE_, _hm);
-#define UNPACK_TM_MOVE_TO_ITEM_ID(_move) case CAT(MOVE_, _move): return CAT(ITEM_TM_, _move);
-#define UNPACK_HM_MOVE_TO_ITEM_ID(_move) case CAT(MOVE_, _move): return CAT(ITEM_HM_, _move);
+#define UNPACK_ITEM_TO_TM_INDEX(_num, _move) case CAT(ITEM_TM, _num): return CAT(ENUM_TM_HM_TM, _num) + 1;
+#define UNPACK_ITEM_TO_HM_INDEX(_num, _move) case CAT(ITEM_HM, _num): return CAT(ENUM_TM_HM_HM, _num) + 1;
+#define UNPACK_ITEM_TO_TM_MOVE_ID(_num, _move) case CAT(ITEM_TM, _num): return CAT(MOVE_, _move);
+#define UNPACK_ITEM_TO_HM_MOVE_ID(_num, _move) case CAT(ITEM_HM, _num): return CAT(MOVE_, _move);
 
 static inline enum TMHMIndex GetItemTMHMIndex(enum Item item)
 {
@@ -150,27 +153,21 @@ static inline enum Move GetItemTMHMMoveId(enum Item item)
 
 static inline enum Item GetTMHMItemIdFromMoveId(enum Move move)
 {
-    switch (move)
-    {
-    /* Expands to:
-        * case MOVE_FOCUS_PUNCH:
-        *     return ITEM_TM_FOCUS_PUNCH;
-        * case MOVE_DRAGON_CLAW:
-        *      return ITEM_TM_DRAGON_CLAW;
-        * etc */
-    FOREACH_TM(UNPACK_TM_MOVE_TO_ITEM_ID)
-    FOREACH_HM(UNPACK_HM_MOVE_TO_ITEM_ID)
-    default:
-        return ITEM_NONE;
-    }
+    u32 i;
+
+    // A move may deliberately be assigned to more than one machine. Return
+    // the first matching machine instead of generating duplicate switch cases.
+    for (i = 1; i <= NUM_ALL_MACHINES; i++)
+        if (gTMHMItemMoveIds[i].moveId == move)
+            return gTMHMItemMoveIds[i].itemId;
+
+    return ITEM_NONE;
 }
 
 #undef UNPACK_ITEM_TO_TM_INDEX
 #undef UNPACK_ITEM_TO_HM_INDEX
 #undef UNPACK_ITEM_TO_TM_MOVE_ID
 #undef UNPACK_ITEM_TO_HM_MOVE_ID
-#undef UNPACK_TM_MOVE_TO_ITEM_ID
-#undef UNPACK_HM_MOVE_TO_ITEM_ID
 
 static inline enum Item GetTMHMItemId(enum TMHMIndex index)
 {

@@ -2327,8 +2327,18 @@ bool8 ScrCmd_checkfieldmove(struct ScriptContext *ctx)
     Script_RequestEffects(SCREFF_V1);
 
     gSpecialVar_Result = PARTY_SIZE;
+    gSpecialVar_0x8005 = 0; // 0: Pokémon move, 2: player uses field tool
     if (doUnlockedCheck && !IsFieldMoveUnlocked(fieldMove))
         return FALSE;
+
+    // Permanent field tools take precedence over Pokémon moves. Slot zero is
+    // only a placeholder; marker 2 makes the scripts omit the mon cut-in.
+    if (HasFieldMoveTool(fieldMove))
+    {
+        gSpecialVar_Result = 0;
+        gSpecialVar_0x8005 = 2;
+        return FALSE;
+    }
 
     move = FieldMove_GetMoveId(fieldMove);
     for (u32 i = 0; i < PARTY_SIZE; i++)
@@ -2343,6 +2353,7 @@ bool8 ScrCmd_checkfieldmove(struct ScriptContext *ctx)
             break;
         }
     }
+
 
     return FALSE;
 }

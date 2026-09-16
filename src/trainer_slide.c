@@ -40,7 +40,7 @@
 #include "trainer_slide.h"
 #include "battle_message.h"
 
-const u8 *const gText_BirchSentretTrainerSlide = COMPOUND_STRING("Ah, this Sentret seems\nto be Pugnacious-natured!{PAUSE_UNTIL_PRESS}\pNATURE POPUPS setting should\nhelp in identifying Natures!\p{PAUSE_UNTIL_PRESS}");
+const u8 *const gText_BirchSentretTrainerSlide = COMPOUND_STRING("Ah, this Sentret seems\nto be Pugnacious-natured!{PAUSE_UNTIL_PRESS}\pNATURE POPUPS setting should\nhelp in identifying Natures!{PAUSE_UNTIL_PRESS}");
 
 static u32 BattlerHPPercentage(enum BattlerId battler, u32 operation, u32 threshold);
 static u32 GetPartyMonCount(u32 lastId, struct Pokemon *party, bool32 onlyAlive);
@@ -60,13 +60,68 @@ static bool32 IsSlideInitalizedOrPlayed(enum BattlerId battler, enum TrainerSlid
 // Partner trainers must be added as TRAINER_PARTNER(PARTNER_XXXX)
 static const u8* const sTrainerSlides[DIFFICULTY_COUNT][TRAINER_PARTNER(PARTNER_COUNT)][TRAINER_SLIDE_COUNT] =
 {
+    [DIFFICULTY_EASY] =
+    {
+        [TRAINER_MAY_ROUTE_103_TREECKO] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Oh, right! You don't know\nabout all the Natures…\pWell, DOCILE doesn't do anything, but\ndon't worry, you'll get the hang of it!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_MAY_ROUTE_103_TORCHIC] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Oh, right! You don't know\nabout all the Natures…\pWell, DOCILE doesn't do anything, but\ndon't worry, you'll get the hang of it!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_MAY_ROUTE_103_MUDKIP] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Oh, right! You don't know\nabout all the Natures…\pWell, DOCILE doesn't do anything, but\ndon't worry, you'll get the hang of it!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_BRENDAN_ROUTE_103_TREECKO] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Hmm, yes! I know! Let me\nteach you all about Natures!\pNow, DOCILE doesn't do anything, but\nothers do! You'll know with practice!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_BRENDAN_ROUTE_103_TORCHIC] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Hmm, yes! I know! Let me\nteach you all about Natures!\pNow, DOCILE doesn't do anything, but\nothers do! You'll know with practice!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_BRENDAN_ROUTE_103_MUDKIP] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Hmm, yes! I know! Let me\nteach you all about Natures!\pNow, DOCILE doesn't do anything, but\nothers do! You'll know with practice!{PAUSE_UNTIL_PRESS}"),
+        },
+    },
     [DIFFICULTY_NORMAL] =
     {
+        [TRAINER_MAY_ROUTE_103_TREECKO] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Oh, right! You don't know\nabout all the Natures…\pWell, DOCILE doesn't do anything, but\ndon't worry, you'll get the hang of it!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_MAY_ROUTE_103_TORCHIC] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Oh, right! You don't know\nabout all the Natures…\pWell, DOCILE doesn't do anything, but\ndon't worry, you'll get the hang of it!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_MAY_ROUTE_103_MUDKIP] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Oh, right! You don't know\nabout all the Natures…\pWell, DOCILE doesn't do anything, but\ndon't worry, you'll get the hang of it!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_BRENDAN_ROUTE_103_TREECKO] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Hmm, yes! I know! Let me\nteach you all about Natures!\pNow, DOCILE doesn't do anything, but\nothers do! You'll know with practice!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_BRENDAN_ROUTE_103_TORCHIC] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Hmm, yes! I know! Let me\nteach you all about Natures!\pNow, DOCILE doesn't do anything, but\nothers do! You'll know with practice!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_BRENDAN_ROUTE_103_MUDKIP] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Hmm, yes! I know! Let me\nteach you all about Natures!\pNow, DOCILE doesn't do anything, but\nothers do! You'll know with practice!{PAUSE_UNTIL_PRESS}"),
+        },
+        [TRAINER_GRUNT_PETALBURG_WOODS] = 
+        {
+            [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("I wasn't expecting intervention!\nThe boss told me this would be easy!{PAUSE_UNTIL_PRESS}"),
+        },
         [TRAINER_ROXANNE_1] =
         {
             [TRAINER_SLIDE_BEFORE_FIRST_TURN] = COMPOUND_STRING("Welcome! Let's begin today's\npractical lesson!{PAUSE_UNTIL_PRESS}"),
             [TRAINER_SLIDE_LAST_SWITCHIN] = COMPOUND_STRING("One final test! Show me what\nyou've learned!{PAUSE_UNTIL_PRESS}"),
-        },
+        }
     },
 };
 

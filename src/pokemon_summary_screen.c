@@ -2701,10 +2701,11 @@ static void Task_HandleReplaceMoveInput(u8 taskId)
 
 static bool8 CanReplaceMove(void)
 {
-    if (sMonSummaryScreen->firstMoveIndex == MAX_MON_MOVES
-        || (sMonSummaryScreen->newMove == MOVE_NONE
-         && !IsBoxMonMoveSlotLockedByNature(GetCurrentBoxmon(), sMonSummaryScreen->firstMoveIndex)))
+    if (sMonSummaryScreen->firstMoveIndex == MAX_MON_MOVES)
         return TRUE;
+
+    if (sMonSummaryScreen->newMove == MOVE_NONE)
+        return CanBoxMonReplaceMoveWithMoveForNature(GetCurrentBoxmon(), sMonSummaryScreen->firstMoveIndex, MOVE_NONE);
 
     if (CannotForgetMove(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]))
         return FALSE;
@@ -4508,7 +4509,9 @@ static enum BattlerId GetCurrentBattlerFromSumIndex(u32 sumIndex)
 
 static enum Type SummaryScreen_GetDynamicMoveType(struct Pokemon *mon, enum Move move, enum Type type)
 {
-    if (!P_SHOW_DYNAMIC_TYPES)
+    // Hidden Power always exposes its Persona-derived type, independently of
+    // the setting controlling other dynamically typed moves.
+    if (!P_SHOW_DYNAMIC_TYPES && GetMoveEffect(move) != EFFECT_HIDDEN_POWER)
         return type;
 
     if (gBattleStruct == NULL)
@@ -4891,6 +4894,8 @@ static inline bool32 ShouldShowMoveRelearner(void)
 {
     return (P_SUMMARY_SCREEN_MOVE_RELEARNER
          && !sMonSummaryScreen->lockMovesFlag
+         && !sMonSummaryScreen->isBoxMon
+         && sMonSummaryScreen->mode != SUMMARY_MODE_BOX
          && sMonSummaryScreen->mode != SUMMARY_MODE_BOX_CURSOR
          && sMonSummaryScreen->hasRelearnableMoves
          && !InBattleFactory()
