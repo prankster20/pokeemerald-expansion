@@ -1237,12 +1237,12 @@ const struct SpeciesInfo gSpeciesInfoGen9[] =
 #if P_FAMILY_TANDEMAUS
     [SPECIES_TANDEMAUS] =
     {
-        .baseHP        = 50,
-        .baseAttack    = 50,
-        .baseDefense   = 45,
+        .baseHP        = 41,
+        .baseAttack    = 52,
+        .baseDefense   = 40,
+        .baseSpAttack  = 52,
+        .baseSpDefense = 40,
         .baseSpeed     = 75,
-        .baseSpAttack  = 40,
-        .baseSpDefense = 45,
         .types = MON_TYPES(TYPE_NORMAL),
         .catchRate = 150,
         .expYield = 61,
@@ -1303,12 +1303,12 @@ const struct SpeciesInfo gSpeciesInfoGen9[] =
 
     [SPECIES_MAUSHOLD_THREE] =
     {
-        .baseHP        = 74,
-        .baseAttack    = 75,
+        .baseHP        = 71,
+        .baseAttack    = 79,
         .baseDefense   = 70,
+        .baseSpAttack  = 79,
+        .baseSpDefense = 70,
         .baseSpeed     = 111,
-        .baseSpAttack  = 65,
-        .baseSpDefense = 75,
         .types = MON_TYPES(TYPE_NORMAL),
         .catchRate = 75,
         .expYield = 165,
@@ -1367,12 +1367,12 @@ const struct SpeciesInfo gSpeciesInfoGen9[] =
 
     [SPECIES_MAUSHOLD_FOUR] =
     {
-        .baseHP        = 74,
-        .baseAttack    = 75,
+        .baseHP        = 71,
+        .baseAttack    = 79,
         .baseDefense   = 70,
+        .baseSpAttack  = 79,
+        .baseSpDefense = 70,
         .baseSpeed     = 111,
-        .baseSpAttack  = 65,
-        .baseSpDefense = 75,
         .types = MON_TYPES(TYPE_NORMAL),
         .catchRate = 75,
         .expYield = 165,

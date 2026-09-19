@@ -2517,4 +2517,11 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
         .aiRating = 6,
         .breakable = TRUE,
     },
+
+    [ABILITY_LEECH] =
+    {
+        .name = _("Leech"),
+        .description = COMPOUND_STRING("Drains 25% of damage dealt."),
+        .aiRating = 8,
+    },
 };

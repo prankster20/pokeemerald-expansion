@@ -1113,7 +1113,6 @@
         {
           "map": "MAP_ROUTE104",
           "base_label": "gRoute104_North",
-          "subarea": "ENCOUNTER_SUBAREA_NORTH",
           "land_mons": {
             "encounter_rate": 20,
             "mons": [
@@ -1208,11 +1207,77 @@
                 "species": "SPECIES_BASCULIN_WHITE_STRIPED"
               }
             ]
-          }
+          },
+          "subarea": "ENCOUNTER_SUBAREA_NORTH"
         },
         {
           "map": "MAP_ROUTE105",
           "base_label": "gRoute105",
+          "sand_mons": {
+            "encounter_rate": 20,
+            "mons": [
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              },
+              {
+                "min_level": 5,
+                "max_level": 6,
+                "species": "SPECIES_ARCHEN"
+              }
+            ]
+          },
           "water_mons": {
             "encounter_rate": 4,
             "mons": [
@@ -1315,71 +1380,6 @@
                 "min_level": 5,
                 "max_level": 5,
                 "species": "SPECIES_NONE"
-              }
-            ]
-          },
-          "sand_mons": {
-            "encounter_rate": 20,
-            "mons": [
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
-              },
-              {
-                "min_level": 5,
-                "max_level": 6,
-                "species": "SPECIES_ARCHEN"
               }
             ]
           }
@@ -3909,6 +3909,71 @@
         {
           "map": "MAP_ABANDONED_SHIP_ROOMS_B1F",
           "base_label": "gAbandonedShip_Rooms_B1F",
+          "land_mons": {
+            "encounter_rate": 20,
+            "mons": [
+              {
+                "min_level": 24,
+                "max_level": 24,
+                "species": "SPECIES_SHUPPET"
+              },
+              {
+                "min_level": 25,
+                "max_level": 25,
+                "species": "SPECIES_SHUPPET"
+              },
+              {
+                "min_level": 26,
+                "max_level": 26,
+                "species": "SPECIES_SHUPPET"
+              },
+              {
+                "min_level": 24,
+                "max_level": 24,
+                "species": "SPECIES_MISDREAVUS"
+              },
+              {
+                "min_level": 25,
+                "max_level": 25,
+                "species": "SPECIES_MISDREAVUS"
+              },
+              {
+                "min_level": 26,
+                "max_level": 26,
+                "species": "SPECIES_MISDREAVUS"
+              },
+              {
+                "min_level": 24,
+                "max_level": 24,
+                "species": "SPECIES_SOLOSIS"
+              },
+              {
+                "min_level": 25,
+                "max_level": 25,
+                "species": "SPECIES_SOLOSIS"
+              },
+              {
+                "min_level": 26,
+                "max_level": 26,
+                "species": "SPECIES_CLAUNCHER"
+              },
+              {
+                "min_level": 24,
+                "max_level": 24,
+                "species": "SPECIES_CLAUNCHER"
+              },
+              {
+                "min_level": 25,
+                "max_level": 25,
+                "species": "SPECIES_CLAUNCHER"
+              },
+              {
+                "min_level": 26,
+                "max_level": 26,
+                "species": "SPECIES_CLAUNCHER"
+              }
+            ]
+          },
           "water_mons": {
             "encounter_rate": 4,
             "mons": [
@@ -4011,71 +4076,6 @@
                 "min_level": 5,
                 "max_level": 5,
                 "species": "SPECIES_NONE"
-              }
-            ]
-          },
-          "land_mons": {
-            "encounter_rate": 20,
-            "mons": [
-              {
-                "min_level": 24,
-                "max_level": 24,
-                "species": "SPECIES_SHUPPET"
-              },
-              {
-                "min_level": 25,
-                "max_level": 25,
-                "species": "SPECIES_SHUPPET"
-              },
-              {
-                "min_level": 26,
-                "max_level": 26,
-                "species": "SPECIES_SHUPPET"
-              },
-              {
-                "min_level": 24,
-                "max_level": 24,
-                "species": "SPECIES_MISDREAVUS"
-              },
-              {
-                "min_level": 25,
-                "max_level": 25,
-                "species": "SPECIES_MISDREAVUS"
-              },
-              {
-                "min_level": 26,
-                "max_level": 26,
-                "species": "SPECIES_MISDREAVUS"
-              },
-              {
-                "min_level": 24,
-                "max_level": 24,
-                "species": "SPECIES_SOLOSIS"
-              },
-              {
-                "min_level": 25,
-                "max_level": 25,
-                "species": "SPECIES_SOLOSIS"
-              },
-              {
-                "min_level": 26,
-                "max_level": 26,
-                "species": "SPECIES_CLAUNCHER"
-              },
-              {
-                "min_level": 24,
-                "max_level": 24,
-                "species": "SPECIES_CLAUNCHER"
-              },
-              {
-                "min_level": 25,
-                "max_level": 25,
-                "species": "SPECIES_CLAUNCHER"
-              },
-              {
-                "min_level": 26,
-                "max_level": 26,
-                "species": "SPECIES_CLAUNCHER"
               }
             ]
           }

@@ -242,15 +242,15 @@ Difficulty: Normal
 
 Inkay
 Level: 10
-Nature: Greedy, Shortsighted
+Nature: Greedy
 - Sneer
 - Confound
 - Flip Turn
 - Peck
 
-SPECIES_WOOPER_PALDEA
+Wooper-Paldea
 Level: 10
-Nature: Greedy, Flighty
+Nature: Greedy
 - Bulldoze
 - Poison Tail
 - Flip Turn
@@ -4346,25 +4346,75 @@ Music: Female
 Items: Potion / Potion
 Double Battle: No
 AI: Basic Trainer
+Difficulty: Easy
 
 Geodude-Alola
 Level: 15
-- Tackle
-- Defense Curl
-- Rock Throw
+Nature: Resolute
+Ability: Sturdy
+EVs: 32 Atk / 32 Spe
 - Rock Tomb
+- Spark
+- Bulldoze
+- Tackle
 
 Glimmet
 Level: 15
-- Acid
+Nature: Calculating
+Ability: Toxic Debris
+EVs: 32 HP / 16 Atk / 16 SpA
 - Rock Tomb
+- Acid
+- Absorb
 - Stealth Rock
 
 Carbink @ Muscle Band
 Level: 15
-- Tackle
-- Covet
+Nature: Perfectionist
+Ability: Analytic
+EVs: 32 HP / 32 Atk
 - Rock Tomb
+- Covet
+- Safeguard
+- Tackle
+
+=== TRAINER_ROXANNE_1 ===
+Name: ROXANNE
+Class: Leader
+Pic: Leader Roxanne
+Gender: Female
+Music: Female
+Items: Potion / Potion
+Double Battle: No
+AI: Basic Trainer
+Difficulty: Normal
+
+Geodude-Alola
+Level: 15
+Nature: Resolute
+Ability: Sturdy
+EVs: 32 Atk / 32 Spe
+- Rock Tomb
+- Spark
+- Tackle
+
+Glimmet
+Level: 15
+Nature: Calculating
+Ability: Toxic Debris
+EVs: 32 HP / 16 Atk / 16 SpA
+- Rock Tomb
+- Acid
+- Stealth Rock
+
+Carbink @ Muscle Band
+Level: 15
+Nature: Perfectionist, Hardy
+Ability: Analytic
+EVs: 32 HP / 32 Atk
+- Rock Tomb
+- Covet
+- Tackle
 
 === TRAINER_BRAWLY_1 ===
 Name: BRAWLY
@@ -4375,27 +4425,32 @@ Music: Male
 Items: Super Potion / Super Potion
 Double Battle: No
 AI: Basic Trainer
+Difficulty: Normal
 
-Machop
-Level: 16
-- Karate Chop
-- Low Kick
-- Seismic Toss
-- Bulk Up
+Clobbopus
+Nature: Jolly, Affable
+Level: 20
+- Rock Smash
+- Flip Turn
+- Brutal Swing
+- Wrap
 
 Meditite
-Level: 16
-- Focus Punch
-- Light Screen
-- Reflect
-- Bulk Up
+Level: 20
+Nature: Energetic, Wayfaring
+EVs: 32 Atk / 32 Spe
+- Fake Out
+- Bullet Punch
+- Roughhouse
+- Thief
 
-Makuhita @ Sitrus Berry
-Level: 19
-- Arm Thrust
-- Vital Throw
-- Reversal
-- Bulk Up
+Crabominable
+Level: 20
+Nature: Relentless, Pugnacious
+- Ice Shard
+- Mach Punch
+- Bubblebeam
+- Blunt Bash
 
 === TRAINER_WATTSON_1 ===
 Name: WATTSON
@@ -5625,10 +5680,12 @@ Double Battle: No
 AI: Check Bad Move
 
 Mareep
-Level: 4
+Nature: Affable
+Level: 5
 
 Fletchling
-Level: 3
+Nature: Forgiving
+Level: 5
 
 === TRAINER_TIMMY ===
 Name: TIMMY
@@ -9937,12 +9994,15 @@ Gender: Female
 Music: Female
 Double Battle: No
 AI: Check Bad Move
+Badges: 0
 
 Minccino
-Level: 4
+Nature: Ambitious
+Level: 6
 
 Cutiefly
-Level: 4
+Nature: Resolute
+Level: 6
 
 === TRAINER_HALEY_1 ===
 Name: HALEY
@@ -10119,10 +10179,12 @@ Double Battle: No
 AI: Check Bad Move
 
 Blipbug
-Level: 4
+Nature: Observant
+Level: 5
 
 Nymble
-Level: 4
+Nature: Energetic
+Level: 5
 
 === TRAINER_LYLE ===
 Name: LYLE
@@ -11639,8 +11701,11 @@ Music: Hiker
 Double Battle: No
 AI: Check Bad Move
 
-Dewpider
+Magikarp
+Nature: Docile
 Level: 9
+- Tackle
+- Splash
 
 === TRAINER_HAILEY ===
 Name: HAILEY

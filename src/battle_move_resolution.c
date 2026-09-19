@@ -3883,6 +3883,31 @@ static enum MoveEndResult MoveEndFormChange(struct BattleCalcValues *cv)
     return result;
 }
 
+static enum MoveEndResult MoveEndLeech(struct BattleCalcValues *cv)
+{
+    enum BattlerId battlerAtk = cv->battlerAtk;
+    enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
+
+    if (gBattleScripting.savedDmg > 0
+     && !gBattleStruct->unableToUseMove
+     && GetMoveEffect(cv->move) != EFFECT_FUTURE_SIGHT
+     && !gBattleStruct->battlerState[battlerAtk].redCardSwitched
+     && IsBattlerAlive(battlerAtk)
+     && !IsBattlerAtMaxHp(battlerAtk)
+     && !(B_HEAL_BLOCKING >= GEN_5 && gBattleMons[battlerAtk].volatiles.healBlock)
+     && IsAbilityAndRecord(battlerAtk, cv->abilities[battlerAtk], ABILITY_LEECH))
+    {
+        gBattleScripting.battler = gBattlerAbility = battlerAtk;
+        gLastUsedAbility = ABILITY_LEECH;
+        SetHealAmount(battlerAtk, gBattleScripting.savedDmg / 4);
+        BattleScriptCall(BattleScript_AbilityHpHeal);
+        result = MOVEEND_RESULT_RUN_SCRIPT;
+    }
+
+    gBattleScripting.moveendState++;
+    return result;
+}
+
 static enum MoveEndResult MoveEndLifeOrbShellBell(struct BattleCalcValues *cv)
 {
     enum MoveEndResult result = MOVEEND_RESULT_CONTINUE;
@@ -4595,6 +4620,7 @@ static enum MoveEndResult (*const sMoveEndHandlers[])(struct BattleCalcValues *c
     [MOVEEND_KEE_MARANGA_HP_THRESHOLD_ITEM_TARGET] = MoveEndKeeMarangaHpThresholdItemTarget,
     [MOVEEND_CARD_BUTTON] = MoveEndCardButton,
     [MOVEEND_FORM_CHANGE] = MoveEndFormChange,
+    [MOVEEND_LEECH] = MoveEndLeech,
     [MOVEEND_LIFE_ORB_SHELL_BELL] = MoveEndLifeOrbShellBell,
     [MOVEEND_INDOMITABLE] = MoveEndIndomitable,
     [MOVEEND_EMERGENCY_EXIT] = MoveEndEmergencyExit,
