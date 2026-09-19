@@ -1880,7 +1880,7 @@ static s32 AI_CheckBadMove(enum BattlerId battlerAtk, enum BattlerId battlerDef,
         if (gBattleMons[battlerDef].volatiles.foresight)
             ADJUST_SCORE(-10);
         else if (gBattleMons[battlerDef].statStages[STAT_EVASION] <= DEFAULT_STAT_STAGE - 2
-          || !(IS_BATTLER_OF_TYPE(battlerDef, TYPE_GHOST))
+        //   || !(IS_BATTLER_OF_TYPE(battlerDef, TYPE_GHOST))
           || DoesPartnerHaveSameMoveEffect(BATTLE_PARTNER(battlerAtk), battlerDef, move, aiData->partnerMove))
             ADJUST_SCORE(-9);
         break;

@@ -1941,12 +1941,15 @@ Class: Lady
 Pic: Lady
 Gender: Female
 Music: Female
-Items: Full Restore
 Double Battle: No
 AI: Check Bad Move
 
 Buneary @ Nugget
 Level: 7
+Nature: Vibrant
+/*
+Personality: 53299
+*/
 
 === TRAINER_DAPHNE ===
 Name: DAPHNE

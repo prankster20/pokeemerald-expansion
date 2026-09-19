@@ -2471,33 +2471,22 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Dig"),
         .description = COMPOUND_STRING(
-            "Digs underground the first\n"
-            "turn and strikes next turn."),
-        .effect = EFFECT_SEMI_INVULNERABLE,
-        #if B_UPDATED_MOVE_DATA >= GEN_4
-            .power = 80,
-        #elif B_UPDATED_MOVE_DATA >= GEN_2
-            .power = 60,
-        #else
-            .power = 100,
-        #endif
+            "Strikes with +2 priority if foe\n"
+            "is readying a damaging move, else fails."),
+        .effect = EFFECT_SUCKER_PUNCH,
+        .power = 70,
         .type = TYPE_GROUND,
         .accuracy = 100,
-        .pp = 10,
+        .pp = 5,
         .target = TARGET_SELECTED,
-        .priority = 0,
+        .priority = 2,
         .category = DAMAGE_CATEGORY_PHYSICAL,
         .makesContact = TRUE,
-        .sleepTalkBanned = TRUE,
-        .instructBanned = TRUE,
-        .assistBanned = B_UPDATED_MOVE_FLAGS >= GEN_6,
-        .skyBattleBanned = TRUE,
-        .argument.twoTurnAttack = { .stringId = STRINGID_PKMNDUGHOLE, .status = STATE_UNDERGROUND },
         .contestEffect = C_UPDATED_MOVE_EFFECTS >= GEN_6 ? CONTEST_EFFECT_AVOID_STARTLE_ONCE : CONTEST_EFFECT_AVOID_STARTLE,
         .contestCategory = C_UPDATED_MOVE_CATEGORIES >= GEN_6 ? CONTEST_CATEGORY_TOUGH : CONTEST_CATEGORY_SMART,
         .contestComboStarterId = 0,
         .contestComboMoves = {0},
-        .battleAnimScript = gBattleAnimMove_Dig,
+        .battleAnimScript = gBattleAnimMove_Dig_OneTurn,
         .validApprenticeMove = TRUE,
     },
 
@@ -3535,14 +3524,14 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
         .name = COMPOUND_STRING("Swift"),
         .description = COMPOUND_STRING(
             "Sprays star-shaped rays\n"
-            "that never miss."),
+            "with +1 priority."),
         .effect = EFFECT_HIT,
-        .power = 60,
+        .power = 40,
         .type = TYPE_NORMAL,
-        .accuracy = 0,
-        .pp = 20,
-        .target = TARGET_BOTH,
-        .priority = 0,
+        .accuracy = 100,
+        .pp = 15,
+        .target = TARGET_SELECTED,
+        .priority = 1,
         .category = DAMAGE_CATEGORY_SPECIAL,
         .contestEffect = CONTEST_EFFECT_BETTER_IF_FIRST,
         .contestCategory = CONTEST_CATEGORY_COOL,
@@ -5310,13 +5299,14 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Foresight"),
         .description = COMPOUND_STRING(
-            "Negates the foe's efforts\n"
-            "to heighten evasiveness."),
+            "Identifies the foe, ignoring\n"
+            "its type-based immunities and\n"
+            "boosts to evasion."),
         .effect = EFFECT_FORESIGHT,
         .power = 0,
-        .type = TYPE_NORMAL,
-        .accuracy = B_UPDATED_MOVE_DATA >= GEN_5 ? 0 : 100,
-        .pp = 40,
+        .type = TYPE_PSYCHIC,
+        .accuracy = 100,
+        .pp = 5,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -5419,21 +5409,16 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Detect"),
         .description = COMPOUND_STRING(
-            "Evades attack, but may fail\n"
-            "if used in succession."),
+            "Protects the user. Chance of\n"
+            "success decreases by 1/3x\n"
+            "with each successive use. Priority +4."),
         .effect = EFFECT_PROTECT,
         .power = 0,
         .type = TYPE_FIGHTING,
         .accuracy = 0,
         .pp = 5,
         .target = TARGET_USER,
-        #if B_UPDATED_MOVE_DATA >= GEN_5
-            .priority = 4,
-        #elif B_UPDATED_MOVE_DATA >= GEN_3
-            .priority = 3,
-        #else
-            .priority = 2,
-        #endif
+        .priority = 4,
         .category = DAMAGE_CATEGORY_STATUS,
         .argument = { .protectMethod = PROTECT_NORMAL },
         .zMove = { .effect = Z_EFFECT_EVSN_UP_1 },
@@ -8649,13 +8634,14 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Odor Sleuth"),
         .description = COMPOUND_STRING(
-            "Negate evasiveness and\n"
-            "Ghost type's immunities."),
+            "Sniffs out the foe, ignoring\n"
+            "its type-based immunities and\n"
+            "boosts to evasion."),
         .effect = EFFECT_FORESIGHT,
         .power = 0,
         .type = TYPE_NORMAL,
-        .accuracy = B_UPDATED_MOVE_DATA >= GEN_4 ? 0 : 100,
-        .pp = 40,
+        .accuracy = 100,
+        .pp = 5,
         .target = TARGET_SELECTED,
         .priority = 0,
         .category = DAMAGE_CATEGORY_STATUS,
@@ -15680,8 +15666,8 @@ const struct MoveInfo gMovesInfo[MOVES_COUNT_ALL] =
     {
         .name = COMPOUND_STRING("Play Nice"),
         .description = COMPOUND_STRING(
-            "Befriends the foe, lowering\n"
-            "its Sp. Atk with +1 priority."),
+            "Befriends the foe and drops\n"
+            "SpA. +1 priority."),
         .effect = EFFECT_STAT_CHANGE,
         .power = 0,
         .type = TYPE_FAIRY,

@@ -95,6 +95,7 @@ extern const u8 gBattleAnimMove_RockThrow[];
 extern const u8 gBattleAnimMove_Earthquake[];
 extern const u8 gBattleAnimMove_Fissure[];
 extern const u8 gBattleAnimMove_Dig[];
+extern const u8 gBattleAnimMove_Dig_OneTurn[];
 extern const u8 gBattleAnimMove_Toxic[];
 extern const u8 gBattleAnimMove_Confusion[];
 extern const u8 gBattleAnimMove_Psychic[];
