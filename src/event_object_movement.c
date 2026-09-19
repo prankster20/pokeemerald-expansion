@@ -2277,7 +2277,9 @@ static void LoadFollowerPersonalityPalette(u32 paletteNum, enum Species species,
     {
         palette = ApplyPersonalityColorToPalette(palette,
                                                  GetMonData(mon, MON_DATA_PERSONALITY),
-                                                 GetMonData(mon, MON_DATA_HIDDEN_NATURE),
+                                                 BoxPokemonHasNature(&mon->box, NATURE_VIBRANT)
+                                                     ? NATURE_VIBRANT
+                                                     : GetMonData(mon, MON_DATA_HIDDEN_NATURE),
                                                  FALSE);
     }
 

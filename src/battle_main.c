@@ -125,13 +125,13 @@ static void ReturnFromBattleToOverworld(void);
 static void TryEvolvePokemon(void);
 
 #define TRAINER_NATURE_FLAG_WORDS DIV_ROUND_UP(NUM_NATURES, 32)
-#define MAX_ANNOUNCED_TRAINER_NATURES 3
+#define MAX_TRAINER_NATURES 5
 
 struct TrainerPartyNatureSet
 {
     u32 personality;
     u32 flags[TRAINER_NATURE_FLAG_WORDS];
-    u8 orderedNatures[MAX_ANNOUNCED_TRAINER_NATURES];
+    u8 orderedNatures[MAX_TRAINER_NATURES];
     u8 count;
 };
 
@@ -1862,23 +1862,31 @@ void SetTrainerMonNatures(struct Pokemon *mon, const struct TrainerMon *partyEnt
     {
         u32 nature = partyEntry->additionalNatures[i];
 
-        if (nature < NUM_NATURES)
+        if (nature < NUM_NATURES && natureSet->count < MAX_TRAINER_NATURES)
         {
-            natureSet->flags[nature / 32] |= 1u << (nature % 32);
-            // Only the first three entries written in trainers.party are
-            // announcement candidates, even if one of them is duplicated.
-            if (i + 1 < MAX_ANNOUNCED_TRAINER_NATURES)
-            {
-                bool32 duplicate = FALSE;
+            bool32 duplicate = FALSE;
 
-                for (u32 j = 0; j < natureSet->count; j++)
-                    if (natureSet->orderedNatures[j] == nature)
-                        duplicate = TRUE;
-                if (!duplicate)
-                    natureSet->orderedNatures[natureSet->count++] = nature;
+            for (u32 j = 0; j < natureSet->count; j++)
+                if (natureSet->orderedNatures[j] == nature)
+                    duplicate = TRUE;
+            if (!duplicate)
+            {
+                natureSet->flags[nature / 32] |= 1u << (nature % 32);
+                natureSet->orderedNatures[natureSet->count++] = nature;
             }
         }
     }
+}
+
+u32 GetPokemonNatureCount(struct Pokemon *mon)
+{
+    struct TrainerPartyNatureSet *natureSet;
+
+    if (GetTrainerPartyNatureSet(mon, &natureSet)
+     && natureSet->personality == GetMonData(mon, MON_DATA_PERSONALITY)
+     && natureSet->count != 0)
+        return natureSet->count;
+    return GetBoxPokemonNatureCount(&mon->box);
 }
 
 bool32 GetPokemonNatureAtIndex(struct Pokemon *mon, u32 index, u32 *nature)
@@ -1894,10 +1902,7 @@ bool32 GetPokemonNatureAtIndex(struct Pokemon *mon, u32 index, u32 *nature)
         return TRUE;
     }
 
-    if (index != 0)
-        return FALSE;
-    *nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
-    return TRUE;
+    return GetBoxPokemonNatureAtIndex(&mon->box, index, nature);
 }
 
 bool32 ShouldSuppressRepeatedNaturePopup(enum BattlerId battler, u32 nature)
@@ -1910,7 +1915,7 @@ bool32 ShouldSuppressRepeatedNaturePopup(enum BattlerId battler, u32 nature)
      || gBattleStruct->eventState.switchIn <= SWITCH_IN_EVENTS_ANNOUNCE_NATURES)
         return FALSE;
 
-    for (u32 i = 0; i < MAX_ANNOUNCED_TRAINER_NATURES; i++)
+    for (u32 i = 0; i < GetPokemonNatureCount(GetBattlerMon(battler)); i++)
         if (GetPokemonNatureAtIndex(GetBattlerMon(battler), i, &announcedNature)
          && announcedNature == nature)
             return TRUE;
@@ -1921,34 +1926,28 @@ bool32 PokemonHasNature(struct Pokemon *mon, u32 nature)
 {
     struct TrainerPartyNatureSet *natureSet;
 
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == nature)
-        return TRUE;
-    if (nature >= NUM_NATURES || !GetTrainerPartyNatureSet(mon, &natureSet))
+    if (nature >= NUM_NATURES)
         return FALSE;
-    if (natureSet->personality != GetMonData(mon, MON_DATA_PERSONALITY))
-        return FALSE;
-    return (natureSet->flags[nature / 32] & (1u << (nature % 32))) != 0;
+    if (GetTrainerPartyNatureSet(mon, &natureSet)
+     && natureSet->personality == GetMonData(mon, MON_DATA_PERSONALITY)
+     && natureSet->count != 0)
+        return (natureSet->flags[nature / 32] & (1u << (nature % 32))) != 0;
+    return BoxPokemonHasNature(&mon->box, nature);
 }
 
 s32 GetPokemonNatureStatModifierPercent(struct Pokemon *mon, enum Stat statIndex, u32 personality)
 {
-    struct TrainerPartyNatureSet *natureSet;
     s32 modifier = 0;
+    u32 nature;
+    u32 count = GetPokemonNatureCount(mon);
 
-    // Trainer-only multi-Natures are stored outside the Pokemon struct. Sum
-    // their percentage-point modifiers so opposing boosts/drops cancel
-    // exactly and matching boosts stack (for example, two +15% boosts become
-    // +30%). The bitset also ensures duplicate entries are applied only once.
-    if (GetTrainerPartyNatureSet(mon, &natureSet)
-     && natureSet->personality == GetMonData(mon, MON_DATA_PERSONALITY))
-    {
-        for (u32 nature = 0; nature < NUM_NATURES; nature++)
-            if (natureSet->flags[nature / 32] & (1u << (nature % 32)))
-                modifier += GetNatureStatModifierPercent(nature, statIndex, personality);
-        return modifier;
-    }
-
-    return GetNatureStatModifierPercent(GetMonData(mon, MON_DATA_HIDDEN_NATURE), statIndex, personality);
+    // Add percentage-point modifiers from every active Nature so opposing
+    // boosts and drops cancel exactly for both player and trainer Pokemon.
+    for (u32 i = 0; i < count; i++)
+        if (GetPokemonNatureAtIndex(mon, i, &nature))
+            modifier += GetNatureStatModifierPercent(nature, statIndex, personality)
+                      * (s32)GetNatureEffectScalePercent(nature, count > 1) / 100;
+    return modifier;
 }
 
 void ModifyPersonalityForNature(u32 *personality, u32 newNature)

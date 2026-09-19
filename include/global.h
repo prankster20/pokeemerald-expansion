@@ -608,6 +608,7 @@ struct SaveBlock2
              u16 optionsEasierCatch:2; // OPTIONS_EASIER_CATCH_[1X/2X/3X]
              u16 optionsNatureTitles:1; // OPTIONS_NATURE_TITLES_[OFF/ON]
              u16 optionsPersonalityColors:1; // OPTIONS_PERSONALITY_COLORS_[OFF/ON]
+             u16 optionsMultipleNatures:1; // OPTIONS_NATURE_MODE_[SINGLE/MULTIPLE]
              //u16 padding2;
     /*0x18*/ struct Pokedex pokedex;
     /*0x90*/ u8 filler_90[0x8];

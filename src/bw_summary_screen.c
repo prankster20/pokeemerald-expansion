@@ -214,6 +214,7 @@ static EWRAM_DATA struct PokemonSummaryScreenData
     u8 curMonIndex;
     u8 maxMonIndex;
     u8 currPageIndex;
+    u8 natureDisplayIndex;
     u8 minPageIndex;
     u8 maxPageIndex;
     bool8 lockMonFlag; // This is used to prevent the player from changing Pokémon in the move deleter select, etc, but it is not needed because the input is handled differently there
@@ -562,9 +563,9 @@ static const struct WindowTemplate sSummaryTemplate[] =
     },
     [PSS_LABEL_WINDOW_PROMPT_INFO] = {
         .bg = 0,
-        .tilemapLeft = 22,
+        .tilemapLeft = 18,
         .tilemapTop = 0,
-        .width = 8,
+        .width = 11,
         .height = 2,
         .paletteNum = 6,
         .baseBlock = 105,
@@ -2231,7 +2232,8 @@ static bool8 ExtractMonDataToSummaryStruct(struct Pokemon *mon)
             sum->speed = GetMonData(mon, MON_DATA_SPEED);
         }
         sum->defensiveNatureBoost = 0;
-        if (sum->mintNature == NATURE_COMMUNAL && !sMonSummaryScreen->isBoxMon)
+        if (!sMonSummaryScreen->isBoxMon
+         && PokemonHasNature(mon, NATURE_COMMUNAL))
         {
             sum->defensiveNatureBoost = GetCommunalBoostPercent(
                 sMonSummaryScreen->monList.mons,
@@ -2595,6 +2597,21 @@ static void Task_HandleInput(u8 taskId)
             PlaySE(SE_SELECT);
             BeginCloseSummaryScreen(taskId);
         }
+        else if (JOY_NEW(SELECT_BUTTON)
+                && sMonSummaryScreen->currPageIndex == PSS_PAGE_INFO
+                && !sMonSummaryScreen->summary.isEgg
+                && GetBoxPokemonNatureCount(GetCurrentSummaryBoxMon()) > 1)
+        {
+            u32 nature;
+            sMonSummaryScreen->natureDisplayIndex++;
+            sMonSummaryScreen->natureDisplayIndex %= GetBoxPokemonNatureCount(GetCurrentSummaryBoxMon());
+            if (GetBoxPokemonNatureAtIndex(GetCurrentSummaryBoxMon(), sMonSummaryScreen->natureDisplayIndex, &nature))
+            {
+                sMonSummaryScreen->summary.mintNature = nature;
+                PrintPageSpecificText(PSS_PAGE_INFO);
+                PlaySE(SE_SELECT);
+            }
+        }
         else if (JOY_NEW(START_BUTTON)
                 && sMonSummaryScreen->currPageIndex == PSS_PAGE_SKILLS
                 && !gMain.inBattle
@@ -2683,6 +2700,7 @@ static void ChangeSummaryPokemon(u8 taskId, s8 delta)
                 SetSpriteInvisibility(SPRITE_ARR_ID_STATUS, TRUE);
             }
             sMonSummaryScreen->curMonIndex = monId;
+            sMonSummaryScreen->natureDisplayIndex = 0;
             sMonSummaryScreen->monAnimTimer = 0;
             sMonSummaryScreen->monAnimPlayed = FALSE;
             gTasks[taskId].tSummaryState = 0;
@@ -3076,7 +3094,7 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             }
             else if (HasMoreThanOneMove() == TRUE)
             {
-                if (sMonSummaryScreen->summary.mintNature == NATURE_NOSTALGIC
+                if (BoxPokemonHasNature(GetCurrentSummaryBoxMon(), NATURE_NOSTALGIC)
                  && sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
                 {
                     PlaySE(SE_FAILURE);
@@ -4020,7 +4038,16 @@ static void PutPageWindowTilemaps(u8 page)
     {
     case PSS_PAGE_INFO:
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_INFO_TITLE);
-        PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_CANCEL);
+        if (!sMonSummaryScreen->summary.isEgg
+         && GetBoxPokemonNatureCount(GetCurrentSummaryBoxMon()) > 1)
+        {
+            FillWindowPixelBuffer(PSS_LABEL_WINDOW_PROMPT_INFO, PIXEL_FILL(0));
+            PrintTextOnWindow(PSS_LABEL_WINDOW_PROMPT_INFO,
+                              COMPOUND_STRING("{SELECT_BUTTON} NATURE"), 0, 1, 0, 1);
+            PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_INFO);
+        }
+        else
+            PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_CANCEL);
         break;
     case PSS_PAGE_SKILLS:
         PutWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_TITLE);
@@ -4067,6 +4094,7 @@ static void ClearPageWindowTilemaps(u8 page)
     {
     case PSS_PAGE_INFO:
         ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_CANCEL);
+        ClearWindowTilemap(PSS_LABEL_WINDOW_PROMPT_INFO);
         break;
     case PSS_PAGE_SKILLS:
         ClearWindowTilemap(PSS_LABEL_WINDOW_POKEMON_SKILLS_EXP);
@@ -4701,7 +4729,8 @@ static void BufferMonTrainerMemo(void)
             }
         }
 
-        if (description != NULL && sum->mercurialNature)
+        if (description != NULL && sum->mercurialNature
+         && sMonSummaryScreen->natureDisplayIndex == 0)
         {
             if (description != sDynamicNatureDescriptionBuffer)
                 StringCopy(sDynamicNatureDescriptionBuffer, description);
@@ -4739,7 +4768,8 @@ static void BufferNatureString(void)
 {
     struct PokemonSummaryScreenData *sumStruct = sMonSummaryScreen;
     DynamicPlaceholderTextUtil_SetPlaceholderPtr(2, gNaturesInfo[sumStruct->summary.mintNature].name);
-    if (sumStruct->summary.mercurialNature)
+    if (sumStruct->summary.mercurialNature
+     && sumStruct->natureDisplayIndex == 0)
         DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, COMPOUND_STRING("{COLOR DYNAMIC_COLOR4}{SHADOW DYNAMIC_COLOR5} (Capricious)"));
     else
         DynamicPlaceholderTextUtil_SetPlaceholderPtr(5, gText_EmptyString5);
@@ -5006,14 +5036,23 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
 {
     struct PokeSummary *sum = &sMonSummaryScreen->summary;
     struct Pokemon *partyMon = GetSummaryPartyMon();
-    u32 nature = sum->mintNature;
-    s32 boost = GetNatureStatModifierPercent(nature, stat, sum->pid);
+    struct BoxPokemon *boxMon = GetCurrentSummaryBoxMon();
+    u32 nature;
+    u32 natureCount = GetBoxPokemonNatureCount(boxMon);
+    s32 boost = 0;
 
     if (stat == STAT_HP)
         return 0;
 
-    switch (nature)
+    for (u32 natureIndex = 0; natureIndex < natureCount; natureIndex++)
     {
+        if (!GetBoxPokemonNatureAtIndex(boxMon, natureIndex, &nature))
+            continue;
+        boost += GetNatureStatModifierPercent(nature, stat, sum->pid)
+               * (s32)GetNatureEffectScalePercent(nature, natureCount > 1) / 100;
+
+        switch (nature)
+        {
     case NATURE_AMBITIOUS:
         if ((stat == STAT_ATK && FlagGet(B_FLAG_BADGE_BOOST_ATTACK))
          || (stat == STAT_DEF && FlagGet(B_FLAG_BADGE_BOOST_DEFENSE))
@@ -5064,8 +5103,9 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
         if (partyMon != NULL && (stat == STAT_ATK || stat == STAT_SPATK))
             boost += GetDevotedBondData(partyMon, NULL);
         break;
-    default:
-        break;
+        default:
+            break;
+        }
     }
 
     if (partyMon != NULL)
@@ -5093,7 +5133,7 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
             struct Pokemon *devotedMon = &gParties[B_TRAINER_PLAYER][i];
 
             if (GetMonData(devotedMon, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE
-             || GetMonData(devotedMon, MON_DATA_HIDDEN_NATURE) != NATURE_DEVOTED)
+             || !PokemonHasNature(devotedMon, NATURE_DEVOTED))
                 continue;
             {
                 u32 devotedBoost = GetDevotedBondData(devotedMon, &bondSlot);
@@ -5410,8 +5450,8 @@ static void PrintMoveNameAndPP(u8 moveIndex)
         PrintTextOnWindowToFitPx_WithFont(moveNameWindowId, GetMoveName(move), 3, moveIndex * 28 + 2, 0, 12, FONT_SMALL, WindowWidthPx(moveNameWindowId) - 3);
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
         // --- Custom Archetype natures: Serious & Methodical ---
-        if (summary->mintNature == NATURE_SERIOUS
-                  || (summary->mintNature == NATURE_TACTICAL && moveIndex == 3))
+        if (BoxPokemonHasNature(GetCurrentSummaryBoxMon(), NATURE_SERIOUS)
+         || (BoxPokemonHasNature(GetCurrentSummaryBoxMon(), NATURE_TACTICAL) && moveIndex == 3))
             pp += 1;
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);
         ConvertIntToDecimalStringN(gStringVar2, pp, STR_CONV_MODE_RIGHT_ALIGN, 2);

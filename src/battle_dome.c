@@ -2114,12 +2114,21 @@ static void InitDomeTrainers(void)
     Free(statValues);
 }
 
+static s32 GetDomeMonNatureModifierPercent(const struct TrainerMon *fmon, enum Stat statIndex)
+{
+    s32 modifier = GetNatureStatModifierPercent(fmon->nature, statIndex, 0);
+
+    for (u32 i = 0; i < fmon->additionalNatureCount && i < 4; i++)
+        modifier += GetNatureStatModifierPercent(fmon->additionalNatures[i], statIndex, 0);
+    return modifier;
+}
+
 // No real PID exists yet at this preview stage, so Quirky's personality-based boost shows as 0% here.
 #define CALC_STAT(base, statIndex)                                                          \
 {                                                                                           \
     u8 baseStat = gSpeciesInfo[fmon->species].base;                                                 \
     stats[statIndex] = (((2 * baseStat + ivs + evs[statIndex] / 4) * level) / 100) + 5;     \
-    stats[statIndex] = (u8) ModifyStatByNature(fmon->nature, stats[statIndex], statIndex, 0);        \
+    stats[statIndex] = stats[statIndex] * (100 + GetDomeMonNatureModifierPercent(fmon, statIndex)) / 100; \
 }
 
 static void CalcDomeMonStats(const struct TrainerMon *fmon, int level, u8 ivs, int *stats)

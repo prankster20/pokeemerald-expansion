@@ -53,9 +53,38 @@ TEST("pranks trainer multi-Natures stack matching boosts and retain separate dro
     SetTrainerMonNatures(multiNature, &trainerMon);
     CalculateMonStats(multiNature);
 
-    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPEED), GetMonData(&baseline, MON_DATA_SPEED) * 130 / 100);
-    EXPECT_EQ(GetMonData(multiNature, MON_DATA_ATK), GetMonData(&baseline, MON_DATA_ATK) * 85 / 100);
-    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPATK), GetMonData(&baseline, MON_DATA_SPATK) * 85 / 100);
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPEED), GetMonData(&baseline, MON_DATA_SPEED) * 120 / 100);
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_ATK), GetMonData(&baseline, MON_DATA_ATK) * 90 / 100);
+    EXPECT_EQ(GetMonData(multiNature, MON_DATA_SPATK), GetMonData(&baseline, MON_DATA_SPATK) * 90 / 100);
+}
+
+TEST("pranks trainer parties retain five ordered unique Natures")
+{
+    static const u8 additionalNatures[] =
+    {
+        NATURE_MODEST,
+        NATURE_JOLLY,
+        NATURE_BOLD,
+        NATURE_CALM,
+    };
+    const struct TrainerMon trainerMon =
+    {
+        .nature = NATURE_ADAMANT,
+        .additionalNatures = additionalNatures,
+        .additionalNatureCount = ARRAY_COUNT(additionalNatures),
+    };
+    struct Pokemon *mon = &gParties[B_TRAINER_OPPONENT_A][0];
+    u32 nature;
+
+    CreateNatureMon(mon, SPECIES_WOBBUFFET, 50, NATURE_HARDY);
+    SetTrainerMonNatures(mon, &trainerMon);
+
+    EXPECT_EQ(GetPokemonNatureCount(mon), 5);
+    EXPECT(GetPokemonNatureAtIndex(mon, 0, &nature)); EXPECT_EQ(nature, NATURE_ADAMANT);
+    EXPECT(GetPokemonNatureAtIndex(mon, 1, &nature)); EXPECT_EQ(nature, NATURE_MODEST);
+    EXPECT(GetPokemonNatureAtIndex(mon, 2, &nature)); EXPECT_EQ(nature, NATURE_JOLLY);
+    EXPECT(GetPokemonNatureAtIndex(mon, 3, &nature)); EXPECT_EQ(nature, NATURE_BOLD);
+    EXPECT(GetPokemonNatureAtIndex(mon, 4, &nature)); EXPECT_EQ(nature, NATURE_CALM);
 }
 
 WILD_BATTLE_TEST("pranks Ambitious receives Badge Boosts when modern configurations disable them", s16 damage)

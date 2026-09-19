@@ -1846,6 +1846,18 @@ UNUSED static const struct BoxPokemon sBoxPokemonConstantsFit =
 
 STATIC_ASSERT(MAX_LEVEL <= 100, PokemonSubstruct0_experience_PotentiallyTooSmall); // Maximum of ~2 million exp.
 
+// Persistent Pokemon are serialized by their raw layout. Multi-Nature storage
+// may reclaim unused bits, but it must never resize these records or the save
+// sections containing them.
+STATIC_ASSERT(sizeof(struct PokemonSubstruct0) == 12, PokemonSubstruct0_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(struct PokemonSubstruct1) == 12, PokemonSubstruct1_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(struct PokemonSubstruct2) == 12, PokemonSubstruct2_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(struct PokemonSubstruct3) == 12, PokemonSubstruct3_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(union PokemonSubstruct) == 12, PokemonSubstructUnion_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(((struct BoxPokemon *)0)->secure.raw) == 48, BoxPokemonSecureData_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(struct BoxPokemon) == 80, BoxPokemon_SaveLayoutChanged);
+STATIC_ASSERT(sizeof(struct Pokemon) == 100, PokemonPartyStruct_LayoutChanged);
+
 static u32 CompressStatus(u32 status)
 {
     s32 i;
@@ -2123,6 +2135,7 @@ void CreateBoxMon(struct BoxPokemon *boxMon, enum Species species, u8 level, u32
     // CreateMon callers that do not subsequently call SetBoxMonIVs (such as
     // several gifts and special encounters) must still receive perfect IVs.
     SetBoxMonIVs(boxMon, USE_RANDOM_IVS);
+    GenerateBoxPokemonAdditionalNatures(boxMon);
 }
 
 static bool32 IsValidGender(u32 gender)
@@ -2674,14 +2687,9 @@ u32 CountBoxMonMovesInCategory(struct BoxPokemon *boxMon, enum DamageCategory ca
     return count;
 }
 
-static u32 GetBoxMonActiveNatureForRefusal(struct BoxPokemon *boxMon)
-{
-    return GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE);
-}
-
 bool32 IsBoxMonMoveSlotLockedByNature(struct BoxPokemon *boxMon, u32 moveSlot)
 {
-    return GetBoxMonActiveNatureForRefusal(boxMon) == NATURE_NOSTALGIC && moveSlot < 2;
+    return BoxPokemonHasNature(boxMon, NATURE_NOSTALGIC) && moveSlot < 2;
 }
 
 bool32 DoesBoxMonNeedToReplaceMoveForNature(struct BoxPokemon *boxMon, enum Move move)
@@ -2691,7 +2699,7 @@ bool32 DoesBoxMonNeedToReplaceMoveForNature(struct BoxPokemon *boxMon, enum Move
     if (move == MOVE_NONE)
         return FALSE;
 
-    if (GetBoxMonActiveNatureForRefusal(boxMon) == NATURE_ECLECTIC)
+    if (BoxPokemonHasNature(boxMon, NATURE_ECLECTIC))
     {
         enum DamageCategory newCategory = GetBattleMoveCategory(move);
 
@@ -2732,7 +2740,7 @@ bool32 CanBoxMonReplaceMoveWithMoveForNature(struct BoxPokemon *boxMon, u32 move
     if (IsBoxMonMoveSlotLockedByNature(boxMon, moveSlot))
         return FALSE;
 
-    if (GetBoxMonActiveNatureForRefusal(boxMon) != NATURE_ECLECTIC)
+    if (!BoxPokemonHasNature(boxMon, NATURE_ECLECTIC))
         return TRUE;
 
     for (u32 i = 0; i < MAX_MON_MOVES; i++)
@@ -2783,7 +2791,7 @@ u32 SanitizeBoxMonMovesForNature(struct BoxPokemon *boxMon)
     u8 categoryCounts[DAMAGE_CATEGORY_STATUS + 1] = {0};
     u32 removedCount = 0;
 
-    if (GetBoxMonActiveNatureForRefusal(boxMon) != NATURE_ECLECTIC)
+    if (!BoxPokemonHasNature(boxMon, NATURE_ECLECTIC))
         return 0;
 
     for (u32 i = 0; i < MAX_MON_MOVES; i++)
@@ -2862,8 +2870,8 @@ u16 GiveMoveToBoxMon(struct BoxPokemon *boxMon, enum Move move)
 
             u32 pp = GetMovePP(move);
             // --- Custom Archetype natures: Serious & Methodical ---
-            u32 nature = GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE);
-            if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && i == 3))
+            if (BoxPokemonHasNature(boxMon, NATURE_SERIOUS)
+             || (BoxPokemonHasNature(boxMon, NATURE_TACTICAL) && i == 3))
                 pp += 1;
             SetBoxMonData(boxMon, MON_DATA_MOVE1 + i, &move);
             SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp);
@@ -2902,8 +2910,8 @@ void SetBoxMonMoveSlot(struct BoxPokemon *mon, enum Move move, u8 slot)
     SetBoxMonData(mon, MON_DATA_MOVE1 + slot, &move);
     u32 pp = GetMovePP(move);
     // --- Custom Archetype natures: Serious & Methodical ---
-    u32 nature = GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE);
-    if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && slot == 3))
+    if (BoxPokemonHasNature(mon, NATURE_SERIOUS)
+     || (BoxPokemonHasNature(mon, NATURE_TACTICAL) && slot == 3))
         pp += 1;
     SetBoxMonData(mon, MON_DATA_PP1 + slot, &pp);
 }
@@ -3077,10 +3085,9 @@ enum Move MonTryLearningNewMoveAtLevel(struct Pokemon *mon, bool32 firstMove, u3
 
 bool32 DoesBoxMonNatureRefuseMove(struct BoxPokemon *boxMon, enum Move move)
 {
-    u32 nature = GetBoxMonActiveNatureForRefusal(boxMon);
     enum BattleMoveEffects effect = GetMoveEffect(move);
 
-    if (nature == NATURE_SHORTSIGHTED)
+    if (BoxPokemonHasNature(boxMon, NATURE_SHORTSIGHTED))
     {
         if (effect == EFFECT_FUTURE_SIGHT
          || effect == EFFECT_WISH
@@ -3089,7 +3096,7 @@ bool32 DoesBoxMonNatureRefuseMove(struct BoxPokemon *boxMon, enum Move move)
          || gBattleMoveEffects[effect].twoTurnEffect)
             return TRUE;
     }
-    else if (nature == NATURE_HEDONISTIC)
+    if (BoxPokemonHasNature(boxMon, NATURE_HEDONISTIC))
     {
         if (effect == EFFECT_RECOIL || effect == EFFECT_RECOIL_IF_MISS)
             return TRUE;
@@ -3101,7 +3108,7 @@ bool32 DoesBoxMonNatureRefuseMove(struct BoxPokemon *boxMon, enum Move move)
                 return TRUE;
         }
     }
-    else if (nature == NATURE_OLD_FORGIVING)
+    if (BoxPokemonHasNature(boxMon, NATURE_OLD_FORGIVING))
     {
         // Banned: vengeance/resentment-flavored moves. pranks / jimh
         if (effect == EFFECT_REVENGE          // Revenge, Avalanche
@@ -3137,12 +3144,10 @@ static bool32 IsDirtyHeldItem(enum Item item)
 
 bool32 DoesBoxMonNatureRefuseHeldItem(struct BoxPokemon *boxMon, enum Item item)
 {
-    u32 nature = GetBoxMonActiveNatureForRefusal(boxMon);
-
     if (item == ITEM_NONE)
         return FALSE;
 
-    if (nature == NATURE_FRUGAL)
+    if (BoxPokemonHasNature(boxMon, NATURE_FRUGAL))
     {
         u32 price = GetItemPrice(item);
 
@@ -3152,7 +3157,7 @@ bool32 DoesBoxMonNatureRefuseHeldItem(struct BoxPokemon *boxMon, enum Item item)
             return TRUE;
     }
 
-    if (nature == NATURE_FASTIDIOUS && IsDirtyHeldItem(item))
+    if (BoxPokemonHasNature(boxMon, NATURE_FASTIDIOUS) && IsDirtyHeldItem(item))
         return TRUE;
 
     return FALSE;
@@ -3309,7 +3314,7 @@ void TryPugnaciousPartySparring(void)
     {
         struct Pokemon *pugnacious = &gParties[B_TRAINER_PLAYER][pugnaciousSlot];
 
-        if (GetNature(pugnacious) != NATURE_PUGNACIOUS
+        if (!PokemonHasNature(pugnacious, NATURE_PUGNACIOUS)
             || !IsEligiblePugnaciousSparringMon(pugnacious)
             || !RandomPercentage(RNG_NATURE_PUGNACIOUS_SPAR, 25))
             continue;
@@ -3347,7 +3352,7 @@ void ApplyWayfaringStepRecovery(void)
     for (u32 i = 0; i < PARTY_SIZE; i++)
     {
         struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][i];
-        if (GetMonData(mon, MON_DATA_SPECIES) != SPECIES_NONE && GetNature(mon) == NATURE_WAYFARING)
+        if (GetMonData(mon, MON_DATA_SPECIES) != SPECIES_NONE && PokemonHasNature(mon, NATURE_WAYFARING))
         {
             hasWayfaringMon = TRUE;
             break;
@@ -3459,21 +3464,62 @@ u32 GetInnocentEvolutionNatureFromFriendship(u32 friendship)
 
 void ApplyInnocentFriendshipRule(struct Pokemon *mon)
 {
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_INNOCENT)
+    if (PokemonHasNature(mon, NATURE_INNOCENT))
     {
         u32 friendship = 0;
         SetMonData(mon, MON_DATA_FRIENDSHIP, &friendship);
     }
 }
 
-u32 ApplyMintedNature(struct Pokemon *mon, u32 nature)
+u32 ApplyMintedNatureAtIndex(struct Pokemon *mon, u32 index, u32 nature)
 {
-    u32 oldNature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    u32 oldNature;
     bool32 fromMercurial = nature == NATURE_CAPRICIOUS;
-    u32 activeNature = fromMercurial ? RollMercurialNature(oldNature) : nature;
+    u32 activeNature;
 
-    SetMonData(mon, MON_DATA_MERCURIAL_NATURE, &fromMercurial);
-    SetMonData(mon, MON_DATA_HIDDEN_NATURE, &activeNature);
+    if (!GetPokemonNatureAtIndex(mon, index, &oldNature))
+        return 0;
+    activeNature = nature;
+    if (fromMercurial)
+    {
+        bool32 foundCompatible = FALSE;
+
+        // Capricious still has to respect the other persistent Nature slots.
+        // Otherwise a perfectly valid Mint use could silently roll a duplicate
+        // or a flavor-opposite Nature and fail to update the Pokémon.
+        for (u32 attempt = 0; attempt < 256; attempt++)
+        {
+            bool32 compatible = TRUE;
+
+            activeNature = RollMercurialNature(oldNature);
+            for (u32 i = 0; i < GetPokemonNatureCount(mon); i++)
+            {
+                u32 existingNature;
+
+                if (i == index)
+                    continue;
+                GetPokemonNatureAtIndex(mon, i, &existingNature);
+                if (!AreNaturesCompatible(existingNature, activeNature))
+                {
+                    compatible = FALSE;
+                    break;
+                }
+            }
+            if (compatible)
+            {
+                foundCompatible = TRUE;
+                break;
+            }
+        }
+        if (!foundCompatible)
+            return 0;
+    }
+    if (!SetBoxPokemonNatureAtIndex(&mon->box, index, activeNature))
+        return 0;
+
+    // The legacy Mercurial persistence bit belongs to the primary slot.
+    if (index == 0)
+        SetMonData(mon, MON_DATA_MERCURIAL_NATURE, &fromMercurial);
     ApplyInnocentFriendshipRule(mon);
     AdjustPPForSeriousNatureChange(mon, oldNature, activeNature);
     u32 removedMoves = RemoveMovesRefusedByNature(mon);
@@ -3481,6 +3527,11 @@ u32 ApplyMintedNature(struct Pokemon *mon, u32 nature)
     SanitizeBoxMonHeldItemForNature(&mon->box);
     CalculateMonStats(mon);
     return removedMoves;
+}
+
+u32 ApplyMintedNature(struct Pokemon *mon, u32 nature)
+{
+    return ApplyMintedNatureAtIndex(mon, 0, nature);
 }
 
 bool32 RerollMercurialNature(struct Pokemon *mon)
@@ -3505,8 +3556,27 @@ bool32 RerollMercurialNature(struct Pokemon *mon)
     if (!isMercurial)
         return FALSE;
 
-    u32 newNature = RollMercurialNature(oldNature);
-    SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
+    u32 newNature = oldNature;
+    bool32 foundCompatible = FALSE;
+
+    for (u32 attempt = 0; attempt < 256 && !foundCompatible; attempt++)
+    {
+        newNature = RollMercurialNature(oldNature);
+        foundCompatible = TRUE;
+        for (u32 i = 1; i < GetPokemonNatureCount(mon); i++)
+        {
+            u32 existingNature;
+
+            GetPokemonNatureAtIndex(mon, i, &existingNature);
+            if (!AreNaturesCompatible(existingNature, newNature))
+            {
+                foundCompatible = FALSE;
+                break;
+            }
+        }
+    }
+    if (!foundCompatible || !SetBoxPokemonNatureAtIndex(&mon->box, 0, newNature))
+        return FALSE;
     AdjustPPForSeriousNatureChange(mon, oldNature, newNature);
     RemoveMovesRefusedByNature(mon);
     SanitizeBoxMonMovesForNature(&mon->box);
@@ -3524,7 +3594,7 @@ bool32 TrySwapEccentricPokeBall(struct Pokemon *mon)
     enum Item newBallItem;
     u32 availableCount = 0;
 
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) != NATURE_ECCENTRIC
+    if (!PokemonHasNature(mon, NATURE_ECCENTRIC)
      || GetMonData(mon, MON_DATA_SANITY_IS_EGG)
      || GetMonData(mon, MON_DATA_SPECIES) == SPECIES_NONE)
         return FALSE;
@@ -3574,7 +3644,7 @@ enum Move MonTryLearningNewMove(struct Pokemon *mon, bool8 firstMove)
 
     // --- Custom Archetype nature: Prodigious ---
     // Learns moves 1 level early.
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
+    if (PokemonHasNature(mon, NATURE_PRODIGIOUS))
         level += 1;
 
     return MonTryLearningNewMoveAtLevel(mon, firstMove, level);
@@ -4350,6 +4420,19 @@ u32 GetBoxMonData3(struct BoxPokemon *boxMon, s32 field, u8 *data)
                 }.combinedValue;
             }
             break;
+        case MON_DATA_NATURE_COUNT:
+            retVal = GetSubstruct1(boxMon)->additionalNatureCountMinusOne;
+            retVal = retVal < MAX_SAVED_MON_NATURES ? retVal + 1 : 1;
+            break;
+        case MON_DATA_ADDITIONAL_NATURE1:
+            retVal = GetSubstruct0(boxMon)->additionalNature1Low
+                   | (GetSubstruct0(boxMon)->additionalNature1High << 6);
+            break;
+        case MON_DATA_ADDITIONAL_NATURE2:
+            retVal = GetSubstruct0(boxMon)->additionalNature2Low
+                   | (GetSubstruct0(boxMon)->additionalNature2Mid << 2)
+                   | (GetSubstruct1(boxMon)->additionalNature2High << 4);
+            break;
         default:
             break;
         }
@@ -4785,6 +4868,32 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
             substruct1->evolutionTracker2 = evoTracker.tracker2;
             break;
         }
+        case MON_DATA_NATURE_COUNT:
+        {
+            u32 count;
+            SET8(count);
+            GetSubstruct1(boxMon)->additionalNatureCountMinusOne = count >= 1 && count <= MAX_SAVED_MON_NATURES
+                                                                  ? count - 1
+                                                                  : 0;
+            break;
+        }
+        case MON_DATA_ADDITIONAL_NATURE1:
+        {
+            u32 nature;
+            SET8(nature);
+            GetSubstruct0(boxMon)->additionalNature1Low = nature & 0x3F;
+            GetSubstruct0(boxMon)->additionalNature1High = (nature >> 6) & 1;
+            break;
+        }
+        case MON_DATA_ADDITIONAL_NATURE2:
+        {
+            u32 nature;
+            SET8(nature);
+            GetSubstruct0(boxMon)->additionalNature2Low = nature & 3;
+            GetSubstruct0(boxMon)->additionalNature2Mid = (nature >> 2) & 3;
+            GetSubstruct1(boxMon)->additionalNature2High = (nature >> 4) & 7;
+            break;
+        }
         default:
             break;
         }
@@ -4866,6 +4975,215 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
 void CopyMon(void *dest, void *src, size_t size)
 {
     memcpy(dest, src, size);
+}
+
+static u32 GetStoredBoxPokemonNatureCount(struct BoxPokemon *boxMon)
+{
+    return GetBoxMonData(boxMon, MON_DATA_NATURE_COUNT);
+}
+
+static bool32 GetStoredBoxPokemonNatureAtIndex(struct BoxPokemon *boxMon, u32 index, u32 *nature)
+{
+    if (nature == NULL || index >= GetStoredBoxPokemonNatureCount(boxMon))
+        return FALSE;
+
+    switch (index)
+    {
+    case 0:
+        *nature = GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE);
+        return TRUE;
+    case 1:
+        *nature = GetBoxMonData(boxMon, MON_DATA_ADDITIONAL_NATURE1);
+        return *nature < NUM_NATURES;
+    case 2:
+        *nature = GetBoxMonData(boxMon, MON_DATA_ADDITIONAL_NATURE2);
+        return *nature < NUM_NATURES;
+    default:
+        return FALSE;
+    }
+}
+
+u32 GetBoxPokemonNatureCount(struct BoxPokemon *boxMon)
+{
+    if (gSaveBlock2Ptr == NULL
+     || gSaveBlock2Ptr->optionsMultipleNatures == OPTIONS_NATURE_MODE_SINGLE)
+        return 1;
+    return GetStoredBoxPokemonNatureCount(boxMon);
+}
+
+bool32 GetBoxPokemonNatureAtIndex(struct BoxPokemon *boxMon, u32 index, u32 *nature)
+{
+    if (index >= GetBoxPokemonNatureCount(boxMon))
+        return FALSE;
+    return GetStoredBoxPokemonNatureAtIndex(boxMon, index, nature);
+}
+
+bool32 BoxPokemonHasNature(struct BoxPokemon *boxMon, u32 nature)
+{
+    u32 storedNature;
+
+    if (nature >= NUM_NATURES)
+        return FALSE;
+    for (u32 i = 0; i < GetBoxPokemonNatureCount(boxMon); i++)
+        if (GetBoxPokemonNatureAtIndex(boxMon, i, &storedNature) && storedNature == nature)
+            return TRUE;
+    return FALSE;
+}
+
+bool32 SetBoxPokemonNatureCount(struct BoxPokemon *boxMon, u32 count)
+{
+    u32 zero = 0;
+
+    if (count < 1 || count > MAX_SAVED_MON_NATURES)
+        return FALSE;
+    SetBoxMonData(boxMon, MON_DATA_NATURE_COUNT, &count);
+    if (count < 3)
+        SetBoxMonData(boxMon, MON_DATA_ADDITIONAL_NATURE2, &zero);
+    if (count < 2)
+        SetBoxMonData(boxMon, MON_DATA_ADDITIONAL_NATURE1, &zero);
+    return TRUE;
+}
+
+bool32 SetBoxPokemonNatureAtIndex(struct BoxPokemon *boxMon, u32 index, u32 nature)
+{
+    u32 existingNature;
+    u32 count;
+
+    if (index >= MAX_SAVED_MON_NATURES || nature >= NUM_NATURES)
+        return FALSE;
+    count = GetStoredBoxPokemonNatureCount(boxMon);
+    // Append contiguously. Do not create an active third slot while the
+    // second slot is still absent.
+    if (index > count)
+        return FALSE;
+    for (u32 i = 0; i < count; i++)
+        if (i != index
+         && GetStoredBoxPokemonNatureAtIndex(boxMon, i, &existingNature)
+         && existingNature == nature)
+            return FALSE;
+
+    switch (index)
+    {
+    case 0:
+        SetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE, &nature);
+        break;
+    case 1:
+        SetBoxMonData(boxMon, MON_DATA_ADDITIONAL_NATURE1, &nature);
+        break;
+    case 2:
+        SetBoxMonData(boxMon, MON_DATA_ADDITIONAL_NATURE2, &nature);
+        break;
+    }
+
+    if (count <= index)
+        SetBoxPokemonNatureCount(boxMon, index + 1);
+    return TRUE;
+}
+
+static bool32 IsExplicitlyContradictoryNaturePair(u32 firstNature, u32 secondNature)
+{
+    static const u8 pairs[][2] =
+    {
+        {NATURE_AFFABLE, NATURE_CANTANKEROUS},
+        {NATURE_AMBITIOUS, NATURE_APATHETIC},
+        {NATURE_ARROGANT, NATURE_HUMBLE},
+        {NATURE_BENEVOLENT, NATURE_CALLOUS},
+        {NATURE_BITTER, NATURE_FORGIVING},
+        {NATURE_BOLD, NATURE_TIMID},
+        {NATURE_BRAVE, NATURE_COWARDLY},
+        {NATURE_COMMUNAL, NATURE_TERRITORIAL},
+        {NATURE_DELICATE, NATURE_RUGGED},
+        {NATURE_DIPLOMATIC, NATURE_PUGNACIOUS},
+        {NATURE_FASTIDIOUS, NATURE_FRIVOLOUS},
+        {NATURE_FORGIVING, NATURE_UNFORGIVING},
+        {NATURE_FRUGAL, NATURE_GREEDY},
+        {NATURE_GENTLE, NATURE_RASH},
+        {NATURE_HEDONISTIC, NATURE_STOIC},
+        {NATURE_CALM, NATURE_CANTANKEROUS},
+        {NATURE_LAZY, NATURE_ENERGETIC},
+        {NATURE_LOYAL, NATURE_REBELLIOUS},
+        {NATURE_NAIVE, NATURE_CALCULATING},
+        {NATURE_NOBLE, NATURE_UNDERHANDED},
+        {NATURE_OLD_FASHIONED, NATURE_YOUTHFUL},
+        {NATURE_SOFT_HEARTED, NATURE_CALLOUS},
+        {NATURE_INNOCENT, NATURE_CYNICAL},
+        {NATURE_IDEALISTIC, NATURE_CYNICAL},
+    };
+
+    for (u32 i = 0; i < ARRAY_COUNT(pairs); i++)
+        if ((firstNature == pairs[i][0] && secondNature == pairs[i][1])
+         || (firstNature == pairs[i][1] && secondNature == pairs[i][0]))
+            return TRUE;
+    return FALSE;
+}
+
+bool32 AreNaturesCompatible(u32 firstNature, u32 secondNature)
+{
+    if (firstNature >= NUM_NATURES || secondNature >= NUM_NATURES || firstNature == secondNature)
+        return FALSE;
+    if (IsExplicitlyContradictoryNaturePair(firstNature, secondNature))
+        return FALSE;
+    // Mechanical opposites remain legal and intentionally cancel (for
+    // example Adamant + Modest). Compatibility is about contradictory
+    // characterization, not optimization.
+    return TRUE;
+}
+
+u32 GetNatureEffectScalePercent(u32 nature, bool32 multipleMode)
+{
+    u32 scale;
+
+    if (nature >= NUM_NATURES)
+        return 100;
+    scale = multipleMode ? gNaturesInfo[nature].multipleNatureEffectPercent
+                         : gNaturesInfo[nature].singleNatureEffectPercent;
+    if (scale != 0)
+        return scale;
+    // In multi-Nature mode, the original 25 stat Natures use +10%/-10%
+    // rather than +15%/-15%. Custom Natures remain at full strength unless
+    // their data explicitly supplies a different multi-Nature value.
+    if (multipleMode && nature < NUM_PERSONALITY_NATURES)
+        return 67;
+    return 100;
+}
+
+void GenerateBoxPokemonAdditionalNatures(struct BoxPokemon *boxMon)
+{
+    u32 desiredCount;
+    u32 candidate;
+    u32 existing;
+
+    if (gSaveBlock2Ptr == NULL
+     || gSaveBlock2Ptr->optionsMultipleNatures != OPTIONS_NATURE_MODE_MULTIPLE
+     || GetBoxMonData(boxMon, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE)
+        return;
+    if (GetBoxMonData(boxMon, MON_DATA_NATURE_COUNT) > 1)
+        return;
+
+    desiredCount = 2 + RandomUniform(RNG_MINT, 0, 1);
+    for (u32 index = 1; index < desiredCount; index++)
+    {
+        bool32 found = FALSE;
+
+        for (u32 attempt = 0; attempt < 256 && !found; attempt++)
+        {
+            candidate = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
+            if (!IsNatureNaturallyGenerated(candidate) || candidate == NATURE_CAPRICIOUS)
+                continue;
+            found = TRUE;
+            for (u32 previous = 0; previous < index; previous++)
+            {
+                GetBoxPokemonNatureAtIndex(boxMon, previous, &existing);
+                if (!AreNaturesCompatible(existing, candidate))
+                {
+                    found = FALSE;
+                    break;
+                }
+            }
+        }
+        if (!found || !SetBoxPokemonNatureAtIndex(boxMon, index, candidate))
+            break;
+    }
 }
 
 u8 GiveCapturedMonToPlayer(struct Pokemon *mon)
@@ -5345,9 +5663,9 @@ u8 CalculatePPWithBonus(enum Move move, u8 ppBonuses, u8 moveIndex)
 u8 CalculatePPWithBonusForMon(struct Pokemon *mon, enum Move move, u8 ppBonuses, u8 moveIndex)
 {
     u8 maxPP = CalculatePPWithBonus(move, ppBonuses, moveIndex);
-    u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
 
-    if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && moveIndex == 3))
+    if (PokemonHasNature(mon, NATURE_SERIOUS)
+     || (PokemonHasNature(mon, NATURE_TACTICAL) && moveIndex == 3))
         maxPP += 1;
     return maxPP;
 }
@@ -5399,7 +5717,6 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
     enum Type types[2];
     enum Move moves[MAX_MON_MOVES];
     enum Ability ability;
-    u32 nature;
     u32 boost = 0;
 
     if (party == NULL || monIndex >= partyCount)
@@ -5413,8 +5730,6 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
     types[0] = GetSpeciesType(species, 0);
     types[1] = GetSpeciesType(species, 1);
     ability = GetMonAbility(mon);
-    nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
-
     for (u32 i = 0; i < MAX_MON_MOVES; i++)
         moves[i] = GetMonData(mon, MON_DATA_MOVE1 + i);
 
@@ -5499,8 +5814,14 @@ u32 GetCommunalBoostPercent(struct Pokemon *party, u32 partyCount, u32 monIndex)
         if (ability != ABILITY_NONE && ability == GetMonAbility(&party[i]))
             boost++;
 
-        if (nature == GetMonData(&party[i], MON_DATA_HIDDEN_NATURE))
-            boost++;
+        for (u32 natureIndex = 0; natureIndex < GetPokemonNatureCount(mon); natureIndex++)
+        {
+            u32 nature;
+
+            if (GetPokemonNatureAtIndex(mon, natureIndex, &nature)
+             && PokemonHasNature(&party[i], nature))
+                boost++;
+        }
     }
 
     // Each shared trait contributes 2%, capped at 8%.
@@ -5525,7 +5846,7 @@ u32 GetSupportiveBoostPercent(struct Pokemon *party, u32 partyCount, u32 monInde
     {
         if (i == monIndex || !IsUsablePartyMonForNatureBoost(&party[i]))
             continue;
-        if (GetMonData(&party[i], MON_DATA_HIDDEN_NATURE) == NATURE_SUPPORTIVE)
+        if (PokemonHasNature(&party[i], NATURE_SUPPORTIVE))
             supportiveCount++;
     }
 
@@ -5631,13 +5952,11 @@ void PokemonToBattleMon(struct Pokemon *src, struct BattlePokemon *dst)
 void CopyPartyMonToBattleData(enum BattlerId battler, u32 partyIndex)
 {
     struct Pokemon *party = GetBattlerParty(battler);
-    u32 nature;
     u32 boostPercent = 0;
     u32 supportiveBoostPercent;
 
     PokemonToBattleMon(&party[partyIndex], &gBattleMons[battler]);
-    nature = GetMonData(&party[partyIndex], MON_DATA_HIDDEN_NATURE);
-    if (nature == NATURE_COMMUNAL)
+    if (PokemonHasNature(&party[partyIndex], NATURE_COMMUNAL))
         boostPercent = GetCommunalBoostPercent(party, PARTY_SIZE, partyIndex);
 
     if (boostPercent != 0)
@@ -5680,7 +5999,7 @@ s32 ApplyHealingNatureBoostsOverworld(struct Pokemon *mon, s32 healAmount)
         enum Species species = GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES_OR_EGG);
 
         if (species != SPECIES_NONE && species != SPECIES_EGG
-         && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_BENEVOLENT)
+         && PokemonHasNature(&gParties[B_TRAINER_PLAYER][i], NATURE_BENEVOLENT))
         {
             healAmount = healAmount * 120 / 100;
             break;
@@ -5688,7 +6007,7 @@ s32 ApplyHealingNatureBoostsOverworld(struct Pokemon *mon, s32 healAmount)
     }
 
     // --- Custom Archetype nature: Delicate ---
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_DELICATE)
+    if (PokemonHasNature(mon, NATURE_DELICATE))
         healAmount = healAmount * 130 / 100;
 
     return healAmount;
@@ -6796,11 +7115,9 @@ bool32 DoesMonMeetAdditionalConditions(struct Pokemon *mon, const struct Evoluti
 // so both stay consistent with each other).
 static u32 GetEffectiveLevelForEvolution(struct Pokemon *mon, u32 level)
 {
-    u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
-
-    if (nature == NATURE_CALLOW)
+    if (PokemonHasNature(mon, NATURE_CALLOW))
         return (level > 3) ? level - 3 : 0;
-    if (nature == NATURE_PRODIGIOUS)
+    if (PokemonHasNature(mon, NATURE_PRODIGIOUS))
         return level + 1;
     return level;
 }
@@ -7037,7 +7354,7 @@ bool32 IsYouthfulNatureActive(struct Pokemon *mon)
     u32 lowestEvolutionLevel = MAX_LEVEL + 1;
     const struct Evolution *evolutions = GetSpeciesEvolutions(species);
 
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) != NATURE_YOUTHFUL || evolutions == NULL)
+    if (!PokemonHasNature(mon, NATURE_YOUTHFUL) || evolutions == NULL)
         return FALSE;
 
     for (u32 i = 0; evolutions[i].method != EVOLUTIONS_END; i++)
@@ -7604,7 +7921,7 @@ void AdjustFriendship(struct Pokemon *mon, u8 event)
 
         mod = sFriendshipEventModifiers[event][friendshipLevel];
         s32 friendshipGain = CalculateFriendshipBonuses(mon, mod, holdEffect);
-        if (friendshipGain > 0 && GetNature(mon) == NATURE_ADORABLE)
+        if (friendshipGain > 0 && PokemonHasNature(mon, NATURE_ADORABLE))
             friendshipGain = max(1, (friendshipGain * 3 + 1) / 2);
         friendship += friendshipGain;
 
@@ -8096,8 +8413,11 @@ const u16 *GetMonFrontSpritePal(struct Pokemon *mon)
     bool32 isShiny = GetMonData(mon, MON_DATA_IS_SHINY);
     u32 personality = GetMonData(mon, MON_DATA_PERSONALITY);
     bool32 isEgg = GetMonData(mon, MON_DATA_IS_EGG);
+    u32 paletteNature = PokemonHasNature(mon, NATURE_VIBRANT)
+                      ? NATURE_VIBRANT
+                      : GetMonData(mon, MON_DATA_HIDDEN_NATURE);
     return GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(species, isShiny, personality,
-                                                               GetMonData(mon, MON_DATA_HIDDEN_NATURE), isEgg);
+                                                               paletteNature, isEgg);
 }
 
 const u16 *GetMonSpritePalFromSpeciesAndPersonality(enum Species species, bool32 isShiny, u32 personality)
@@ -8223,8 +8543,6 @@ void MonRestorePP(struct Pokemon *mon)
 void BoxMonRestorePP(struct BoxPokemon *boxMon)
 {
     int i;
-    u32 nature = GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE, 0);
-
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         if (GetBoxMonData(boxMon, MON_DATA_MOVE1 + i, 0))
@@ -8233,7 +8551,8 @@ void BoxMonRestorePP(struct BoxPokemon *boxMon)
             u16 bonus = GetBoxMonData(boxMon, MON_DATA_PP_BONUSES, 0);
             u8 pp = CalculatePPWithBonus(move, bonus, i);
             // --- Custom Archetype natures: Serious & Methodical ---
-            if (nature == NATURE_SERIOUS || (nature == NATURE_TACTICAL && i == 3))
+            if (BoxPokemonHasNature(boxMon, NATURE_SERIOUS)
+             || (BoxPokemonHasNature(boxMon, NATURE_TACTICAL) && i == 3))
                 pp += 1;
             SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp);
         }
@@ -8288,7 +8607,7 @@ bool32 PlayerPartyHasNature(u32 nature)
     {
         if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) != SPECIES_NONE
          && !GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG)
-         && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == nature)
+         && PokemonHasNature(&gParties[B_TRAINER_PLAYER][i], nature))
             return TRUE;
     }
 
@@ -8303,7 +8622,7 @@ static u32 CountPlayerPartyMonsWithNature(u32 nature)
     {
         if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES) != SPECIES_NONE
          && !GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_IS_EGG)
-         && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == nature)
+         && PokemonHasNature(&gParties[B_TRAINER_PLAYER][i], nature))
             count++;
     }
 

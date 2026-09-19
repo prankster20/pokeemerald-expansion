@@ -2370,7 +2370,7 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             }
             else if (HasMoreThanOneMove() == TRUE)
             {
-                if (sMonSummaryScreen->summary.mintNature == NATURE_NOSTALGIC
+                if (BoxPokemonHasNature(GetCurrentBoxmon(), NATURE_NOSTALGIC)
                  && sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
                 {
                     PlaySE(SE_FAILURE);
@@ -3933,7 +3933,8 @@ static void BufferStat(u8 *dst, enum Stat statIndex, u32 stat, u32 strId, u32 n)
     static const u8 sTextNatureNeutral[] = _("{COLOR}{01}");
     u8 *txtPtr;
 
-    if (statIndex != 0 && P_SUMMARY_SCREEN_NATURE_COLORS && sMonSummaryScreen->summary.mintNature == NATURE_PROUD)
+    if (statIndex != 0 && P_SUMMARY_SCREEN_NATURE_COLORS
+     && BoxPokemonHasNature(GetCurrentBoxmon(), NATURE_PROUD))
     {
         enum Stat highStat, lowStat;
         GetProudHighLowStats(&highStat, &lowStat);
@@ -4165,8 +4166,8 @@ static void PrintMoveNameAndPP(u8 moveIndex)
     {
         pp = CalculatePPWithBonus(move, summary->ppBonuses, moveIndex);
         // --- Custom Archetype natures: Serious & Methodical ---
-        if (summary->mintNature == NATURE_SERIOUS
-                  || (summary->mintNature == NATURE_TACTICAL && moveIndex == 3))
+        if (BoxPokemonHasNature(GetCurrentBoxmon(), NATURE_SERIOUS)
+         || (BoxPokemonHasNature(GetCurrentBoxmon(), NATURE_TACTICAL) && moveIndex == 3))
             pp += 1;
         PrintTextOnWindowToFit(moveNameWindowId, GetMoveName(move), 0, moveIndex * 16 + 1, 0, 1);
         ConvertIntToDecimalStringN(gStringVar1, summary->pp[moveIndex], STR_CONV_MODE_RIGHT_ALIGN, 2);

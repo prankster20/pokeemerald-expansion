@@ -31,6 +31,119 @@ TEST("Nature independent from Hidden Nature")
     EXPECT_EQ(GetMonData(&mon, MON_DATA_HIDDEN_NATURE), hiddenNature);
 }
 
+TEST("Additional Natures persist in the existing BoxPokemon layout")
+{
+    struct Pokemon mon;
+    struct Pokemon restored;
+    u32 nature;
+    u32 oldMode = gSaveBlock2Ptr->optionsMultipleNatures;
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_SINGLE;
+    CreateMon(&mon, SPECIES_WOBBUFFET, 25, USE_RANDOM_PERSONALITY, OTID_STRUCT_PLAYER_ID);
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_MULTIPLE;
+    nature = NATURE_ADAMANT;
+    SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
+
+    EXPECT_EQ(GetPokemonNatureCount(&mon), 1);
+    EXPECT(SetBoxPokemonNatureAtIndex(&mon.box, 1, NATURE_MODEST));
+    EXPECT(SetBoxPokemonNatureAtIndex(&mon.box, 2, NATURE_JOLLY));
+    EXPECT_EQ(GetPokemonNatureCount(&mon), 3);
+    EXPECT(PokemonHasNature(&mon, NATURE_ADAMANT));
+    EXPECT(PokemonHasNature(&mon, NATURE_MODEST));
+    EXPECT(PokemonHasNature(&mon, NATURE_JOLLY));
+
+    BoxMonToMon(&mon.box, &restored);
+    EXPECT_EQ(GetPokemonNatureCount(&restored), 3);
+    EXPECT(PokemonHasNature(&restored, NATURE_ADAMANT));
+    EXPECT(PokemonHasNature(&restored, NATURE_MODEST));
+    EXPECT(PokemonHasNature(&restored, NATURE_JOLLY));
+    gSaveBlock2Ptr->optionsMultipleNatures = oldMode;
+}
+
+TEST("Additional Nature slots reject gaps and duplicates")
+{
+    struct Pokemon mon;
+    u32 oldMode = gSaveBlock2Ptr->optionsMultipleNatures;
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_SINGLE;
+    CreateMon(&mon, SPECIES_WOBBUFFET, 25, USE_RANDOM_PERSONALITY, OTID_STRUCT_PLAYER_ID);
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_MULTIPLE;
+    EXPECT(!SetBoxPokemonNatureAtIndex(&mon.box, 2, NATURE_JOLLY));
+    EXPECT(SetBoxPokemonNatureAtIndex(&mon.box, 1, NATURE_MODEST));
+    EXPECT(!SetBoxPokemonNatureAtIndex(&mon.box, 2, NATURE_MODEST));
+    EXPECT_EQ(GetPokemonNatureCount(&mon), 2);
+    gSaveBlock2Ptr->optionsMultipleNatures = oldMode;
+}
+
+TEST("Multiple Nature stat modifiers combine additively")
+{
+    struct Pokemon mon;
+    u32 nature = NATURE_ADAMANT;
+    u32 oldMode = gSaveBlock2Ptr->optionsMultipleNatures;
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_SINGLE;
+    CreateMon(&mon, SPECIES_WOBBUFFET, 25, USE_RANDOM_PERSONALITY, OTID_STRUCT_PLAYER_ID);
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_MULTIPLE;
+    SetMonData(&mon, MON_DATA_HIDDEN_NATURE, &nature);
+    EXPECT(SetBoxPokemonNatureAtIndex(&mon.box, 1, NATURE_MODEST));
+
+    EXPECT_EQ(GetPokemonNatureStatModifierPercent(&mon, STAT_ATK, 0), 0);
+    EXPECT_EQ(GetPokemonNatureStatModifierPercent(&mon, STAT_SPATK, 0), 0);
+    gSaveBlock2Ptr->optionsMultipleNatures = oldMode;
+}
+
+TEST("Multi-Nature generation creates two or three compatible unique Natures")
+{
+    struct Pokemon mon;
+    u32 oldMode = gSaveBlock2Ptr->optionsMultipleNatures;
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_MULTIPLE;
+    CreateMon(&mon, SPECIES_WOBBUFFET, 25, USE_RANDOM_PERSONALITY, OTID_STRUCT_PLAYER_ID);
+
+    EXPECT(GetPokemonNatureCount(&mon) >= 2);
+    EXPECT(GetPokemonNatureCount(&mon) <= MAX_SAVED_MON_NATURES);
+    for (u32 i = 0; i < GetPokemonNatureCount(&mon); i++)
+    {
+        u32 first;
+        GetPokemonNatureAtIndex(&mon, i, &first);
+        for (u32 j = i + 1; j < GetPokemonNatureCount(&mon); j++)
+        {
+            u32 second;
+            GetPokemonNatureAtIndex(&mon, j, &second);
+            EXPECT(AreNaturesCompatible(first, second));
+        }
+    }
+    gSaveBlock2Ptr->optionsMultipleNatures = oldMode;
+}
+
+TEST("Mechanical opposite Natures are compatible and cancel")
+{
+    EXPECT(AreNaturesCompatible(NATURE_ADAMANT, NATURE_MODEST));
+    EXPECT(!AreNaturesCompatible(NATURE_ARROGANT, NATURE_HUMBLE));
+    EXPECT(!AreNaturesCompatible(NATURE_ADAMANT, NATURE_ADAMANT));
+}
+
+TEST("Single Nature mode temporarily hides but does not erase additional slots")
+{
+    struct Pokemon mon;
+    u32 oldMode = gSaveBlock2Ptr->optionsMultipleNatures;
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_SINGLE;
+    CreateMon(&mon, SPECIES_WOBBUFFET, 25, USE_RANDOM_PERSONALITY, OTID_STRUCT_PLAYER_ID);
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_MULTIPLE;
+    EXPECT(SetBoxPokemonNatureAtIndex(&mon.box, 1, NATURE_MODEST));
+    EXPECT_EQ(GetPokemonNatureCount(&mon), 2);
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_SINGLE;
+    EXPECT_EQ(GetPokemonNatureCount(&mon), 1);
+    EXPECT(!PokemonHasNature(&mon, NATURE_MODEST));
+
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_MULTIPLE;
+    EXPECT_EQ(GetPokemonNatureCount(&mon), 2);
+    EXPECT(PokemonHasNature(&mon, NATURE_MODEST));
+    gSaveBlock2Ptr->optionsMultipleNatures = oldMode;
+}
+
 TEST("Hidden Power type uses all five digits of the Persona code")
 {
     EXPECT(GetPersonaHiddenPowerType(19295) != GetPersonaHiddenPowerType(29295));

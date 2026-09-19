@@ -7040,7 +7040,9 @@ static void SetDisplayMonData(void *pokemon, u8 mode)
             sStorage->displayMonPalette = GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(sStorage->displayMonSpecies,
                                                                                               isShiny,
                                                                                               sStorage->displayMonPersonality,
-                                                                                              GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE),
+                                                                                              BoxPokemonHasNature(boxMon, NATURE_VIBRANT)
+                                                                                                  ? NATURE_VIBRANT
+                                                                                                  : GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE),
                                                                                               sStorage->displayMonIsEgg);
             gender = GetGenderFromSpeciesAndPersonality(sStorage->displayMonSpecies, sStorage->displayMonPersonality);
             sStorage->displayMonItemId = GetBoxMonData(boxMon, MON_DATA_HELD_ITEM);
@@ -10106,7 +10108,9 @@ void UpdateSpeciesSpritePSS(struct BoxPokemon *boxMon)
     sStorage->displayMonPalette = GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(species,
                                                                                       isShiny,
                                                                                       pid,
-                                                                                      GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE),
+                                                                                      BoxPokemonHasNature(boxMon, NATURE_VIBRANT)
+                                                                                          ? NATURE_VIBRANT
+                                                                                          : GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE),
                                                                                       isEgg);
     sStorage->displayMonIsEgg = isEgg;
     if (!sJustOpenedBag)

@@ -21,6 +21,7 @@
 
 #define GET_BASE_SPECIES_ID(speciesId) (GetFormSpeciesId(speciesId, 0))
 #define FORM_SPECIES_END (0xffff)
+#define MAX_SAVED_MON_NATURES 3
 
 // Property labels for Get(Box)MonData / Set(Box)MonData
 enum MonData {
@@ -126,6 +127,9 @@ enum MonData {
     MON_DATA_GIGANTAMAX_FACTOR,
     MON_DATA_TERA_TYPE,
     MON_DATA_EVOLUTION_TRACKER,
+    MON_DATA_NATURE_COUNT,
+    MON_DATA_ADDITIONAL_NATURE1,
+    MON_DATA_ADDITIONAL_NATURE2,
 };
 
 struct PokemonSubstruct0
@@ -133,15 +137,20 @@ struct PokemonSubstruct0
     u16 species:11; // 2047 species.
     enum Type teraType:5; // 30 types.
     u16 heldItem:10; // 1023 items.
-    u16 unused_02:6;
+    // Persistent multi-Nature storage. These fragments are deliberately kept
+    // in the exact bit positions previously occupied by unused fields so the
+    // 12-byte encrypted substruct and 80-byte BoxPokemon layouts do not move.
+    // They remain inert until the multi-Nature accessors are introduced.
+    u16 additionalNature1Low:6;
     u32 experience:21;
     u32 nickname11:8; // 11th character of nickname.
-    u32 unused_04:3;
+    u32 additionalNature1High:1;
+    u32 additionalNature2Low:2;
     u8 ppBonuses;
     u8 friendship;
     u16 pokeball:6; // 63 balls.
     u16 nickname12:8; // 12th character of nickname.
-    u16 unused_0A:2;
+    u16 additionalNature2Mid:2;
 };
 
 struct PokemonSubstruct1
@@ -151,7 +160,11 @@ struct PokemonSubstruct1
     enum Move move2:11; // 2047 moves.
     u16 evolutionTracker2:5;
     enum Move move3:11; // 2047 moves.
-    u16 unused_04:5;
+    u16 additionalNature2High:3;
+    // Stored as zero for one Nature, one for two, and two for three. Keeping
+    // zero as the single-Nature representation makes existing zero-filled
+    // Pokemon records naturally backward compatible.
+    u16 additionalNatureCountMinusOne:2;
     enum Move move4:11; // 2047 moves.
     u16 unused_06:3;
     u16 hyperTrainedHP:1;
@@ -611,6 +624,10 @@ struct NatureInfo
     const u8 *natureGirlMessage;
     const u8 *description;
     u32 semanticGroups;
+    // Zero means 100%. These per-Nature hooks allow multi-Nature mode to
+    // rebalance percentage effects without changing single-Nature mode.
+    u8 singleNatureEffectPercent;
+    u8 multipleNatureEffectPercent;
 };
 
 // Broad integration surfaces used to audit Nature interactions. A Nature may
@@ -809,6 +826,7 @@ void TryFastidiousCleanPartyStatusAfterBattle(void);
 void TryPugnaciousPartySparring(void);
 void ApplyWayfaringStepRecovery(void);
 u32 ApplyMintedNature(struct Pokemon *mon, u32 nature);
+u32 ApplyMintedNatureAtIndex(struct Pokemon *mon, u32 index, u32 nature);
 void ApplyInnocentFriendshipRule(struct Pokemon *mon);
 bool32 IsNatureExcludedFromRandomAcquisition(u32 nature);
 bool32 IsNatureDefined(u32 nature);
@@ -848,6 +866,17 @@ u32 GetBoxMonData2(struct BoxPokemon *boxMon, s32 field);
 
 void SetMonData(struct Pokemon *mon, s32 field, const void *dataArg);
 void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg);
+u32 GetBoxPokemonNatureCount(struct BoxPokemon *boxMon);
+bool32 GetBoxPokemonNatureAtIndex(struct BoxPokemon *boxMon, u32 index, u32 *nature);
+bool32 BoxPokemonHasNature(struct BoxPokemon *boxMon, u32 nature);
+bool32 SetBoxPokemonNatureCount(struct BoxPokemon *boxMon, u32 count);
+bool32 SetBoxPokemonNatureAtIndex(struct BoxPokemon *boxMon, u32 index, u32 nature);
+bool32 AreNaturesCompatible(u32 firstNature, u32 secondNature);
+u32 GetNatureEffectScalePercent(u32 nature, bool32 multipleMode);
+void GenerateBoxPokemonAdditionalNatures(struct BoxPokemon *boxMon);
+u32 GetPokemonNatureCount(struct Pokemon *mon);
+bool32 GetPokemonNatureAtIndex(struct Pokemon *mon, u32 index, u32 *nature);
+bool32 PokemonHasNature(struct Pokemon *mon, u32 nature);
 void CopyMon(void *dest, void *src, size_t size);
 u8 GiveCapturedMonToPlayer(struct Pokemon *mon);
 u8 CopyMonToPC(struct Pokemon *mon);

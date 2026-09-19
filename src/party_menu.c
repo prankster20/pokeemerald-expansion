@@ -192,7 +192,7 @@ struct PartyMenuInternal
     u32 spriteIdCancelPokeball:7;
     u32 messageId:14;
     u8 windowId[3];
-    u8 actions[8];
+    u8 actions[10];
     u8 numActions;
     // In vanilla Emerald, only the first 0xB0 hwords (0x160 bytes) are actually used.
     // However, a full 0x100 hwords (0x200 bytes) are allocated.
@@ -2134,7 +2134,7 @@ static void DisplayFrugalRefusedHeldItemMessage(struct Pokemon *mon, enum Item i
 {
     GetMonNickname(mon, gStringVar1);
     CopyItemName(item, gStringVar2);
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_FASTIDIOUS)
+    if (PokemonHasNature(mon, NATURE_FASTIDIOUS))
         StringExpandPlaceholders(gStringVar4, gText_PkmnTooFastidiousForItem);
     else
         StringExpandPlaceholders(gStringVar4, gText_PkmnTooFrugalForItem);
@@ -3004,6 +3004,7 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
 {
     u8 i, j;
     u8 natureAction;
+    u32 nature;
 
     sPartyMenuInternal->numActions = 0;
     AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_SUMMARY);
@@ -3023,9 +3024,14 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
 
     // --- Custom Archetype natures: Charitable & Wayfaring ---
     // These grant overworld actions by nature, not by knowing a move.
-    natureAction = GetNaturePartyMenuAction(GetMonData(&mons[slotId], MON_DATA_HIDDEN_NATURE));
-    if (natureAction != 0xFF)
-        AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, natureAction);
+    for (i = 0; i < GetPokemonNatureCount(&mons[slotId]); i++)
+    {
+        if (!GetPokemonNatureAtIndex(&mons[slotId], i, &nature))
+            continue;
+        natureAction = GetNaturePartyMenuAction(nature);
+        if (natureAction != 0xFF)
+            AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, natureAction);
+    }
 
     if (!InBattlePike())
     {
@@ -3037,12 +3043,9 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
             AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_ITEM);
     }
     // --- Bugfix for Custom Archetype natures: Charitable & Wayfaring ---
-    // actions[] is a fixed 8-slot array (see struct PartyMenuInternal). A mon
-    // with 4 field moves already uses 6 slots here (Summary + 4 + Switch/Item),
-    // leaving none for a nature action AND Cancel. Drop Cancel rather than
-    // overflow the array - B press still cancels (see the MENU_B_PRESSED
-    // handler below, which special-cases this).
-    if (sPartyMenuInternal->numActions < 8)
+    // A mon can expose both Nature actions in multi-Nature mode. Keep enough
+    // room for four field moves, both actions, Switch, Item, and Cancel.
+    if (sPartyMenuInternal->numActions < ARRAY_COUNT(sPartyMenuInternal->actions))
         AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, MENU_CANCEL1);
 }
 
@@ -5310,6 +5313,21 @@ void ItemUseCB_AbilityPatch(u8 taskId, TaskFunc task)
 #define tOldNature  data[2]
 #define tNewNature  data[3]
 #define tOldFunc    4
+#define tNatureSlot data[5]
+
+static void ShowMintNatureSlotPrompt(u8 taskId)
+{
+    static const u8 sText_chooseSlot[] = _("Replace Nature {STR_VAR_1}: {STR_VAR_2}?\n{LEFT_ARROW}{RIGHT_ARROW} Choose  A: Confirm  B: Cancel");
+    u32 nature;
+
+    GetPokemonNatureAtIndex(&gParties[B_TRAINER_PLAYER][gTasks[taskId].data[1]],
+                            gTasks[taskId].data[5], &nature);
+    ConvertIntToDecimalStringN(gStringVar1, gTasks[taskId].data[5] + 1, STR_CONV_MODE_LEFT_ALIGN, 1);
+    StringCopy(gStringVar2, gNaturesInfo[nature].name);
+    StringExpandPlaceholders(gStringVar4, sText_chooseSlot);
+    DisplayPartyMenuMessage(gStringVar4, TRUE);
+    ScheduleBgCopyTilemapToVram(2);
+}
 
 void Task_Mint(u8 taskId)
 {
@@ -5320,9 +5338,51 @@ void Task_Mint(u8 taskId)
     switch (tState)
     {
     case 0:
+        tNatureSlot = 0;
+        if (GetPokemonNatureCount(&gParties[B_TRAINER_PLAYER][tMonId]) > 1)
+        {
+            ShowMintNatureSlotPrompt(taskId);
+            tState = 1;
+        }
+        else
+            tState = 3;
+        break;
+    case 1:
+        if (!IsPartyMenuTextPrinterActive())
+            tState = 2;
+        break;
+    case 2:
+        if (JOY_NEW(DPAD_RIGHT))
+        {
+            tNatureSlot = (tNatureSlot + 1) % GetPokemonNatureCount(&gParties[B_TRAINER_PLAYER][tMonId]);
+            ShowMintNatureSlotPrompt(taskId);
+            tState = 1;
+        }
+        else if (JOY_NEW(DPAD_LEFT))
+        {
+            tNatureSlot = (tNatureSlot + GetPokemonNatureCount(&gParties[B_TRAINER_PLAYER][tMonId]) - 1)
+                        % GetPokemonNatureCount(&gParties[B_TRAINER_PLAYER][tMonId]);
+            ShowMintNatureSlotPrompt(taskId);
+            tState = 1;
+        }
+        else if (JOY_NEW(A_BUTTON))
+        {
+            u32 oldNature;
+            GetPokemonNatureAtIndex(&gParties[B_TRAINER_PLAYER][tMonId], tNatureSlot, &oldNature);
+            tOldNature = oldNature;
+            tState = 3;
+        }
+        else if (JOY_NEW(B_BUTTON))
+        {
+            gPartyMenuUseExitCallback = FALSE;
+            gTasks[taskId].func = (void *)GetWordTaskArg(taskId, tOldFunc);
+        }
+        break;
+    case 3:
         // Can't use.
-        if (tOldNature == tNewNature
-         && !GetMonData(&gParties[B_TRAINER_PLAYER][tMonId], MON_DATA_MERCURIAL_NATURE))
+        if ((tNatureSlot > 0 && tNewNature == NATURE_CAPRICIOUS)
+         || (tOldNature == tNewNature
+          && !GetMonData(&gParties[B_TRAINER_PLAYER][tMonId], MON_DATA_MERCURIAL_NATURE)))
         {
             gPartyMenuUseExitCallback = FALSE;
             PlaySE(SE_SELECT);
@@ -5331,6 +5391,22 @@ void Task_Mint(u8 taskId)
             gTasks[taskId].func = Task_ClosePartyMenuAfterText;
             return;
         }
+        for (u32 i = 0; i < GetPokemonNatureCount(&gParties[B_TRAINER_PLAYER][tMonId]); i++)
+        {
+            u32 existing;
+            if (i == tNatureSlot)
+                continue;
+            GetPokemonNatureAtIndex(&gParties[B_TRAINER_PLAYER][tMonId], i, &existing);
+            if (!AreNaturesCompatible(existing, tNewNature))
+            {
+                gPartyMenuUseExitCallback = FALSE;
+                PlaySE(SE_FAILURE);
+                DisplayPartyMenuMessage(gText_WontHaveEffect, TRUE);
+                ScheduleBgCopyTilemapToVram(2);
+                gTasks[taskId].func = Task_ClosePartyMenuAfterText;
+                return;
+            }
+        }
         gPartyMenuUseExitCallback = TRUE;
         GetMonNickname(&gParties[B_TRAINER_PLAYER][tMonId], gStringVar1);
         CopyItemName(gSpecialVar_ItemId, gStringVar2);
@@ -5338,20 +5414,20 @@ void Task_Mint(u8 taskId)
         PlaySE(SE_SELECT);
         DisplayPartyMenuMessage(gStringVar4, 1);
         ScheduleBgCopyTilemapToVram(2);
-        tState++;
+        tState = 4;
         break;
-    case 1:
+    case 4:
         if (!IsPartyMenuTextPrinterActive())
         {
             PartyMenuDisplayYesNoMenu();
-            tState++;
+            tState = 5;
         }
         break;
-    case 2:
+    case 5:
         switch (Menu_ProcessInputNoWrapClearOnChoose())
         {
         case 0:
-            tState++;
+            tState = 6;
             break;
         case 1:
         case MENU_B_PRESSED:
@@ -5366,20 +5442,20 @@ void Task_Mint(u8 taskId)
             return;
         }
         break;
-    case 3:
+    case 6:
         PlaySE(SE_USE_ITEM);
         StringExpandPlaceholders(gStringVar4, sText_doneText);
         DisplayPartyMenuMessage(gStringVar4, 1);
         ScheduleBgCopyTilemapToVram(2);
-        tState++;
+        tState = 7;
         break;
-    case 4:
+    case 7:
         if (!IsPartyMenuTextPrinterActive())
-            tState++;
+            tState = 8;
         break;
-    case 5:
+    case 8:
         {
-            u32 removedMoves = ApplyMintedNature(&gParties[B_TRAINER_PLAYER][tMonId], tNewNature);
+            u32 removedMoves = ApplyMintedNatureAtIndex(&gParties[B_TRAINER_PLAYER][tMonId], tNatureSlot, tNewNature);
             RemoveBagItem(gSpecialVar_ItemId, 1);
             if (removedMoves != 0)
             {
@@ -5387,7 +5463,7 @@ void Task_Mint(u8 taskId)
                 StringExpandPlaceholders(gStringVar4, gText_MonForgotMovesForNewNature);
                 DisplayPartyMenuMessage(gStringVar4, 1);
                 ScheduleBgCopyTilemapToVram(2);
-                tState++;
+                tState = 9;
             }
             else
             {
@@ -5395,7 +5471,7 @@ void Task_Mint(u8 taskId)
             }
         }
         break;
-    case 6:
+    case 9:
         if (!IsPartyMenuTextPrinterActive())
             gTasks[taskId].func = Task_ClosePartyMenu;
         break;
@@ -5569,6 +5645,60 @@ void ItemUseCB_RandomMint(u8 taskId, TaskFunc task)
     tNewNature = RandomUniformExcept(RNG_MINT, 0, NUM_NATURES - 1, IsExcludedMintNature);
     SetWordTaskArg(taskId, tOldFunc, (uintptr_t)(gTasks[taskId].func));
     gTasks[taskId].func = Task_Mint;
+}
+
+static const u8 sText_AdditionalNatureAwakened[] =
+    _("{STR_VAR_1}'s {STR_VAR_2} Nature\nawakened!{PAUSE_UNTIL_PRESS}");
+
+void ItemUseCB_NatureExpansionMint(u8 taskId, TaskFunc task)
+{
+    struct Pokemon *mon = &gParties[B_TRAINER_PLAYER][gPartyMenu.slotId];
+    u32 count = GetPokemonNatureCount(mon);
+    u32 candidate = NUM_NATURES;
+
+    if (gSaveBlock2Ptr->optionsMultipleNatures != OPTIONS_NATURE_MODE_MULTIPLE
+     || count >= MAX_SAVED_MON_NATURES)
+    {
+        PlaySE(SE_FAILURE);
+        DisplayPartyMenuMessage(gText_WontHaveEffect, TRUE);
+        ScheduleBgCopyTilemapToVram(2);
+        gTasks[taskId].func = task;
+        return;
+    }
+
+    for (u32 attempt = 0; attempt < 256 && candidate == NUM_NATURES; attempt++)
+    {
+        u32 rolled = RandomUniform(RNG_MINT, 0, NUM_NATURES - 1);
+        bool32 compatible = IsNatureNaturallyGenerated(rolled) && rolled != NATURE_CAPRICIOUS;
+
+        for (u32 i = 0; i < count && compatible; i++)
+        {
+            u32 existing;
+            GetPokemonNatureAtIndex(mon, i, &existing);
+            compatible = AreNaturesCompatible(existing, rolled);
+        }
+        if (compatible)
+            candidate = rolled;
+    }
+
+    if (candidate == NUM_NATURES
+     || !SetBoxPokemonNatureAtIndex(&mon->box, count, candidate))
+    {
+        PlaySE(SE_FAILURE);
+        DisplayPartyMenuMessage(gText_WontHaveEffect, TRUE);
+    }
+    else
+    {
+        CalculateMonStats(mon);
+        RemoveBagItem(gSpecialVar_ItemId, 1);
+        GetMonNickname(mon, gStringVar1);
+        StringCopy(gStringVar2, gNaturesInfo[candidate].name);
+        StringExpandPlaceholders(gStringVar4, sText_AdditionalNatureAwakened);
+        PlaySE(SE_USE_ITEM);
+        DisplayPartyMenuMessage(gStringVar4, TRUE);
+    }
+    ScheduleBgCopyTilemapToVram(2);
+    gTasks[taskId].func = task;
 }
 
 static void StartMintTaskWithNature(u8 taskId, u32 nature)
@@ -5964,6 +6094,7 @@ void ItemUseCB_GenderSelectMint(u8 taskId, TaskFunc task)
 #undef tOldNature
 #undef tNewNature
 #undef tOldFunc
+#undef tNatureSlot
 #undef tCapMonId
 #undef tCapWindowId
 #undef tCapOldFunc
@@ -6381,6 +6512,18 @@ static void Task_UniversalMint_ConfirmOnPartyScreen(u8 taskId)
     switch (data[0])
     {
     case 0:
+        if (!sUniversalMintMenu->selectedCurrentNature)
+        {
+            data[0] = 0;
+            data[1] = monId;
+            data[2] = GetMonData(&gParties[B_TRAINER_PLAYER][monId], MON_DATA_HIDDEN_NATURE);
+            data[3] = chosenNature;
+            SetWordTaskArg(taskId, 4, (uintptr_t)Task_HandleChooseMonInput);
+            Free(sUniversalMintMenu);
+            sUniversalMintMenu = NULL;
+            gTasks[taskId].func = Task_Mint;
+            return;
+        }
         GetMonNickname(&gParties[B_TRAINER_PLAYER][monId], gStringVar1);
         CopyItemName(gSpecialVar_ItemId, gStringVar2);
         if (!sUniversalMintMenu->selectedCurrentNature

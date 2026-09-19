@@ -110,6 +110,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsBattleSceneOff = FALSE;
     gSaveBlock2Ptr->optionsAnnounceNatures = OPTIONS_ANNOUNCE_NATURES_YES;
     gSaveBlock2Ptr->optionsNatureTitles = OPTIONS_NATURE_TITLES_ON;
+    gSaveBlock2Ptr->optionsMultipleNatures = OPTIONS_NATURE_MODE_SINGLE;
     gSaveBlock2Ptr->optionsShinyOdds = OPTIONS_SHINY_ODDS_4096;
     gSaveBlock2Ptr->optionsAutosave = OPTIONS_AUTOSAVE_OFF;
     gSaveBlock2Ptr->optionsDifficulty = DIFFICULTY_NORMAL;

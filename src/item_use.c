@@ -1092,6 +1092,12 @@ void ItemUseOutOfBattle_GenderSelectMint(u8 taskId)
     SetUpItemUseCallback(taskId);
 }
 
+void ItemUseOutOfBattle_NatureExpansionMint(u8 taskId)
+{
+    gItemUseCB = ItemUseCB_NatureExpansionMint;
+    SetUpItemUseCallback(taskId);
+}
+
 void ItemUseOutOfBattle_ResetEVs(u8 taskId)
 {
     gItemUseCB = ItemUseCB_ResetEVs;

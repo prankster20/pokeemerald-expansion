@@ -266,7 +266,8 @@ void EvolutionScene(struct Pokemon *mon, enum Species postEvoSpecies, bool32 can
                         currSpecies,
                         personality,
                         TRUE);
-    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(currSpecies, isShiny, personality, GetMonData(mon, MON_DATA_HIDDEN_NATURE), FALSE), OBJ_PLTT_ID(1), PLTT_SIZE_4BPP);
+    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(currSpecies, isShiny, personality,
+                PokemonHasNature(mon, NATURE_VIBRANT) ? NATURE_VIBRANT : GetMonData(mon, MON_DATA_HIDDEN_NATURE), FALSE), OBJ_PLTT_ID(1), PLTT_SIZE_4BPP);
 
     SetMultiuseSpriteTemplateToPokemon(currSpecies, B_POSITION_OPPONENT_LEFT);
     gMultiuseSpriteTemplate.affineAnims = gDummySpriteAffineAnimTable;
@@ -281,7 +282,8 @@ void EvolutionScene(struct Pokemon *mon, enum Species postEvoSpecies, bool32 can
                         postEvoSpecies,
                         personality,
                         TRUE);
-    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(postEvoSpecies, isShiny, personality, GetMonData(mon, MON_DATA_HIDDEN_NATURE), FALSE), OBJ_PLTT_ID(2), PLTT_SIZE_4BPP);
+    LoadPalette(GetMonSpritePalFromSpeciesAndPersonalityNatureIsEgg(postEvoSpecies, isShiny, personality,
+                PokemonHasNature(mon, NATURE_VIBRANT) ? NATURE_VIBRANT : GetMonData(mon, MON_DATA_HIDDEN_NATURE), FALSE), OBJ_PLTT_ID(2), PLTT_SIZE_4BPP);
 
     SetMultiuseSpriteTemplateToPokemon(postEvoSpecies, B_POSITION_OPPONENT_RIGHT);
     gMultiuseSpriteTemplate.affineAnims = gDummySpriteAffineAnimTable;
@@ -632,19 +634,26 @@ static bool32 IsCallowBlacklistedNature(u32 nature)
 
 static void TryChangeNatureOnEvolution(struct Pokemon *mon)
 {
-    u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
+    u32 count = GetPokemonNatureCount(mon);
 
+    for (u32 i = 0; i < count; i++)
+    {
+        u32 nature;
+        u32 newNature;
+
+        if (!GetPokemonNatureAtIndex(mon, i, &nature))
+            continue;
         if (nature == NATURE_CALLOW)
-    {
-        u32 newNature = RandomUniformExcept(RNG_CALLOW_EVOLUTION, 0, NUM_NATURES - 1, IsCallowBlacklistedNature);
-        SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
-            AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
-    }
-    else if (nature == NATURE_INNOCENT)
-    {
-        u32 newNature = GetInnocentEvolutionNatureFromFriendship(GetMonData(mon, MON_DATA_FRIENDSHIP));
-        SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
-        AdjustPPForSeriousNatureChange(mon, NATURE_INNOCENT, newNature);
+            newNature = RandomUniformExcept(RNG_CALLOW_EVOLUTION, 0, NUM_NATURES - 1, IsCallowBlacklistedNature);
+        else if (nature == NATURE_INNOCENT)
+            newNature = GetInnocentEvolutionNatureFromFriendship(GetMonData(mon, MON_DATA_FRIENDSHIP));
+        else
+            continue;
+
+        // Duplicate Natures are deliberately invalid. If evolution resolves
+        // to one already present, leave this slot unchanged.
+        if (SetBoxPokemonNatureAtIndex(&mon->box, i, newNature))
+            AdjustPPForSeriousNatureChange(mon, nature, newNature);
     }
 }
 

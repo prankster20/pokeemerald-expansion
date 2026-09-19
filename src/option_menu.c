@@ -6,6 +6,7 @@
 #include "main.h"
 #include "menu.h"
 #include "palette.h"
+#include "pokemon_storage_system.h"
 #include "scanline_effect.h"
 #include "sound.h"
 #include "sprite.h"
@@ -35,6 +36,7 @@
 #define tDifficulty data[12]
 #define tNatureTitles data[13]
 #define tPersonalityColors data[14]
+#define tMultipleNatures data[15]
 
 enum
 {
@@ -52,6 +54,13 @@ enum
 {
     OPTION_PAGE_MAIN,
     OPTION_PAGE_MORE,
+    OPTION_PAGE_GAME_MODES,
+};
+
+enum
+{
+    GAME_MODE_MENUITEM_NATURES,
+    GAME_MODE_MENUITEM_COUNT,
 };
 
 enum
@@ -115,6 +124,8 @@ static u8 EasierCatch_ProcessInput(u8 selection);
 static void EasierCatch_DrawChoices(u8 selection);
 static u8 Difficulty_ProcessInput(u8 selection);
 static void Difficulty_DrawChoice(u8 selection, bool8 selected);
+static u8 MultipleNatures_ProcessInput(u8 selection);
+static void MultipleNatures_DrawChoices(u8 selection);
 static u8 Sound_ProcessInput(u8 selection);
 static void Sound_DrawChoices(u8 selection);
 static u8 FrameType_ProcessInput(u8 selection);
@@ -132,6 +143,7 @@ EWRAM_DATA static bool8 sArrowPressed = FALSE;
 
 static const u8 gText_Option[]             = _("OPTION");
 static const u8 gText_QualityOfLife[]      = _("QUALITY OF LIFE");
+static const u8 gText_GameModes[]          = _("GAME MODES");
 static const u8 gText_TextSpeedFast[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}FAST");
 static const u8 gText_TextSpeedInstant[]   = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}INSTANT");
 static const u8 gText_BattleSceneOn[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}ON");
@@ -150,6 +162,7 @@ static const u8 gText_ButtonTypeLEqualsA[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN
 static const u8 gText_OptionCancel[]       = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}CANCEL");
 static const u8 gText_OptionMore[]         = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}QoL{RIGHT_ARROW}");
 static const u8 gText_OptionPrevious[]     = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}{LEFT_ARROW}PREV");
+static const u8 gText_OptionGameModes[]    = _("{COLOR DARK_GRAY}{SHADOW LIGHT_GRAY}MODES{RIGHT_ARROW}");
 static const u8 gText_ShinyOdds4096[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}4096");
 static const u8 gText_ShinyOdds1024[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}1024");
 static const u8 gText_ShinyOdds256[]       = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}256");
@@ -167,6 +180,9 @@ static const u8 gText_PersonalityColors[]  = _("MON COLORS");
 static const u8 gText_ShinyOdds[]          = _("SHINY ODDS");
 static const u8 gText_EasierCatch[]        = _("CATCH RATE");
 static const u8 gText_Difficulty[]         = _("DIFFICULTY");
+static const u8 gText_NaturesMode[]        = _("NATURES");
+static const u8 gText_NaturesSingle[]      = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SINGLE");
+static const u8 gText_NaturesMultiple[]    = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}MULTIPLE");
 
 static const u16 sOptionMenuText_Pal[] = INCGFX_U16("graphics/interface/option_menu_text.pal", ".gbapal");
 // note: this is only used in the Japanese release
@@ -331,6 +347,7 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tAnnounceNatures = gSaveBlock2Ptr->optionsAnnounceNatures;
         gTasks[taskId].tNatureTitles = gSaveBlock2Ptr->optionsNatureTitles;
         gTasks[taskId].tPersonalityColors = gSaveBlock2Ptr->optionsPersonalityColors;
+        gTasks[taskId].tMultipleNatures = gSaveBlock2Ptr->optionsMultipleNatures;
         gTasks[taskId].tShinyOdds = gSaveBlock2Ptr->optionsShinyOdds;
         gTasks[taskId].tEasierCatch = gSaveBlock2Ptr->optionsEasierCatch;
         if (gTasks[taskId].tEasierCatch >= OPTIONS_EASIER_CATCH_COUNT)
@@ -377,19 +394,36 @@ static void Task_OptionMenuProcessInput(u8 taskId)
         else if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE
               && gTasks[taskId].tMenuSelection == MENUITEM_FOOTER)
         {
-            SetOptionMenuPage(taskId, OPTION_PAGE_MAIN);
+            if (gTasks[taskId].tFooterChoice == FOOTER_CANCEL)
+                SetOptionMenuPage(taskId, OPTION_PAGE_MAIN);
+            else
+                SetOptionMenuPage(taskId, OPTION_PAGE_GAME_MODES);
+        }
+        else if (gTasks[taskId].tMenuPage == OPTION_PAGE_GAME_MODES
+              && gTasks[taskId].tMenuSelection == MENUITEM_FOOTER)
+        {
+            SetOptionMenuPage(taskId, OPTION_PAGE_MORE);
         }
     }
     else if (JOY_NEW(B_BUTTON))
     {
-        if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
+        if (gTasks[taskId].tMenuPage == OPTION_PAGE_GAME_MODES)
+            SetOptionMenuPage(taskId, OPTION_PAGE_MORE);
+        else if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
             SetOptionMenuPage(taskId, OPTION_PAGE_MAIN);
         else
             gTasks[taskId].func = Task_OptionMenuSave;
     }
     else if (JOY_NEW(DPAD_UP))
     {
-        if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
+        if (gTasks[taskId].tMenuPage == OPTION_PAGE_GAME_MODES)
+        {
+            if (gTasks[taskId].tMenuSelection == 0)
+                gTasks[taskId].tMenuSelection = MENUITEM_FOOTER;
+            else
+                gTasks[taskId].tMenuSelection = 0;
+        }
+        else if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
         {
             if (gTasks[taskId].tMenuSelection == 0)
                 gTasks[taskId].tMenuSelection = MENUITEM_FOOTER;
@@ -406,7 +440,14 @@ static void Task_OptionMenuProcessInput(u8 taskId)
     }
     else if (JOY_NEW(DPAD_DOWN))
     {
-        if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
+        if (gTasks[taskId].tMenuPage == OPTION_PAGE_GAME_MODES)
+        {
+            if (gTasks[taskId].tMenuSelection == MENUITEM_FOOTER)
+                gTasks[taskId].tMenuSelection = 0;
+            else
+                gTasks[taskId].tMenuSelection = MENUITEM_FOOTER;
+        }
+        else if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
         {
             if (gTasks[taskId].tMenuSelection == MENUITEM_FOOTER)
                 gTasks[taskId].tMenuSelection = 0;
@@ -425,6 +466,22 @@ static void Task_OptionMenuProcessInput(u8 taskId)
     {
         u8 previousOption;
 
+        if (gTasks[taskId].tMenuPage == OPTION_PAGE_GAME_MODES)
+        {
+            if (gTasks[taskId].tMenuSelection == GAME_MODE_MENUITEM_NATURES)
+            {
+                previousOption = gTasks[taskId].tMultipleNatures;
+                gTasks[taskId].tMultipleNatures = MultipleNatures_ProcessInput(gTasks[taskId].tMultipleNatures);
+                if (previousOption != gTasks[taskId].tMultipleNatures)
+                    MultipleNatures_DrawChoices(gTasks[taskId].tMultipleNatures);
+            }
+            if (sArrowPressed)
+            {
+                sArrowPressed = FALSE;
+                CopyWindowToVram(WIN_OPTIONS, COPYWIN_GFX);
+            }
+            return;
+        }
         if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
         {
             if (gTasks[taskId].tMenuSelection == MORE_MENUITEM_ANNOUNCE_NATURES)
@@ -468,6 +525,13 @@ static void Task_OptionMenuProcessInput(u8 taskId)
                 gTasks[taskId].tEasierCatch = EasierCatch_ProcessInput(gTasks[taskId].tEasierCatch);
                 if (previousOption != gTasks[taskId].tEasierCatch)
                     EasierCatch_DrawChoices(gTasks[taskId].tEasierCatch);
+            }
+            else if (gTasks[taskId].tMenuSelection == MENUITEM_FOOTER
+                  && JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+            {
+                gTasks[taskId].tFooterChoice ^= 1;
+                DrawOptionMenuPage(taskId);
+                sArrowPressed = TRUE;
             }
 
             if (sArrowPressed)
@@ -544,12 +608,29 @@ static void Task_OptionMenuProcessInput(u8 taskId)
 
 static void Task_OptionMenuSave(u8 taskId)
 {
+    bool32 natureModeChanged = gSaveBlock2Ptr->optionsMultipleNatures != gTasks[taskId].tMultipleNatures;
+
     gSaveBlock2Ptr->optionsTextSpeed = gTasks[taskId].tTextSpeed;
     gSaveBlock2Ptr->optionsBattleSceneOff = gTasks[taskId].tBattleSceneOff;
     gSaveBlock2Ptr->optionsBattleStyle = gTasks[taskId].tBattleStyle;
     gSaveBlock2Ptr->optionsAnnounceNatures = gTasks[taskId].tAnnounceNatures;
     gSaveBlock2Ptr->optionsNatureTitles = gTasks[taskId].tNatureTitles;
     gSaveBlock2Ptr->optionsPersonalityColors = gTasks[taskId].tPersonalityColors;
+    gSaveBlock2Ptr->optionsMultipleNatures = gTasks[taskId].tMultipleNatures;
+    if (natureModeChanged)
+    {
+        if (gSaveBlock2Ptr->optionsMultipleNatures == OPTIONS_NATURE_MODE_MULTIPLE)
+        {
+            for (u32 i = 0; i < gPartiesCount[B_TRAINER_PLAYER]; i++)
+                GenerateBoxPokemonAdditionalNatures(&gParties[B_TRAINER_PLAYER][i].box);
+            if (gPokemonStoragePtr != NULL)
+                for (u32 box = 0; box < TOTAL_BOXES_COUNT; box++)
+                    for (u32 slot = 0; slot < IN_BOX_COUNT; slot++)
+                        GenerateBoxPokemonAdditionalNatures(&gPokemonStoragePtr->boxes[box][slot]);
+        }
+        for (u32 i = 0; i < gPartiesCount[B_TRAINER_PLAYER]; i++)
+            CalculateMonStats(&gParties[B_TRAINER_PLAYER][i]);
+    }
     gSaveBlock2Ptr->optionsShinyOdds = gTasks[taskId].tShinyOdds;
     gSaveBlock2Ptr->optionsEasierCatch = gTasks[taskId].tEasierCatch;
     // Autosave is currently unavailable. Clear the dormant option for older saves too.
@@ -855,6 +936,25 @@ static void Difficulty_DrawChoice(u8 selection, bool8 selected)
     DrawOptionMenuChoice(text, x, YPOS_MORE_DIFFICULTY, TRUE);
 }
 
+static u8 MultipleNatures_ProcessInput(u8 selection)
+{
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        selection ^= 1;
+        sArrowPressed = TRUE;
+    }
+    return selection;
+}
+
+static void MultipleNatures_DrawChoices(u8 selection)
+{
+    DrawOptionMenuChoice(gText_NaturesSingle, 104, 0, selection == OPTIONS_NATURE_MODE_SINGLE);
+    DrawOptionMenuChoice(gText_NaturesMultiple,
+                         GetStringRightAlignXOffset(FONT_NORMAL, gText_NaturesMultiple, 198),
+                         0,
+                         selection == OPTIONS_NATURE_MODE_MULTIPLE);
+}
+
 static u8 Sound_ProcessInput(u8 selection)
 {
     if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
@@ -985,7 +1085,9 @@ static void ButtonMode_DrawChoices(u8 selection)
 
 static void DrawHeaderText(u8 page)
 {
-    const u8 *text = page == OPTION_PAGE_MORE ? gText_QualityOfLife : gText_Option;
+    const u8 *text = page == OPTION_PAGE_MORE ? gText_QualityOfLife
+                   : page == OPTION_PAGE_GAME_MODES ? gText_GameModes
+                   : gText_Option;
 
     FillWindowPixelBuffer(WIN_HEADER, PIXEL_FILL(1));
     AddTextPrinterParameterized(WIN_HEADER, FONT_NORMAL, text, 8, 1, TEXT_SKIP_DRAW, NULL);
@@ -1032,7 +1134,7 @@ static void DrawOptionMenuPage(u8 taskId)
         FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
         DrawMainFooter(taskId);
     }
-    else
+    else if (gTasks[taskId].tMenuPage == OPTION_PAGE_MORE)
     {
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_AnnounceNatures, 8, YPOS_MORE_ANNOUNCENATURES + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_NatureTitles, 8, YPOS_MORE_NATURE_TITLES + 1, TEXT_SKIP_DRAW, NULL);
@@ -1040,13 +1142,27 @@ static void DrawOptionMenuPage(u8 taskId)
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_ShinyOdds, 8, YPOS_MORE_SHINYODDS + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_EasierCatch, 8, YPOS_MORE_EASIER_CATCH + 1, TEXT_SKIP_DRAW, NULL);
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Difficulty, 8, YPOS_MORE_DIFFICULTY + 1, TEXT_SKIP_DRAW, NULL);
-        DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER, gTasks[taskId].tMenuSelection == MENUITEM_FOOTER);
+        DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER,
+                             gTasks[taskId].tMenuSelection == MENUITEM_FOOTER
+                          && gTasks[taskId].tFooterChoice == FOOTER_CANCEL);
+        DrawOptionMenuChoice(gText_OptionGameModes,
+                             GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionGameModes, 198),
+                             YPOS_FOOTER,
+                             gTasks[taskId].tMenuSelection == MENUITEM_FOOTER
+                          && gTasks[taskId].tFooterChoice == FOOTER_MORE);
         AnnounceNatures_DrawChoices(gTasks[taskId].tAnnounceNatures);
         NatureTitles_DrawChoices(gTasks[taskId].tNatureTitles);
         PersonalityColors_DrawChoices(gTasks[taskId].tPersonalityColors);
         ShinyOdds_DrawChoices(gTasks[taskId].tShinyOdds);
         EasierCatch_DrawChoices(gTasks[taskId].tEasierCatch);
         Difficulty_DrawChoice(gTasks[taskId].tDifficulty, gTasks[taskId].tMenuSelection == MORE_MENUITEM_DIFFICULTY);
+    }
+    else
+    {
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_NaturesMode, 8, 1, TEXT_SKIP_DRAW, NULL);
+        DrawOptionMenuChoice(gText_OptionPrevious, 8, YPOS_FOOTER,
+                             gTasks[taskId].tMenuSelection == MENUITEM_FOOTER);
+        MultipleNatures_DrawChoices(gTasks[taskId].tMultipleNatures);
     }
 
     HighlightOptionMenuItem(gTasks[taskId].tMenuSelection);
@@ -1056,9 +1172,10 @@ static void DrawOptionMenuPage(u8 taskId)
 static void SetOptionMenuPage(u8 taskId, u8 page)
 {
     gTasks[taskId].tMenuPage = page;
-    if (page == OPTION_PAGE_MORE)
+    if (page == OPTION_PAGE_MORE || page == OPTION_PAGE_GAME_MODES)
     {
         gTasks[taskId].tMenuSelection = 0;
+        gTasks[taskId].tFooterChoice = FOOTER_CANCEL;
     }
     else
     {

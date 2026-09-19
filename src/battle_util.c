@@ -7774,7 +7774,7 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
     {
         struct Pokemon *_cand = &_defParty[_di];
         if (GetMonData(_cand, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE) continue;
-        if (GetMonData(_cand, MON_DATA_HIDDEN_NATURE) != NATURE_DEVOTED) continue;
+        if (!PokemonHasNature(_cand, NATURE_DEVOTED)) continue;
 
         s32 _bondSlot = -1;
         u32 _boost = GetDevotedBondData(_cand, &_bondSlot);
@@ -9153,7 +9153,7 @@ uq4_12_t GetOverworldTypeEffectiveness(struct Pokemon *mon, enum Type moveType)
     enum Type type1 = GetSpeciesType(speciesDef, 0);
     enum Type type2 = GetSpeciesType(speciesDef, 1);
 
-    MulByTypeEffectiveness(&ctx, &modifier, type1, GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_ZEALOUS);
+    MulByTypeEffectiveness(&ctx, &modifier, type1, PokemonHasNature(mon, NATURE_ZEALOUS));
     if (type2 != type1)
         MulByTypeEffectiveness(&ctx, &modifier, type2, FALSE);
 
@@ -10276,7 +10276,7 @@ void CopyMonLevelAndBaseStatsToBattleMon(enum BattlerId battler, struct Pokemon 
     gBattleMons[battler].spAttack = GetMonData(mon, MON_DATA_SPATK);
     gBattleMons[battler].spDefense = GetMonData(mon, MON_DATA_SPDEF);
 
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_VAIN
+    if (PokemonHasNature(mon, NATURE_VAIN)
      && GetBattlerPartyState(battler)->vainBroken)
         ApplyVainStatLoss(battler);
 }
@@ -10935,17 +10935,21 @@ bool32 EmergencyExitCanBeTriggered(enum BattlerId battler, enum Ability ability)
 // ability popup.
 void SetNaturePopupForWimpOut(enum BattlerId battler)
 {
-    u32 nature = GetMonData(GetBattlerMon(battler), MON_DATA_HIDDEN_NATURE);
+    struct Pokemon *mon = GetBattlerMon(battler);
+    u32 nature;
 
-    if (nature == NATURE_COWARDLY || nature == NATURE_PHOBIC)
-    {
-        gBattleScripting.showNaturePopup = TRUE;
-        gBattleScripting.naturePopupId = nature;
-    }
+    if (PokemonHasNature(mon, NATURE_COWARDLY))
+        nature = NATURE_COWARDLY;
+    else if (PokemonHasNature(mon, NATURE_PHOBIC))
+        nature = NATURE_PHOBIC;
     else
     {
         gBattleScripting.showNaturePopup = FALSE;
+        return;
     }
+
+    gBattleScripting.showNaturePopup = TRUE;
+    gBattleScripting.naturePopupId = nature;
 }
 
 // pranks / jimh - generic version of the above, for any other nature that

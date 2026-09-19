@@ -114,7 +114,6 @@ u32 GeneratePersonalityForGender(u32 gender, enum Species species);
 void ModifyPersonalityForGender(u32 *personality, u32 gender, enum Species species);
 void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct TrainerMon *partyEntry);
 void SetTrainerMonNatures(struct Pokemon *mon, const struct TrainerMon *partyEntry);
-bool32 PokemonHasNature(struct Pokemon *mon, u32 nature);
 s32 GetPokemonNatureStatModifierPercent(struct Pokemon *mon, enum Stat statIndex, u32 personality);
 bool32 CanPlayerForfeitNormalTrainerBattle(void);
 bool32 DidPlayerForfeitNormalTrainerBattle(void);

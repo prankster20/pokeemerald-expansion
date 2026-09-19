@@ -87,7 +87,7 @@ static void GetBattlerNickWithNatureTitle(enum BattlerId battler, u8 *dst)
 
     // Pompous Pokémon insist upon a grand title even when ordinary Nature
     // titles are disabled. The personality makes the title stable per mon.
-    if (nature == NATURE_POMPOUS)
+    if (PokemonHasNature(mon, NATURE_POMPOUS))
     {
         u32 personality = GetMonData(mon, MON_DATA_PERSONALITY);
 

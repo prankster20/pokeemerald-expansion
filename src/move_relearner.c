@@ -882,19 +882,19 @@ static u32 GetRelearnerLevelUpMoves(struct BoxPokemon *mon, u16 *moves)
 
     // --- Custom Archetype nature: Prodigious ---
     // Learns moves 1 level early - so the relearner offers them 1 level early too.
-    if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
+    if (BoxPokemonHasNature(mon, NATURE_PRODIGIOUS))
         level += 1;
 
     // --- Custom Archetype nature: Pack-Rat ---
     // Always offers Stockpile first in the level-up relearner list.
-    if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_PACK_RAT
+    if (BoxPokemonHasNature(mon, NATURE_PACK_RAT)
      && !BoxMonKnowsMove(mon, MOVE_STOCKPILE))
         moves[numMoves++] = MOVE_STOCKPILE;
 
     // --- Custom Archetype nature: Scholarly ---
     // Prepends the base species' egg moves to the level-up relearner list,
     // allowing evolved Pokémon to study those moves too.
-    if (GetBoxMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_SCHOLARLY)
+    if (BoxPokemonHasNature(mon, NATURE_SCHOLARLY))
     {
         enum Species eggSpecies = species;
         while (GetSpeciesPreEvolution(eggSpecies) != SPECIES_NONE)
@@ -1070,16 +1070,16 @@ static bool32 HasRelearnerLevelUpMoves(struct BoxPokemon *boxMon)
 
     // --- Custom Archetype nature: Prodigious ---
     // Learns moves 1 level early - so the relearner offers them 1 level early too.
-    if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_PRODIGIOUS)
+    if (BoxPokemonHasNature(boxMon, NATURE_PRODIGIOUS))
         level += 1;
 
     // --- Custom Archetype nature: Pack-Rat ---
-    if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_PACK_RAT
+    if (BoxPokemonHasNature(boxMon, NATURE_PACK_RAT)
      && !BoxMonKnowsMove(boxMon, MOVE_STOCKPILE))
         return TRUE;
 
     // --- Custom Archetype nature: Scholarly ---
-    if (GetBoxMonData(boxMon, MON_DATA_HIDDEN_NATURE) == NATURE_SCHOLARLY)
+    if (BoxPokemonHasNature(boxMon, NATURE_SCHOLARLY))
     {
         enum Species eggSpecies = species;
         while (GetSpeciesPreEvolution(eggSpecies) != SPECIES_NONE)

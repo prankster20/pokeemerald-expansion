@@ -101,6 +101,7 @@ void ItemUseCB_GroupMint(u8 taskId, TaskFunc task);
 void ItemUseCB_PersonalityMint(u8 taskId, TaskFunc task);
 void ItemUseCB_PersonalitySelectorMint(u8 taskId, TaskFunc task);
 void ItemUseCB_GenderSelectMint(u8 taskId, TaskFunc task);
+void ItemUseCB_NatureExpansionMint(u8 taskId, TaskFunc task);
 void ItemUseCB_ResetEVs(u8 taskId, TaskFunc task);
 void ItemUseCB_ReduceEV(u8 taskId, TaskFunc task);
 void ItemUseCB_PPRecovery(u8 taskId, TaskFunc task);

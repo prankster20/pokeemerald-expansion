@@ -2997,6 +2997,23 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_ExpShare,
     },
 
+    [ITEM_NATURE_EXPANSION_MINT] =
+    {
+        .name = ITEM_NAME("Expansion Mint"),
+        .price = 30000,
+        .description = COMPOUND_STRING(
+            "Adds a compatible\n"
+            "Nature in MULTIPLE\n"
+            "Nature mode."),
+        .pocket = POCKET_ITEMS,
+        .sortType = ITEM_TYPE_NATURE_MINT,
+        .type = ITEM_USE_PARTY_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_NatureExpansionMint,
+        .flingPower = 10,
+        .iconPic = gItemIcon_Mint,
+        .iconPalette = gItemIconPalette_PurpleMint,
+    },
+
     [ITEM_PERSONALITY_MINT] =
     {
         .name = ITEM_NAME("Persona Random Mint"),

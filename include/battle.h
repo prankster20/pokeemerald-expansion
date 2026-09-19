@@ -1120,8 +1120,6 @@ extern u8 gPartyCriticalHits[PARTY_SIZE];
 extern u8 gCategoryIconSpriteId;
 struct Pokemon *GetBattlerParty(enum BattlerId battler);
 struct Pokemon *GetTrainerParty(enum BattleTrainer trainer);
-bool32 PokemonHasNature(struct Pokemon *mon, u32 nature);
-bool32 GetPokemonNatureAtIndex(struct Pokemon *mon, u32 index, u32 *nature);
 bool32 ShouldSuppressRepeatedNaturePopup(enum BattlerId battler, u32 nature);
 struct Pokemon* GetBattlerMon(enum BattlerId battler);
 
