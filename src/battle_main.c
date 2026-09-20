@@ -2059,6 +2059,28 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
                 ModifyPersonalityForGender(&personalityValue, MON_FEMALE, partyData[monIndex].species);
             else if (partyData[monIndex].gender == TRAINER_MON_GENDERLESS)
                 ModifyPersonalityForGender(&personalityValue, MON_GENDERLESS, partyData[monIndex].species);
+            if (partyData[monIndex].hasPersonaCode)
+            {
+                u32 codedPersonality;
+                u32 gender = GetGenderFromSpeciesAndPersonality(partyData[monIndex].species, personalityValue);
+
+                if (FindPersonalityForCode(partyData[monIndex].species,
+                                           gender,
+                                           partyData[monIndex].nature,
+                                           partyData[monIndex].personaCode,
+                                           UINT32_MAX,
+                                           &codedPersonality))
+                {
+                    personalityValue = codedPersonality;
+                }
+                else
+                {
+                    // This should only be reachable for an impossible
+                    // Nature/gender/code combination. Preserve the otherwise
+                    // valid generated personality instead of corrupting it.
+                    assertf(FALSE, "no personality for Persona Code %u", partyData[monIndex].personaCode);
+                }
+            }
             if (partyData[monIndex].isShiny)
             {
                 otId.method = OT_ID_PRESET;

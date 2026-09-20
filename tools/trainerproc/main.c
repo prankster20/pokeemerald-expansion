@@ -19,7 +19,7 @@
 #define PARTY_SIZE 255
 #define MAX_MON_MOVES 4
 #define MAX_MON_TAGS 32
-#define MAX_MON_NATURES 128
+#define MAX_MON_NATURES 5
 #define STARTING_STATUS_COUNT 64
 
 struct String
@@ -68,6 +68,9 @@ struct Pokemon
 
     struct Stats ivs;
     int ivs_line;
+
+    int persona_code;
+    int persona_code_line;
 
     struct String ability;
     int ability_line;
@@ -1517,6 +1520,16 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
                 if (!token_stats(p, &value, &pokemon->ivs, parsed->default_ivs_off))
                     any_error = !show_parse_error(p);
             }
+            else if (is_literal_token(&key, "Persona Code"))
+            {
+                if (pokemon->persona_code_line)
+                    any_error = !set_show_parse_error(p, key.location, "duplicate 'Persona Code'");
+                pokemon->persona_code_line = value.location.line;
+                if (!token_int(p, &value, &pokemon->persona_code))
+                    any_error = !show_parse_error(p);
+                else if (pokemon->persona_code < 0 || pokemon->persona_code >= 100000)
+                    any_error = !set_show_parse_error(p, value.location, "'Persona Code' must be from 0 to 99999");
+            }
             else if (is_literal_token(&key, "Ability"))
             {
                 if (pokemon->ability_line)
@@ -1614,7 +1627,7 @@ static bool parse_trainer(struct Parser *p, const struct Parsed *parsed, struct 
             }
             else
             {
-                any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Ability', 'Gender', 'Level', 'Met Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
+                any_error = !set_show_parse_error(p, key.location, "expected one of 'EVs', 'IVs', 'Persona Code', 'Ability', 'Gender', 'Level', 'Met Level', 'Ball', 'Happiness', 'Nature', 'Shiny', 'Dynamax Level', 'Gigantamax', or 'Tera Type'");
             }
         }
 
@@ -2156,6 +2169,13 @@ static void fprint_trainers(const char *output_path, FILE *f, struct Parsed *par
                 fprintf(f, "            .iv = ");
                 fprint_stats(f, "TRAINER_PARTY_IVS", pokemon->ivs);
                 fprintf(f, ",\n");
+            }
+
+            if (pokemon->persona_code_line)
+            {
+                fprintf(f, "#line %d\n", pokemon->persona_code_line);
+                fprintf(f, "            .personaCode = %d,\n", pokemon->persona_code);
+                fprintf(f, "            .hasPersonaCode = TRUE,\n");
             }
 
             if (pokemon->ability_line)

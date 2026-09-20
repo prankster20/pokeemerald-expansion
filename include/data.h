@@ -67,6 +67,7 @@ struct TrainerMon
     const u8 *nickname;
     const u8 *ev;
     u32 iv;
+    u32 personaCode;
     enum Move moves[MAX_MON_MOVES];
     enum Species species;
     enum Item heldItem;
@@ -78,6 +79,7 @@ struct TrainerMon
     u8 nature:7; // Widened from 5 bits to fit the expanded 100-nature Archetype system (2^7=128 > 100; old 5-bit width maxed at 31 and would've truncated any custom nature).
     const u8 *additionalNatures; // Nature entries after the personality/stat Nature.
     u8 additionalNatureCount;
+    bool8 hasPersonaCode:1;
     bool8 gender:3;
     bool8 isShiny:1;
     enum Type teraType:5;
