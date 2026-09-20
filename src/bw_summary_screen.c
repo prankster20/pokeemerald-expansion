@@ -260,8 +260,6 @@ static void TryDrawHPBar(void);
 static void SwitchToMoveSelection(u8);
 static void Task_HandleInput_MoveSelect(u8);
 static bool8 HasMoreThanOneMove(void);
-static bool8 CanDeleteSelectedMove(void);
-static void DeleteSelectedMove(u8);
 static void ChangeSelectedMove(s16 *, s8, u8 *);
 static void CloseMoveSelectMode(u8);
 static void SwitchToMovePositionSwitchMode(u8);
@@ -399,7 +397,6 @@ static u8 sDynamicNatureDescriptionBuffer[300]; // Holds dynamic Nature descript
 static const u8 sMemoMiscTextColor[]                        = _("{COLOR WHITE}{SHADOW DARK_GRAY}");
 static const u8 sText_ChangeAbility[]                       = _("{START_BUTTON} CHANGE");
 static const u8 sText_Relearn[]                             = _("{START_BUTTON} RELEARN");
-static const u8 sText_Delete[]                              = _("{SELECT_BUTTON} DELETE");
 static const u8 sStatsNonHPLayout[]                         = _("{DYNAMIC 0}\n{DYNAMIC 1}\n{DYNAMIC 2}\n{DYNAMIC 3}\n{DYNAMIC 4}");
 static const u8 sMovesPPLayout[]                            = _("{PP}{CLEAR_TO 31}{DYNAMIC 0}/{DYNAMIC 1}");
 
@@ -3002,17 +2999,10 @@ static void SwitchToMoveSelection(u8 taskId)
         if (ShouldShowMoveRelearner())
             HideMoveRelearner();
         FillWindowPixelBuffer(PSS_LABEL_WINDOW_PROMPT_SWITCH, PIXEL_FILL(0));
-        if (sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
-        {
-            PrintMovePrompt(sText_Delete);
-        }
-        else
-        {
-            stringXPos = GetStringRightAlignXOffset(FONT_NORMAL, sText_Switch, 62);
-            iconXPos = max(stringXPos - 16, 0);
-            PrintAOrBButtonIcon(PSS_LABEL_WINDOW_PROMPT_SWITCH, FALSE, iconXPos);
-            PrintTextOnWindow(PSS_LABEL_WINDOW_PROMPT_SWITCH, sText_Switch, stringXPos, 1, 0, 1);
-        }
+        stringXPos = GetStringRightAlignXOffset(FONT_NORMAL, sText_Switch, 62);
+        iconXPos = max(stringXPos - 16, 0);
+        PrintAOrBButtonIcon(PSS_LABEL_WINDOW_PROMPT_SWITCH, FALSE, iconXPos);
+        PrintTextOnWindow(PSS_LABEL_WINDOW_PROMPT_SWITCH, sText_Switch, stringXPos, 1, 0, 1);
         PutWindowTilemap(PSS_LABEL_WINDOW_PROMPT_SWITCH);
     }
 
@@ -3038,30 +3028,6 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             data[0] = 4;
             ChangeSelectedMove(data, 1, &sMonSummaryScreen->firstMoveIndex);
         }
-        else if (JOY_NEW(SELECT_BUTTON)
-              && sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE
-              && !gMain.inBattle
-              && !sMonSummaryScreen->summary.isEgg
-              && !sMonSummaryScreen->lockMovesFlag)
-        {
-            if (CanDeleteSelectedMove())
-            {
-                PlaySE(SE_SELECT);
-                DeleteSelectedMove(taskId);
-            }
-            else
-            {
-                PlaySE(SE_FAILURE);
-                if (!HasMoreThanOneMove())
-                    PrintMoveDetails(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]);
-                else if (CannotForgetMove(sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex]))
-                    ShowCantForgetHMsWindow(taskId);
-                else if (IsBoxMonMoveSlotLockedByNature(GetCurrentSummaryBoxMon(), sMonSummaryScreen->firstMoveIndex))
-                    ShowCantForgetNostalgicWindow(taskId);
-                else
-                    ShowCantForgetEclecticWindow(taskId);
-            }
-        }
         else if (JOY_NEW(A_BUTTON))
         {
             if (sMonSummaryScreen->lockMovesFlag == TRUE
@@ -3069,10 +3035,6 @@ static void Task_HandleInput_MoveSelect(u8 taskId)
             {
                 PlaySE(SE_SELECT);
                 CloseMoveSelectMode(taskId);
-            }
-            else if (sMonSummaryScreen->mode != SUMMARY_MODE_SELECT_MOVE)
-            {
-                PlaySE(SE_FAILURE);
             }
             else if (HasMoreThanOneMove() == TRUE)
             {
@@ -3109,83 +3071,6 @@ static bool8 HasMoreThanOneMove(void)
             return TRUE;
     }
     return FALSE;
-}
-
-static bool8 CanDeleteSelectedMove(void)
-{
-    enum Move move;
-
-    if (sMonSummaryScreen->firstMoveIndex >= MAX_MON_MOVES || !HasMoreThanOneMove())
-        return FALSE;
-
-    move = sMonSummaryScreen->summary.moves[sMonSummaryScreen->firstMoveIndex];
-    if (move == MOVE_NONE || CannotForgetMove(move))
-        return FALSE;
-
-    // Route deletion through the shared Nature move-rule gate as a
-    // replacement with MOVE_NONE. Future move-locking Natures can therefore
-    // protect their required moves in one central place.
-    if (!CanBoxMonReplaceMoveWithMoveForNature(GetCurrentSummaryBoxMon(),
-                                               sMonSummaryScreen->firstMoveIndex,
-                                               MOVE_NONE))
-        return FALSE;
-
-    return TRUE;
-}
-
-static void DeleteSelectedMove(u8 taskId)
-{
-    struct BoxPokemon *boxMon = GetCurrentSummaryBoxMon();
-    enum Move moves[MAX_MON_MOVES];
-    u8 pp[MAX_MON_MOVES];
-    u8 ppBonusBySlot[MAX_MON_MOVES];
-    u8 ppBonuses = GetBoxMonData(boxMon, MON_DATA_PP_BONUSES);
-    u8 moveNameWindowId;
-    u32 i;
-
-    for (i = 0; i < MAX_MON_MOVES; i++)
-    {
-        moves[i] = GetBoxMonData(boxMon, MON_DATA_MOVE1 + i);
-        pp[i] = GetBoxMonData(boxMon, MON_DATA_PP1 + i);
-        ppBonusBySlot[i] = (ppBonuses >> (i * 2)) & 3;
-    }
-
-    for (i = sMonSummaryScreen->firstMoveIndex; i < MAX_MON_MOVES - 1; i++)
-    {
-        moves[i] = moves[i + 1];
-        pp[i] = pp[i + 1];
-        ppBonusBySlot[i] = ppBonusBySlot[i + 1];
-    }
-    moves[MAX_MON_MOVES - 1] = MOVE_NONE;
-    pp[MAX_MON_MOVES - 1] = 0;
-    ppBonusBySlot[MAX_MON_MOVES - 1] = 0;
-
-    ppBonuses = 0;
-    for (i = 0; i < MAX_MON_MOVES; i++)
-    {
-        SetBoxMonData(boxMon, MON_DATA_MOVE1 + i, &moves[i]);
-        SetBoxMonData(boxMon, MON_DATA_PP1 + i, &pp[i]);
-        ppBonuses |= ppBonusBySlot[i] << (i * 2);
-    }
-    SetBoxMonData(boxMon, MON_DATA_PP_BONUSES, &ppBonuses);
-
-    CopyMonToSummaryStruct(&sMonSummaryScreen->currentMon);
-    for (i = 0; i < MAX_MON_MOVES; i++)
-    {
-        sMonSummaryScreen->summary.moves[i] = moves[i];
-        sMonSummaryScreen->summary.pp[i] = pp[i];
-    }
-    sMonSummaryScreen->summary.ppBonuses = ppBonuses;
-
-    CloseMoveSelectMode(taskId);
-    moveNameWindowId = AddWindowFromTemplateList(sPageMovesTemplate, PSS_DATA_WINDOW_MOVE_NAMES_PP);
-    FillWindowPixelBuffer(moveNameWindowId, PIXEL_FILL(0));
-    PrintBattleMoves();
-    CopyWindowToVram(moveNameWindowId, COPYWIN_GFX);
-    if (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES)
-        SetMoveTypeIcons();
-    else
-        SetContestMoveTypeIcons();
 }
 
 static void ChangeSelectedMove(s16 *taskData, s8 direction, u8 *moveIndexPtr)
