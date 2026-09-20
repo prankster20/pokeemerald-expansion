@@ -325,6 +325,7 @@ extern const u8 gBattleAnimMove_OdorSleuth[];
 extern const u8 gBattleAnimMove_RockTomb[];
 extern const u8 gBattleAnimMove_SilverWind[];
 extern const u8 gBattleAnimMove_MetalSound[];
+extern const u8 gBattleAnimMove_MetalClang[];
 extern const u8 gBattleAnimMove_GrassWhistle[];
 extern const u8 gBattleAnimMove_Tickle[];
 extern const u8 gBattleAnimMove_CosmicPower[];

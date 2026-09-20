@@ -5532,7 +5532,7 @@ u32 GetSupportiveBoostPercent(struct Pokemon *party, u32 partyCount, u32 monInde
     if (supportiveCount == 0)
         return 0;
 
-    // First Supportive teammate grants +5%; each additional one grants +1%,
+    // First Supportive teammate grants +6%; each additional one grants +1%,
     // capped at +10% total.
     return min(6 + supportiveCount - 1, 10);
 }

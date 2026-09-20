@@ -677,6 +677,7 @@ bool32 IsDamageMoveUnusable(struct DamageContext *ctx)
         break;
     case EFFECT_LOW_KICK:
     case EFFECT_HEAT_CRASH:
+    case EFFECT_NEW_HEAVY_SLAM:
         if (GetActiveGimmick(ctx->battlerDef) == GIMMICK_DYNAMAX)
             return TRUE;
         break;
@@ -1133,6 +1134,10 @@ static bool32 AI_IsMoveEffectInPlus(enum BattlerId battlerAtk, enum BattlerId ba
                 if (AI_CanConfuse(battlerAtk, battlerDef, abilityDef, BATTLE_PARTNER(battlerAtk), move, MOVE_NONE))
                     return TRUE;
                 break;
+            // case MOVE_EFFECT_INFATUATION:
+            //     if (AI_CanBeInfatuated(battlerAtk, battlerDef, abilityDef))
+            //         return TRUE;
+            //     break;
             case MOVE_EFFECT_FLINCH:
                 if (ShouldTryToFlinch(battlerAtk, battlerDef, abilityAtk, abilityDef, move))
                     return TRUE;

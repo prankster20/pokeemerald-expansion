@@ -10,7 +10,7 @@
     F(06, TOXIC) \
     F(07, HAIL) \
     F(08, BULK_UP) \
-    F(09, BULLET_SEED) \
+    F(09, TRAILBLAZE) \
     F(10, HIDDEN_POWER) \
     F(11, SUNNY_DAY) \
     F(12, TAUNT) \

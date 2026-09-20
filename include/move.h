@@ -398,6 +398,29 @@ static inline bool32 IsLightMove(enum Move moveId)
     }
 }
 
+static inline bool32 IsKickingMove(enum Move moveId)
+{
+    switch (moveId)
+    {
+        case MOVE_AXE_KICK:
+        case MOVE_BLAZE_KICK:
+        case MOVE_DOUBLE_KICK:
+        case MOVE_HIGH_JUMP_KICK:
+        case MOVE_JUMP_KICK:
+        case MOVE_LOW_KICK:
+        case MOVE_MEGA_KICK:
+        case MOVE_ROLLING_KICK:
+        case MOVE_SUPERCELL_SLAM:
+        case MOVE_THUNDEROUS_KICK:
+        case MOVE_TRIPLE_AXEL:
+        case MOVE_TRIPLE_KICK:
+        case MOVE_TROP_KICK:
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+
 static inline bool32 IsBallisticMove(enum Move moveId)
 {
     return gMovesInfo[SanitizeMoveId(moveId)].ballisticMove;

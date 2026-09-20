@@ -682,7 +682,14 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
     {
         .name = _("Iron Fist"),
         .description = COMPOUND_STRING("Boosts punching moves."),
-        .aiRating = 6,
+        .aiRating = 7,
+    },
+
+    [ABILITY_STRIKER] =
+    {
+        .name = _("Striker"),
+        .description = COMPOUND_STRING("Boosts kicking moves."),
+        .aiRating = 7,
     },
 
     [ABILITY_POISON_HEAL] =
@@ -1356,6 +1363,13 @@ const struct AbilityInfo gAbilitiesInfo[ABILITIES_COUNT] =
     {
         .name = _("Mega Launcher"),
         .description = COMPOUND_STRING("Boosts pulse moves."),
+        .aiRating = 7,
+    },
+
+    [ABILITY_ARTILLERY] =
+    {
+        .name = _("Artillery"),
+        .description = COMPOUND_STRING("Boosts Pulse and Ballistic moves by 30% each."),
         .aiRating = 7,
     },
 

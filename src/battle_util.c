@@ -6474,11 +6474,11 @@ static const u8 sFlailHpScaleToPowerTable[] =
 // format: min. weight (hectograms), base power
 static const u16 sWeightToDamageTable[] =
 {
-    100, 20,
-    250, 40,
-    500, 60,
-    1000, 80,
-    2000, 100,
+    100, 40,
+    250, 60,
+    500, 80,
+    1000, 100,
+    2000, 120,
     0xFFFF, 0xFFFF
 };
 
@@ -6672,6 +6672,18 @@ static inline u32 CalcMoveBasePower(struct DamageContext *ctx)
         break;
     case EFFECT_LOW_KICK:
         weight = GetBattlerWeight(battlerDef);
+        for (i = 0; sWeightToDamageTable[i] != 0xFFFF; i += 2)
+        {
+            if (sWeightToDamageTable[i] > weight)
+                break;
+        }
+        if (sWeightToDamageTable[i] != 0xFFFF)
+            basePower = sWeightToDamageTable[i + 1];
+        else
+            basePower = 120;
+        break;
+    case EFFECT_NEW_HEAVY_SLAM:
+        weight = GetBattlerWeight(battlerAtk);
         for (i = 0; sWeightToDamageTable[i] != 0xFFFF; i += 2)
         {
             if (sWeightToDamageTable[i] > weight)
@@ -6936,7 +6948,11 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
         break;
     case ABILITY_IRON_FIST:
         if (IsPunchingMove(move))
-           modifier = uq4_12_multiply(modifier, UQ_4_12(1.2));
+           modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
+        break;
+    case ABILITY_STRIKER:
+        if (IsKickingMove(move))
+           modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
         break;
     case ABILITY_SHEER_FORCE:
         if (MoveIsAffectedBySheerForce(move))
@@ -6978,6 +6994,10 @@ static inline u32 CalcMoveBasePowerAfterModifiers(struct DamageContext *ctx)
     case ABILITY_MEGA_LAUNCHER:
         if (IsPulseMove(move))
            modifier = uq4_12_multiply(modifier, UQ_4_12(1.5));
+        break;
+    case ABILITY_ARTILLERY:
+        if (IsPulseMove(move) || IsBallisticMove(move))
+           modifier = uq4_12_multiply(modifier, UQ_4_12(1.3));
         break;
     case ABILITY_WATER_BUBBLE:
         if (moveType == TYPE_WATER)
@@ -7689,9 +7709,8 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
 
     // --- Custom Archetype nature: Calculating ---
     // Uses the average of the target's effective Defense and Sp. Defense.
-    // Psyshock-style moves are treated exactly like every other damaging
-    // move here: Calculating replaces their usual Defense-only rule.
-    if (HasNature(ctx->battlerAtk, NATURE_CALCULATING))
+    // Psyshock-style or Cataclysm-style moves are excluded.
+    if (HasNature(ctx->battlerAtk, NATURE_CALCULATING) && (moveEffect != EFFECT_PSYSHOCK && moveEffect != EFFECT_CATACLYSM))
     {
         usesDefStat = moveEffect == EFFECT_PSYSHOCK || IsBattleMovePhysical(move);
         defStage = gBattleMons[battlerDef].statStages[STAT_DEF];
@@ -7718,6 +7737,38 @@ static inline u32 CalcDefenseStat(struct DamageContext *ctx)
 
         // The stages have already been applied independently above.
         defStage = DEFAULT_STAT_STAGE;
+    }
+    else if (moveEffect == EFFECT_CATACLYSM) {
+        if (ctx->fieldStatuses & STATUS_FIELD_WONDER_ROOM) // the defense stats are swapped
+        {
+            if (def < spDef)
+            {
+                defStat = spDef;
+                usesDefStat = FALSE;
+                defStage = gBattleMons[battlerDef].statStages[STAT_SPDEF];
+            }
+            else
+            {
+                defStat = def;
+                usesDefStat = TRUE;
+                defStage = gBattleMons[battlerDef].statStages[STAT_DEF];
+            }
+        }
+        else
+        {
+            if (def < spDef)
+            {
+                defStat = def;
+                usesDefStat = TRUE;
+                defStage = gBattleMons[battlerDef].statStages[STAT_DEF];
+            }
+            else
+            {
+                defStat = spDef;
+                usesDefStat = FALSE;
+                defStage = gBattleMons[battlerDef].statStages[STAT_SPDEF];
+            }
+        }
     }
     else if (moveEffect == EFFECT_PSYSHOCK || IsBattleMovePhysical(move)) // uses defense stat instead of sp.def
     {
@@ -11752,7 +11803,7 @@ void SetWrapTurns(enum BattlerId battler, enum HoldEffect holdEffect)
     if (holdEffect == HOLD_EFFECT_GRIP_CLAW)
         gBattleMons[battler].volatiles.wrapTurns = GetGullibleVolatileDuration(battler, GetConfig(B_BINDING_TURNS) >= GEN_5 ? B_WRAP_TURNS : normalWrapTurns);
     else
-        gBattleMons[battler].volatiles.wrapTurns = GetGullibleVolatileDuration(battler, GetConfig(B_BINDING_TURNS) >= GEN_5 ? RandomUniform(RNG_WRAP, 4, normalWrapTurns) : RandomUniform(RNG_WRAP, 2, normalWrapTurns));
+        gBattleMons[battler].volatiles.wrapTurns = GetGullibleVolatileDuration(battler, GetConfig(B_BINDING_TURNS) >= GEN_5 ? RandomUniform(RNG_WRAP, normalWrapTurns, normalWrapTurns) : RandomUniform(RNG_WRAP, 2, normalWrapTurns));
 }
 
 // Return True if the order was changed, and false if the order was not changed(for example because the target would move after the attacker anyway).
