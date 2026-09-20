@@ -935,6 +935,7 @@ const u8 *const gBattleStringsTable[STRINGID_COUNT] =
     [STRINGID_SUPERSTITIONBUILDING]                 = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX}'s superstition is building…"),
     [STRINGID_SUPERSTITIOUSTOOSCARED]               = COMPOUND_STRING("{B_SCR_NAME_WITH_PREFIX} is too scared to use {B_BUFF1} again!"),
     [STRINGID_SCROUNGERFOUND]                       = COMPOUND_STRING("{B_BUFF1} scrounged up an item!"),
+    [STRINGID_PUGNACIOUSSPARRED]                   = COMPOUND_STRING("{B_BUFF1} sparred with {B_BUFF2}!"),
 };
 
 const u16 gTrainerUsedItemStringIds[] =

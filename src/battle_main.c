@@ -5825,13 +5825,6 @@ static void HandleEndTurn_FinishBattle(void)
                                | BATTLE_TYPE_CATCH_TUTORIAL)))
             TryFastidiousCleanPartyStatusAfterBattle();
 
-        if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK
-                               | BATTLE_TYPE_RECORDED_LINK
-                               | BATTLE_TYPE_SAFARI
-                               | BATTLE_TYPE_CATCH_TUTORIAL))
-            && (gBattleOutcome == B_OUTCOME_WON || gBattleOutcome == B_OUTCOME_CAUGHT))
-            TryPugnaciousPartySparring();
-
         for (u32 i = 0; i < PARTY_SIZE; i++)
         {
             if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK

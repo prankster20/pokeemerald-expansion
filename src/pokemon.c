@@ -3315,8 +3315,18 @@ void TryPugnaciousPartySparring(void)
 
         if (partnerCount != 0)
         {
-            struct Pokemon *partner = &gParties[B_TRAINER_PLAYER][partnerSlots[RandomUniform(RNG_NATURE_PUGNACIOUS_PARTNER, 0, partnerCount - 1)]];
+            u32 partnerSlot = partnerSlots[RandomUniform(RNG_NATURE_PUGNACIOUS_PARTNER, 0, partnerCount - 1)];
+            struct Pokemon *partner = &gParties[B_TRAINER_PLAYER][partnerSlot];
             struct Pokemon *sparringMons[] = {pugnacious, partner};
+
+            if (gMain.inBattle && !gBattleCommunication[MSG_DISPLAY])
+            {
+                enum BattlerId battler = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
+                PREPARE_MON_NICK_BUFFER(gBattleTextBuff1, battler, pugnaciousSlot);
+                PREPARE_MON_NICK_BUFFER(gBattleTextBuff2, battler, partnerSlot);
+                PrepareStringBattle(STRINGID_PUGNACIOUSSPARRED, battler);
+                gBattleCommunication[MSG_DISPLAY] = 1;
+            }
 
             for (u32 i = 0; i < ARRAY_COUNT(sparringMons); i++)
             {

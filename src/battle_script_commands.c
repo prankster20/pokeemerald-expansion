@@ -10099,6 +10099,13 @@ static void Cmd_pickup(void)
         }
     }
 
+    if ((gBattleOutcome == B_OUTCOME_WON || gBattleOutcome == B_OUTCOME_CAUGHT)
+     && !(gBattleTypeFlags & (BATTLE_TYPE_LINK
+                           | BATTLE_TYPE_RECORDED_LINK
+                           | BATTLE_TYPE_SAFARI
+                           | BATTLE_TYPE_CATCH_TUTORIAL)))
+        TryPugnaciousPartySparring();
+
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
