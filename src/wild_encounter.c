@@ -240,7 +240,7 @@ static bool32 IsWorldlyLeadingParty(void)
 {
     return GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_SPECIES) != SPECIES_NONE
         && !GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_IS_EGG)
-        && GetMonData(&gParties[B_TRAINER_PLAYER][0], MON_DATA_HIDDEN_NATURE) == NATURE_WORLDLY;
+        && PokemonHasNature(&gParties[B_TRAINER_PLAYER][0], NATURE_WORLDLY);
 }
 
 static u32 ChooseWorldlyWildMonIndex(const struct WildPokemon *wildPokemon, u32 firstSlot, u32 slotCount, const u32 *slotWeights)

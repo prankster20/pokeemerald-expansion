@@ -2134,7 +2134,7 @@ static void DisplayFrugalRefusedHeldItemMessage(struct Pokemon *mon, enum Item i
 {
     GetMonNickname(mon, gStringVar1);
     CopyItemName(item, gStringVar2);
-    if (GetMonData(mon, MON_DATA_HIDDEN_NATURE) == NATURE_FASTIDIOUS)
+    if (PokemonHasNature(mon, NATURE_FASTIDIOUS))
         StringExpandPlaceholders(gStringVar4, gText_PkmnTooFastidiousForItem);
     else
         StringExpandPlaceholders(gStringVar4, gText_PkmnTooFrugalForItem);

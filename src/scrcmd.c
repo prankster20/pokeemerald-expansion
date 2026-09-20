@@ -633,7 +633,7 @@ bool8 ScrCmd_additem(struct ScriptContext *ctx)
     {
         for (u32 i = 0; i < gPartiesCount[B_TRAINER_PLAYER]; i++)
         {
-            if (GetNature(&gParties[B_TRAINER_PLAYER][i]) == NATURE_ADORABLE)
+            if (PokemonHasNature(&gParties[B_TRAINER_PLAYER][i], NATURE_ADORABLE))
             {
                 quantity++;
                 VarSet(VAR_0x8001, quantity);

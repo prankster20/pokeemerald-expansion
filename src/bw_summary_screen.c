@@ -5093,7 +5093,7 @@ static s32 GetSummaryStatBoostPercent(enum Stat stat)
             struct Pokemon *devotedMon = &gParties[B_TRAINER_PLAYER][i];
 
             if (GetMonData(devotedMon, MON_DATA_SPECIES_OR_EGG) == SPECIES_NONE
-             || GetMonData(devotedMon, MON_DATA_HIDDEN_NATURE) != NATURE_DEVOTED)
+             || !PokemonHasNature(devotedMon, NATURE_DEVOTED))
                 continue;
             {
                 u32 devotedBoost = GetDevotedBondData(devotedMon, &bondSlot);

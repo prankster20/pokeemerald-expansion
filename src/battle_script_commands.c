@@ -10023,7 +10023,7 @@ static void Cmd_pickup(void)
                     }
                 }
             }
-            else if (GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_SCROUNGER
+            else if (PokemonHasNature(&gParties[B_TRAINER_PLAYER][i], NATURE_SCROUNGER)
                 && species != SPECIES_NONE
                 && species != SPECIES_EGG
                 && (Random() % 3) == 0)
@@ -11865,12 +11865,12 @@ void ApplyExperienceMultipliers(s32 *expAmount, u8 expGetterMonId, u8 faintedBat
 
     // --- Custom Archetype nature: Callow ---
     // Gains 5% less EXP.
-        if (GetMonData(&gParties[B_TRAINER_PLAYER][expGetterMonId], MON_DATA_HIDDEN_NATURE) == NATURE_CALLOW)
+        if (PokemonHasNature(&gParties[B_TRAINER_PLAYER][expGetterMonId], NATURE_CALLOW))
         *expAmount = (*expAmount * 95) / 100;
 
     // --- Custom Archetype nature: Childish ---
     // Gains 20% more EXP.
-    if (GetMonData(&gParties[B_TRAINER_PLAYER][expGetterMonId], MON_DATA_HIDDEN_NATURE) == NATURE_CHILDISH)
+    if (PokemonHasNature(&gParties[B_TRAINER_PLAYER][expGetterMonId], NATURE_CHILDISH))
         *expAmount = (*expAmount * 120) / 100;
 
     if (B_SCALED_EXP >= GEN_5 && B_SCALED_EXP != GEN_6)

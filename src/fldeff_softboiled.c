@@ -78,7 +78,7 @@ static void Task_SoftboiledRestoreHealth(u8 taskId)
         enum Species species = GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_SPECIES_OR_EGG);
 
         if (species != SPECIES_NONE && species != SPECIES_EGG
-         && GetMonData(&gParties[B_TRAINER_PLAYER][i], MON_DATA_HIDDEN_NATURE) == NATURE_BENEVOLENT)
+         && PokemonHasNature(&gParties[B_TRAINER_PLAYER][i], NATURE_BENEVOLENT))
         {
             healAmount = healAmount * 120 / 100;
             break;

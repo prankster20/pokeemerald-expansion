@@ -1484,10 +1484,9 @@ static u32 GetBattlerMonData(enum BattlerId battler, struct Pokemon *party, u32 
         battleMon.spAttack = GetMonData(&party[monId], MON_DATA_SPATK);
         battleMon.spDefense = GetMonData(&party[monId], MON_DATA_SPDEF);
         {
-            u32 nature = GetMonData(&party[monId], MON_DATA_HIDDEN_NATURE);
             u32 boostPercent = 0;
 
-            if (nature == NATURE_COMMUNAL)
+            if (PokemonHasNature(&party[monId], NATURE_COMMUNAL))
                 boostPercent = GetCommunalBoostPercent(party, PARTY_SIZE, monId);
 
             battleMon.defense = battleMon.defense * (100 + boostPercent) / 100;

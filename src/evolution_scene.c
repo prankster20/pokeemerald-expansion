@@ -634,13 +634,13 @@ static void TryChangeNatureOnEvolution(struct Pokemon *mon)
 {
     u32 nature = GetMonData(mon, MON_DATA_HIDDEN_NATURE);
 
-        if (nature == NATURE_CALLOW)
+    if (PokemonHasNature(mon, NATURE_CALLOW))
     {
         u32 newNature = RandomUniformExcept(RNG_CALLOW_EVOLUTION, 0, NUM_NATURES - 1, IsCallowBlacklistedNature);
         SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
-            AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
+        AdjustPPForSeriousNatureChange(mon, NATURE_CALLOW, newNature);
     }
-    else if (nature == NATURE_INNOCENT)
+    else if (PokemonHasNature(mon, NATURE_INNOCENT))
     {
         u32 newNature = GetInnocentEvolutionNatureFromFriendship(GetMonData(mon, MON_DATA_FRIENDSHIP));
         SetMonData(mon, MON_DATA_HIDDEN_NATURE, &newNature);
