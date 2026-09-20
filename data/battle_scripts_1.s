@@ -4478,6 +4478,13 @@ BattleScript_MoveEffectConfusion::
 	waitmessage B_WAIT_TIME_LONG
 	return
 
+BattleScript_MoveEffectInfatuation::
+	volatileanimation BS_EFFECT_BATTLER, VOLATILE_INFATUATION
+	printstring STRINGID_PKMNFELLINLOVE
+	waitmessage B_WAIT_TIME_LONG
+	call BattleScript_TryDestinyKnotAttacker
+	return
+
 BattleScript_MoveEffectRecoilHP25::
 	saveattacker
 	copybyte gBattlerAttacker, sBATTLER

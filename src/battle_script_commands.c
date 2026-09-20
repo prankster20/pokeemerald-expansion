@@ -2730,6 +2730,34 @@ void SetMoveEffect(enum BattlerId battlerAtk, enum BattlerId effectBattler, enum
             gBattlescriptCurrInstr = BattleScript_MoveEffectConfusion;
         }
         break;
+    case MOVE_EFFECT_INFATUATION:
+        {
+            u32 immuneNature = GetInfatuationImmuneNature(effectBattler);
+
+            if (immuneNature != NATURE_RANDOM)
+            {
+                gBattleScripting.battler = effectBattler;
+                gBattleScripting.showNaturePopup = TRUE;
+                gBattleScripting.naturePopupId = immuneNature;
+                BattleScriptPush(battleScript);
+                gBattlescriptCurrInstr = BattleScript_AbilityPopUpScripting;
+            }
+            else if (gBattleMons[effectBattler].volatiles.infatuation
+                  || abilities[effectBattler] == ABILITY_OBLIVIOUS
+                  || IsAbilityOnSide(effectBattler, ABILITY_AROMA_VEIL))
+            {
+                gBattlescriptCurrInstr = battleScript;
+            }
+            else
+            {
+                gBattleMons[effectBattler].volatiles.infatuation = INFATUATED_WITH(battlerAtk);
+                TryReflectBitterVolatile(battlerAtk, effectBattler, BITTER_VOLATILE_INFATUATION);
+                gEffectBattler = effectBattler;
+                BattleScriptPush(battleScript);
+                gBattlescriptCurrInstr = BattleScript_MoveEffectInfatuation;
+            }
+        }
+        break;
     case MOVE_EFFECT_FLINCH:
         if (abilities[effectBattler] == ABILITY_INNER_FOCUS)
         {

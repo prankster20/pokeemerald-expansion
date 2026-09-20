@@ -1134,10 +1134,10 @@ static bool32 AI_IsMoveEffectInPlus(enum BattlerId battlerAtk, enum BattlerId ba
                 if (AI_CanConfuse(battlerAtk, battlerDef, abilityDef, BATTLE_PARTNER(battlerAtk), move, MOVE_NONE))
                     return TRUE;
                 break;
-            // case MOVE_EFFECT_INFATUATION:
-            //     if (AI_CanBeInfatuated(battlerAtk, battlerDef, abilityDef))
-            //         return TRUE;
-            //     break;
+            case MOVE_EFFECT_INFATUATION:
+                if (AI_CanBeInfatuated(battlerAtk, battlerDef, abilityDef))
+                    return TRUE;
+                break;
             case MOVE_EFFECT_FLINCH:
                 if (ShouldTryToFlinch(battlerAtk, battlerDef, abilityAtk, abilityDef, move))
                     return TRUE;
